@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -232,6 +232,12 @@ def freight_delivery(campaign_id:str,contract_public_id:str=Form(...),actor_publ
 @app.post("/campaigns/{campaign_id}/passenger-bookings")
 def passenger_booking(campaign_id:str,cycle_public_id:str=Form(...),journey_public_id:str=Form(...),passage_class:str=Form(...),passenger_count:int=Form(...),idempotency_key:str=Form(...)):
     try:book_route_passengers(cycle_public_id=cycle_public_id,journey_public_id=journey_public_id,passage_class=passage_class,passenger_count=passenger_count,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/trade?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/passenger-boardings")
+def passenger_boarding(campaign_id:str,journey_public_id:str=Form(...),actor_public_id:str=Form(...),idempotency_key:str=Form(...)):
+    try:board_route_passengers(journey_public_id=journey_public_id,actor_public_id=actor_public_id,idempotency_key=idempotency_key)
     except (ValueError,PermissionError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/trade?campaign={campaign_id}",status_code=303)
 
