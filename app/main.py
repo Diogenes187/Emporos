@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, declare_combat_attack, resolve_combat_attack
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -369,6 +369,20 @@ def combat_turn_complete(campaign_id:str,encounter_id:str,actor_id:str,idempoten
 @app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/rounds/advance")
 def combat_round_advance(campaign_id:str,encounter_id:str,idempotency_key:str=Form(...)):
     try:advance_combat_round(encounter_public_id=encounter_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/attacks")
+def combat_attack_declare(campaign_id:str,encounter_id:str,attacker_actor_public_id:str=Form(...),target_actor_public_id:str=Form(...),attack_selection:str=Form(...),target_has_cover:bool=Form(False),idempotency_key:str=Form(...)):
+    try:
+        item_rule_code,attack_profile_code,range_rule_code=attack_selection.split('||')
+        declare_combat_attack(encounter_public_id=encounter_id,attacker_actor_public_id=attacker_actor_public_id,target_actor_public_id=target_actor_public_id,item_rule_code=item_rule_code,attack_profile_code=attack_profile_code,range_rule_code=range_rule_code,target_has_cover=target_has_cover,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/attacks/{attack_id}/resolve")
+def combat_attack_resolve(campaign_id:str,encounter_id:str,attack_id:str,item_rule_code:str=Form(...),attack_profile_code:str=Form(...),range_rule_code:str=Form(...),target_actor_public_id:str=Form(...),armor_rule_code:str=Form(...),idempotency_key:str=Form(...)):
+    try:resolve_combat_attack(personal_attack_public_id=attack_id,item_rule_code=item_rule_code,attack_profile_code=attack_profile_code,range_rule_code=range_rule_code,target_actor_public_id=target_actor_public_id,armor_rule_code=armor_rule_code,idempotency_key=idempotency_key)
     except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
 
