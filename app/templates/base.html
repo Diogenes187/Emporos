@@ -66,6 +66,7 @@
         <strong>Mechanics remain outside narration</strong>
         <span>Travel, trade, combat, and inventory changes appear here only after the engine commits them.</span>
       </article>
+      {% if campaign %}{% for action in campaign.referee_tool_requests %}<article class="receipt"><small>ENGINE ACTION — CONFIRM REQUIRED</small><strong>{{ action.request_summary }}</strong><span>{{ action.tool_name|replace('_',' ')|title }}</span><form method="post" action="/campaigns/{{ campaign.public_id }}/referee-actions/{{ action.public_id }}/confirm"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-confirm-{{ loop.index }}"><button type="submit">Confirm mechanical action</button></form></article>{% endfor %}{% endif %}
     </section>
     <form class="composer" method="post" {% if campaign %}action="/campaigns/{{ campaign.public_id }}/referee-turns"{% endif %}>
       {% if campaign %}<input type="hidden" name="idempotency_key" value="{{ creation_key }}-referee">{% endif %}

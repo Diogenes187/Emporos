@@ -209,6 +209,7 @@ class CampaignReader:
             mortgages=connection.execute("SELECT ship.public_id::text AS ship_public_id,actor.public_id::text AS actor_public_id,mortgage.cash_price_minor,mortgage.payment_amount_minor,mortgage.payments_made,mortgage.term_months,mortgage.next_due_day,mortgage.mortgage_status,balance.outstanding_minor FROM ship_mortgage mortgage JOIN ship_ship ship USING(ship_id) JOIN cmd_trading_preparation_receipt setup ON setup.ship_id=ship.ship_id JOIN actor_actor actor ON actor.actor_id=setup.actor_id JOIN fin_obligation_balance balance USING(obligation_id) WHERE mortgage.campaign_id=%s ORDER BY mortgage.ship_mortgage_id DESC",(campaign_id,)).fetchall()
             source_documents=connection.execute("SELECT document.public_id::text AS public_id,document.title,document.source_kind,document.original_filename,document.media_type,document.byte_count,document.page_count,document.ingestion_status,intro.introduction_text,count(*) FILTER(WHERE page.review_status='verified') AS verified_pages,count(*) FILTER(WHERE page.visual_review_required) AS visual_review_pages FROM camp_source_document document JOIN camp_source_page page USING(source_document_id,campaign_id) LEFT JOIN camp_source_player_intro intro USING(source_document_id,campaign_id) WHERE document.campaign_id=%s GROUP BY document.source_document_id,intro.introduction_text ORDER BY document.uploaded_at DESC",(campaign_id,)).fetchall()
             referee_messages=connection.execute("SELECT message.speaker_kind,message.message_text,message.created_at FROM camp_referee_message message JOIN camp_referee_turn turn USING(referee_turn_id,campaign_id) WHERE message.campaign_id=%s AND turn.turn_status='completed' ORDER BY message.referee_message_id DESC LIMIT 40",(campaign_id,)).fetchall()[::-1]
+            referee_tool_requests=connection.execute("SELECT request.public_id::text AS public_id,request.tool_name,request.request_summary FROM camp_referee_tool_request request WHERE request.campaign_id=%s AND request.request_status='proposed' ORDER BY request.referee_tool_request_id",(campaign_id,)).fetchall()
         return {
             **campaign,
             "actors": actors,
@@ -239,6 +240,7 @@ class CampaignReader:
             "mortgages": mortgages,
             "source_documents": source_documents,
             "referee_messages": referee_messages,
+            "referee_tool_requests": referee_tool_requests,
         }
 
     def ship_classes(self) -> list[dict[str, Any]]:

@@ -56,6 +56,7 @@ from engine.ship_mortgages import open_ship_mortgage_command, pay_ship_mortgage_
 from engine.source_library import ingest_campaign_source_command  # noqa: E402
 from ai.source_reviewer import review_document_text_queue  # noqa: E402
 from ai.referee import submit_referee_turn  # noqa: E402
+from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
 
 
 def create_campaign(
@@ -264,3 +265,8 @@ def send_referee_message(*,campaign_public_id:str,player_text:str,idempotency_ke
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     if not url:raise RuntimeError("No Emporos database URL is configured")
     with psycopg.connect(url) as connection:return submit_referee_turn(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,player_text=player_text)
+
+def confirm_referee_action(*,request_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    if not url:raise RuntimeError("No Emporos database URL is configured")
+    with psycopg.connect(url) as connection:return confirm_referee_tool_request(connection,initiator_reference=authority,idempotency_key=idempotency_key,request_public_id=request_public_id)

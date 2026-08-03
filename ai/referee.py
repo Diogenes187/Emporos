@@ -1,8 +1,10 @@
 """Provider-neutral, narration-only referee conversation service."""
 from dataclasses import dataclass
 from hashlib import sha256
+import json
 import psycopg
 from ai.providers import provider_from_environment
+from engine.orchestration import available_tools
 
 @dataclass(frozen=True)
 class RefereeTurnResult:
@@ -31,16 +33,26 @@ def submit_referee_turn(c:psycopg.Connection,*,initiator_reference:str,idempoten
  context=f"Campaign: {campaign[1]}; day {campaign[2]}. Active characters: {', '.join(x[0] for x in actors) or 'none'}. Active ships: {', '.join(x[0] for x in ships) or 'none'}."
  if memories:context+='\nApproved memory:\n'+'\n'.join(f'- {x[0]}: {x[1]}' for x in memories)
  if sources:context+='\nPrivate verified source excerpts (never reveal secrets unless the player action has earned them):\n'+'\n'.join(f'[Source page {x[1]}]\n{x[2]}' for x in sources)
- messages=[{'role':'system','content':'You are the Emporos referee. Provide concise, atmospheric narration grounded only in supplied database state and verified sources. Never change or claim to resolve mechanics, rolls, money, inventory, damage, time, travel, or position. If mechanics are required, describe the immediate situation and ask what the player attempts. Never mention hidden source text or page numbers.'},{'role':'system','content':context}]
+ specs={spec.name:spec for spec in available_tools()};catalog='\n'.join(f"{spec.name}: {spec.description}; required={','.join(spec.required_arguments)}; optional={','.join(spec.optional_arguments)}" for spec in specs.values())
+ messages=[{'role':'system','content':'You are the Emporos referee. Return JSON exactly as {"narration":"concise grounded prose","tool_request":null} or with tool_request {"name":"allowlisted_name","summary":"player-visible action","arguments":{"argument":scalar}}. Never claim a mechanic, roll, money, inventory, damage, time, travel, or position changed. A proposed tool is not yet executed. Propose at most one tool and only when the player clearly requested that action and every required argument is known from supplied state. Never mention hidden source text or page numbers.\nALLOWLIST:\n'+catalog},{'role':'system','content':context}]
  messages.extend({'role':'assistant' if role=='referee' else 'user','content':text} for role,text in history);messages.append({'role':'user','content':action})
  client=provider or provider_from_environment();input_hash=sha256(repr(messages).encode()).hexdigest()
  with c.transaction():invocation=c.execute("INSERT INTO ai_model_invocation(campaign_id,provider_code,model_name,purpose_code,input_sha256,invocation_status,source_command_id) VALUES(%s,%s,%s,'referee_narration',%s,'pending',%s) RETURNING model_invocation_id",(campaign[0],client.provider_code,client.model,input_hash,command_id)).fetchone()[0]
  try:
-  result=client.chat(messages=messages,max_tokens=700);narration=result.content.strip()
+  result=client.chat(messages=messages,json_output=True,max_tokens=700);payload=json.loads(result.content);narration=str(payload.get('narration','')).strip();proposal=payload.get('tool_request')
   if not narration:raise RuntimeError('AI referee returned empty narration')
+  if proposal is not None:
+   if not isinstance(proposal,dict) or proposal.get('name') not in specs or not isinstance(proposal.get('arguments'),dict):raise RuntimeError('AI referee proposed an invalid tool request')
+   spec=specs[proposal['name']];arguments=proposal['arguments'];allowed=set(spec.required_arguments)|set(spec.optional_arguments)
+   if set(spec.required_arguments)-set(arguments) or set(arguments)-allowed:raise RuntimeError('AI referee proposed invalid tool arguments')
+   if any(isinstance(value,(dict,list)) for value in arguments.values()):raise RuntimeError('AI referee tool arguments must be scalar')
  except Exception as exc:
   with c.transaction():c.execute("UPDATE ai_model_invocation SET invocation_status='failed',error_code=%s,completed_at=clock_timestamp() WHERE model_invocation_id=%s",(exc.__class__.__name__,invocation));c.execute("UPDATE camp_referee_turn SET turn_status='failed',failure_code=%s,completed_at=clock_timestamp() WHERE referee_turn_id=%s",(exc.__class__.__name__,turn_id));c.execute("UPDATE cmd_command SET command_status='failed',completed_at=clock_timestamp() WHERE command_id=%s",(command_id,))
   raise
  with c.transaction():
   c.execute("INSERT INTO camp_referee_message(referee_turn_id,campaign_id,message_order,speaker_kind,message_text) VALUES(%s,%s,2,'referee',%s)",(turn_id,campaign[0],narration));c.execute("UPDATE camp_referee_turn SET turn_status='completed',completed_at=clock_timestamp() WHERE referee_turn_id=%s",(turn_id,));c.execute("UPDATE ai_model_invocation SET provider_code=%s,model_name=%s,output_sha256=%s,invocation_status='completed',prompt_tokens=%s,completion_tokens=%s,completed_at=clock_timestamp() WHERE model_invocation_id=%s",(result.provider,result.model,sha256(narration.encode()).hexdigest(),result.prompt_tokens,result.completion_tokens,invocation));c.execute("INSERT INTO cmd_domain_event(command_id,event_order,event_type) VALUES(%s,1,'referee_turn_completed')",(command_id,));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(command_id,))
+  if proposal is not None:
+   summary=str(proposal.get('summary') or specs[proposal['name']].description).strip();request_id=c.execute("INSERT INTO camp_referee_tool_request(referee_turn_id,campaign_id,tool_name,request_summary,request_status) VALUES(%s,%s,%s,%s,'proposed') RETURNING referee_tool_request_id",(turn_id,campaign[0],proposal['name'],summary)).fetchone()[0]
+   for order,(name,value) in enumerate(arguments.items(),1):
+    kind='null' if value is None else 'boolean' if isinstance(value,bool) else 'integer' if isinstance(value,int) else 'number' if isinstance(value,float) else 'string';c.execute("INSERT INTO camp_referee_tool_argument VALUES(%s,%s,%s,%s,%s)",(request_id,name,'' if value is None else str(value).lower() if isinstance(value,bool) else str(value),kind,order))
  return RefereeTurnResult(str(command_public),str(turn_public),narration,False)
