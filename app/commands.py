@@ -50,6 +50,7 @@ from engine.passenger_booking import book_route_passengers_command  # noqa: E402
 from engine.passenger_boarding import board_route_passengers_command  # noqa: E402
 from engine.low_passage_revival import revive_low_passenger_command  # noqa: E402
 from engine.passenger_manifest import finalize_passenger_manifest_command  # noqa: E402
+from engine.postal_contracts import accept_postal_contract_command, deliver_postal_contract_command  # noqa: E402
 
 
 def create_campaign(
@@ -221,3 +222,11 @@ def revive_low_passenger(*,journey_passage_id:int,idempotency_key:str):
 def finalize_passenger_manifest(*,journey_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return finalize_passenger_manifest_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,journey_public_id=journey_public_id)
+
+def accept_postal_contract(*,journey_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return accept_postal_contract_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,journey_public_id=journey_public_id)
+
+def deliver_postal_contract(*,contract_public_id:str,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return deliver_postal_contract_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,contract_public_id=contract_public_id,actor_public_id=actor_public_id)
