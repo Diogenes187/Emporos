@@ -1,0 +1,21 @@
+"""Resolve the source-prescribed low-passage revival check."""
+from dataclasses import dataclass
+import psycopg
+from engine.tasks import resolve_actor_task_command
+@dataclass(frozen=True)
+class LowPassageRevivalResult:
+ command_public_id:str;journey_public_id:str;passenger_actor_public_id:str;passenger_name:str;task_total:int;succeeded:bool;passage_status:str;replayed:bool
+def _load(c,cid,pub,replayed):
+ r=c.execute("SELECT journey.public_id,actor.public_id,actor.name,task.check_total,receipt.passenger_succeeded,receipt.passage_status_after FROM cmd_low_passage_revival_receipt receipt JOIN journey_passage passage USING(journey_passage_id) JOIN journey_journey journey USING(journey_id) JOIN actor_actor actor ON actor.actor_id=receipt.passenger_actor_id JOIN cmd_actor_task_receipt task ON task.command_id=receipt.passenger_task_command_id WHERE receipt.command_id=%s",(cid,)).fetchone();return LowPassageRevivalResult(str(pub),str(r[0]),str(r[1]),r[2],r[3],r[4],r[5],replayed)
+def revive_low_passenger_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,journey_passage_id:int,random_source=None)->LowPassageRevivalResult:
+ with c.transaction():
+  old=c.execute("SELECT command_id,public_id,command_type,command_status FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s FOR UPDATE",(initiator_reference,idempotency_key)).fetchone()
+  if old:
+   if old[2:]!=('revive_low_passenger','completed'):raise RuntimeError('Idempotency key belongs to another command')
+   return _load(c,old[0],old[1],True)
+  s=c.execute("SELECT passage.campaign_id,passage.journey_passage_id,passage.actor_id,actor.public_id,passage.concurrency_version,journey.journey_id FROM journey_passage passage JOIN journey_journey journey USING(journey_id,campaign_id) JOIN camp_campaign campaign USING(campaign_id) JOIN actor_actor actor ON actor.actor_id=passage.actor_id WHERE passage.journey_passage_id=%s AND passage.passage_class='low' AND passage.passage_status='boarded' AND journey.journey_status='completed' AND campaign.owner_reference=%s FOR UPDATE OF passage,journey,actor",(journey_passage_id,initiator_reference)).fetchone()
+  if not s:raise ValueError('Low passenger revival requires an arrived, occupied low berth')
+  task=resolve_actor_task_command(c,initiator_reference='emporos-passenger',idempotency_key=f'low-revival:{s[1]}:{idempotency_key}',actor_public_id=str(s[3]),characteristic_rule_code='characteristic.endurance',difficulty_rule_code='difficulty.easy',random_source=random_source)
+  task_id=c.execute("SELECT command_id FROM cmd_command WHERE public_id=%s",(task.command_public_id,)).fetchone()[0];after='completed' if task.succeeded else 'failed_revival';cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('revive_low_passenger',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone()
+  c.execute("INSERT INTO journey_low_passage_revival_receipt(journey_passage_id,campaign_id,passenger_actor_id,passenger_task_command_id,assistance_modifier,passenger_succeeded,passage_status_before,passage_status_after,passage_version_before,passage_version_after,source_command_id) VALUES(%s,%s,%s,%s,0,%s,'boarded',%s,%s,%s,%s)",(s[1],s[0],s[2],task_id,task.succeeded,after,s[4],s[4]+1,cid))
+  c.execute("UPDATE journey_participant SET commitment_status='completed',released_at=clock_timestamp() WHERE journey_id=%s AND actor_id=%s AND commitment_status IN('planned','committed')",(s[5],s[2]));c.execute("INSERT INTO cmd_low_passage_revival_receipt VALUES(%s,%s,%s,%s,%s,%s,%s)",(cid,s[0],s[1],s[2],task_id,task.succeeded,after));c.execute("INSERT INTO cmd_domain_event(command_id,event_order,event_type) VALUES(%s,1,'low_passenger_revival_resolved')",(cid,));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,));return _load(c,cid,pub,False)
