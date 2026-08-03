@@ -25,7 +25,7 @@ def ingest_campaign_source_command(c:psycopg.Connection,*,initiator_reference:st
  digest=sha256(content).hexdigest();safe=re.sub(r'[^A-Za-z0-9._-]+','_',Path(original_filename).name);relative=Path(digest[:2])/(digest+'-'+safe)
  pages=_pdf_pages(content) if media_type=='application/pdf' else [((content.decode('utf-8-sig')).strip(),'extracted',False)]
  if not pages:raise ValueError('Campaign source has no pages')
- review=sum(1 for text,status,visual in pages if status!='extracted' or visual);status='ready' if review==0 else 'needs_review';target=storage_root/relative
+ review=len(pages);status='needs_review';target=storage_root/relative
  with c.transaction():
   old=c.execute("SELECT command_id,public_id,command_type,command_status FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s FOR UPDATE",(initiator_reference,idempotency_key)).fetchone()
   if old:
@@ -36,7 +36,7 @@ def ingest_campaign_source_command(c:psycopg.Connection,*,initiator_reference:st
   duplicate=c.execute("SELECT public_id FROM camp_source_document WHERE campaign_id=%s AND content_sha256=%s",(campaign[0],digest)).fetchone()
   if duplicate:raise ValueError('This source file is already installed in the campaign')
   cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('ingest_campaign_source',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone();document,dpub=c.execute("INSERT INTO camp_source_document(campaign_id,title,source_kind,original_filename,media_type,content_sha256,byte_count,page_count,ingestion_status,stored_relative_path,source_command_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING source_document_id,public_id",(campaign[0],title.strip(),source_kind,Path(original_filename).name,media_type,digest,len(content),len(pages),status,str(relative),cid)).fetchone()
-  for number,(text,state,visual) in enumerate(pages,1):c.execute("INSERT INTO camp_source_page(source_document_id,campaign_id,page_number,text_content,text_sha256,character_count,extraction_status,visual_review_required,review_status) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",(document,campaign[0],number,text,sha256(text.encode()).hexdigest(),len(text),state,visual,'pending' if visual or state!='extracted' else 'verified'))
+  for number,(text,state,visual) in enumerate(pages,1):c.execute("INSERT INTO camp_source_page(source_document_id,campaign_id,page_number,text_content,text_sha256,character_count,extraction_status,visual_review_required,review_status) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'pending')",(document,campaign[0],number,text,sha256(text.encode()).hexdigest(),len(text),state,visual))
   c.execute("INSERT INTO cmd_campaign_source_ingestion_receipt VALUES(%s,%s,%s,%s,%s,%s,%s)",(cid,campaign[0],document,len(pages),sum(1 for _,state,_ in pages if state=='extracted'),review,status));c.execute("INSERT INTO cmd_domain_event VALUES(%s,1,'campaign_source_ingested')",(cid,));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,))
  target.parent.mkdir(parents=True,exist_ok=True)
  if not target.exists():target.write_bytes(content)
