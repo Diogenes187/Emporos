@@ -210,6 +210,7 @@ class CampaignReader:
             source_documents=connection.execute("SELECT document.public_id::text AS public_id,document.title,document.source_kind,document.original_filename,document.media_type,document.byte_count,document.page_count,document.ingestion_status,intro.introduction_text,count(*) FILTER(WHERE page.review_status='verified') AS verified_pages,count(*) FILTER(WHERE page.visual_review_required) AS visual_review_pages FROM camp_source_document document JOIN camp_source_page page USING(source_document_id,campaign_id) LEFT JOIN camp_source_player_intro intro USING(source_document_id,campaign_id) WHERE document.campaign_id=%s GROUP BY document.source_document_id,intro.introduction_text ORDER BY document.uploaded_at DESC",(campaign_id,)).fetchall()
             referee_messages=connection.execute("SELECT message.speaker_kind,message.message_text,message.created_at FROM camp_referee_message message JOIN camp_referee_turn turn USING(referee_turn_id,campaign_id) WHERE message.campaign_id=%s AND turn.turn_status='completed' ORDER BY message.referee_message_id DESC LIMIT 40",(campaign_id,)).fetchall()[::-1]
             referee_tool_requests=connection.execute("SELECT request.public_id::text AS public_id,request.tool_name,request.request_summary FROM camp_referee_tool_request request WHERE request.campaign_id=%s AND request.request_status='proposed' ORDER BY request.referee_tool_request_id",(campaign_id,)).fetchall()
+            encounters=connection.execute("""SELECT encounter.public_id::text AS public_id,type.encounter_type_code,encounter.encounter_status,encounter.current_mode,combat.current_round,combat.combat_status,count(participant.actor_id) AS participant_count,COALESCE(array_agg(actor.name ORDER BY actor.name) FILTER(WHERE actor.actor_id IS NOT NULL),ARRAY[]::text[]) AS participant_names,COALESCE(array_agg(actor.public_id::text ORDER BY actor.name) FILTER(WHERE actor.actor_id IS NOT NULL),ARRAY[]::text[]) AS participant_public_ids FROM enc_encounter encounter JOIN rule_encounter_type type ON type.rule_id=encounter.encounter_type_rule_id LEFT JOIN enc_participant participant USING(encounter_id) LEFT JOIN actor_actor actor USING(actor_id) LEFT JOIN enc_personal_combat combat USING(encounter_id) WHERE encounter.campaign_id=%s GROUP BY encounter.encounter_id,type.encounter_type_code,combat.current_round,combat.combat_status ORDER BY encounter.created_at DESC""",(campaign_id,)).fetchall()
         return {
             **campaign,
             "actors": actors,
@@ -241,6 +242,7 @@ class CampaignReader:
             "source_documents": source_documents,
             "referee_messages": referee_messages,
             "referee_tool_requests": referee_tool_requests,
+            "encounters": encounters,
         }
 
     def ship_classes(self) -> list[dict[str, Any]]:

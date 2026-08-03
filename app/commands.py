@@ -57,6 +57,8 @@ from engine.source_library import ingest_campaign_source_command  # noqa: E402
 from ai.source_reviewer import review_document_text_queue  # noqa: E402
 from ai.referee import submit_referee_turn  # noqa: E402
 from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
+from engine.encounters import create_encounter_command,add_encounter_participant_command,transition_encounter_mode_command  # noqa: E402
+from engine.combat_runtime import initialize_personal_combat_command  # noqa: E402
 
 
 def create_campaign(
@@ -270,3 +272,19 @@ def confirm_referee_action(*,request_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     if not url:raise RuntimeError("No Emporos database URL is configured")
     with psycopg.connect(url) as connection:return confirm_referee_tool_request(connection,initiator_reference=authority,idempotency_key=idempotency_key,request_public_id=request_public_id)
+
+def create_encounter(*,campaign_public_id:str,encounter_type_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return create_encounter_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,encounter_type_code=encounter_type_code)
+
+def add_encounter_participant(*,encounter_public_id:str,actor_public_id:str,participant_role:str,side_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return add_encounter_participant_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,participant_role=participant_role,side_code=side_code)
+
+def begin_personal_combat(*,encounter_public_id:str,reason:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return transition_encounter_mode_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,to_mode='personal_combat',reason=reason)
+
+def initialize_personal_combat(*,encounter_public_id:str,aware_actor_public_ids:tuple[str,...],starting_context_code:str,light_condition:str,starting_range_rule_code:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return initialize_personal_combat_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,aware_actor_public_ids=aware_actor_public_ids,starting_context_code=starting_context_code,light_condition=light_condition,starting_range_rule_code=starting_range_rule_code or None)
