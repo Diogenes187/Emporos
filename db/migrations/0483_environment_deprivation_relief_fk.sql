@@ -1,0 +1,2 @@
+ALTER TABLE health_deprivation_recovery_lock DROP CONSTRAINT health_deprivation_recovery_l_released_by_relief_receipt_i_fkey,
+ ADD CONSTRAINT health_deprivation_lock_relief_fk FOREIGN KEY(released_by_relief_receipt_id) REFERENCES env_deprivation_relief_receipt(deprivation_relief_receipt_id) DEFERRABLE INITIALLY DEFERRED;

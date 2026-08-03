@@ -1,0 +1,35 @@
+"""Source-bounded Broker operations and Carousing attitude influence."""
+from dataclasses import dataclass
+import psycopg
+from engine.tasks import resolve_actor_task_command
+from engine.encounters import attempt_attitude_influence_command
+@dataclass(frozen=True)
+class BrokerOperationResult:
+ command_public_id:str;operation_code:str;check_total:int;effect:int;succeeded:bool;attempt_number_in_month:int|None;price_percent:int|None;replayed:bool
+def resolve_broker_operation_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,actor_public_id:str,market_session_id:int,operation_code:str,objective_reference:str,characteristic_rule_code:str,trade_good_code:str|None=None,circumstance_modifier:int=0,random_source=None)->BrokerOperationResult:
+ if not objective_reference.strip():raise ValueError('Broker objective is required')
+ with c.transaction():
+  old=c.execute("SELECT command_id,public_id,command_type,command_status FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s FOR UPDATE",(initiator_reference,idempotency_key)).fetchone()
+  if old:
+   if old[2:]!=('resolve_broker_operation','completed'):raise RuntimeError('Idempotency key belongs to another command')
+   r=c.execute("SELECT operation_code,check_total,effect,succeeded,attempt_number_in_month,price_percent FROM cmd_broker_operation_receipt WHERE command_id=%s",(old[0],)).fetchone();return BrokerOperationResult(str(old[1]),*r,True)
+  state=c.execute("SELECT a.actor_id,a.campaign_id,m.rule_id,o.skill_rule_id,d.rule_code,t.rule_code,clock.day_number,g.trade_good_rule_id FROM actor_actor a JOIN camp_clock clock USING(campaign_id) JOIN mkt_session session ON session.market_session_id=%s AND session.campaign_id=a.campaign_id JOIN rule_broker_operation_mechanic m ON true JOIN rule_broker_operation o ON o.rule_id=m.rule_id AND o.operation_code=%s JOIN rule_rule d ON d.rule_id=o.difficulty_rule_id JOIN rule_rule t ON t.rule_id=o.time_frame_rule_id LEFT JOIN rule_trade_good g ON g.good_code=%s WHERE a.public_id=%s AND a.controller_reference=%s AND session.session_status='open' FOR UPDATE OF a",(market_session_id,operation_code,trade_good_code,actor_public_id,initiator_reference)).fetchone()
+  if not state or (operation_code.startswith('determine-') and state[7] is None) or (operation_code.startswith('find-') and trade_good_code is not None):raise ValueError('Broker operation context is not legal')
+  attempt=None;modifier=circumstance_modifier
+  if operation_code.startswith('find-'):
+   attempt=c.execute("SELECT count(*)+1 FROM cmd_broker_operation_receipt WHERE campaign_id=%s AND actor_id=%s AND operation_code=%s AND campaign_day/30=%s/30",(state[1],state[0],operation_code,state[6])).fetchone()[0];modifier-=attempt-1
+  task=resolve_actor_task_command(c,initiator_reference=initiator_reference,idempotency_key=f'broker:{idempotency_key}',actor_public_id=actor_public_id,characteristic_rule_code=characteristic_rule_code,skill_rule_code='skill.broker',difficulty_rule_code=state[4],time_frame_rule_code=state[5],circumstance_modifier=modifier,goal_reference=objective_reference.strip(),random_source=random_source);task_id=c.execute("SELECT command_id FROM cmd_command WHERE public_id=%s",(task.command_public_id,)).fetchone()[0];percent=None
+  if operation_code.startswith('determine-'):percent=c.execute("SELECT CASE WHEN %s='determine-purchase-price' THEN purchase_percent ELSE sale_percent END FROM rule_modified_price_band WHERE (minimum_result IS NULL OR minimum_result<=%s) AND (maximum_result IS NULL OR maximum_result>=%s)",(operation_code,task.total,task.total)).fetchone()[0]
+  cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('resolve_broker_operation',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone();c.execute("INSERT INTO cmd_broker_operation_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(cid,state[1],state[0],market_session_id,state[2],operation_code,objective_reference.strip(),task_id,state[6],attempt,state[7],percent,task.total,task.effect,task.succeeded));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,));return BrokerOperationResult(str(pub),operation_code,task.total,task.effect,task.succeeded,attempt,percent,False)
+def resolve_carousing_influence_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,encounter_public_id:str,acting_actor_public_id:str,target_actor_public_id:str,circumstance_modifiers:tuple[int,...]=(),random_source=None):
+ with c.transaction():
+  old=c.execute("SELECT command_id,command_type,command_status FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s FOR UPDATE",(initiator_reference,idempotency_key)).fetchone()
+  nested=f'carousing:{idempotency_key}'
+  if old:
+   if old[1:]!=('resolve_carousing_influence','completed'):raise RuntimeError('Idempotency key belongs to another command')
+   nested=c.execute("SELECT sub.idempotency_key FROM cmd_carousing_influence_receipt r JOIN cmd_command sub ON sub.command_id=r.influence_command_id WHERE r.command_id=%s",(old[0],)).fetchone()[0]
+  state=c.execute("SELECT a.actor_id,a.campaign_id,COALESCE(sk.skill_level,s.untrained_modifier),b.modifier,s.rule_id FROM actor_actor a JOIN rule_rule rr ON rr.rule_code='skill.carousing' JOIN rule_skill s ON s.rule_id=rr.rule_id LEFT JOIN actor_skill sk ON sk.actor_id=a.actor_id AND sk.skill_rule_id=rr.rule_id JOIN rule_rule cr ON cr.rule_code='characteristic.social-standing' JOIN actor_characteristic ac ON ac.actor_id=a.actor_id AND ac.characteristic_rule_id=cr.rule_id JOIN rule_characteristic_modifier_band b ON b.score_range @> ac.current_value::integer WHERE a.public_id=%s AND a.controller_reference=%s",(acting_actor_public_id,initiator_reference)).fetchone()
+  if not state:raise ValueError('Controlled actor lacks Carousing influence state')
+  result=attempt_attitude_influence_command(c,initiator_reference=initiator_reference,idempotency_key=nested,encounter_public_id=encounter_public_id,acting_actor_public_id=acting_actor_public_id,target_actor_public_id=target_actor_public_id,skill_modifier=state[2],characteristic_modifier=state[3],circumstance_modifiers=circumstance_modifiers,random_source=random_source)
+  if old:return result
+  target=c.execute("SELECT actor_id FROM actor_actor WHERE public_id=%s AND campaign_id=%s",(target_actor_public_id,state[1])).fetchone();sub=c.execute("SELECT command_id FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s",(initiator_reference,nested)).fetchone()[0];cid=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('resolve_carousing_influence',%s,%s) RETURNING command_id",(initiator_reference,idempotency_key)).fetchone()[0];c.execute("INSERT INTO cmd_carousing_influence_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,%s)",(cid,state[1],state[0],target[0],sub,state[4],state[2],state[3]));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,));return result

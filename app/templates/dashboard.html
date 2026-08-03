@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Command · Emporos{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><small>SHIPBOARD COMMAND</small><h1>{{ campaign.name if campaign else 'Begin a campaign.' }}</h1><p>{% if campaign %}Authoritative state loaded from Base Cepheus.{% else %}No active campaign is available in the connected database.{% endif %}</p></div>
+  <button class="primary">Resume scene</button>
+</section>
+
+<section class="stat-grid">
+  <article><small>SHIPS</small><strong>{{ campaign.ships|length if campaign else 0 }}</strong><span>{{ campaign.ships[0].name if campaign and campaign.ships else 'No vessel instantiated' }}</span></article>
+  <article><small>CHARACTERS</small><strong>{{ campaign.actors|length if campaign else 0 }}</strong><span>Relational actor records</span></article>
+  <article><small>SYSTEMS</small><strong>{{ campaign.systems|length if campaign else 0 }}</strong><span>Charted in this campaign</span></article>
+  <article><small>CAMPAIGN DAY</small><strong>{{ campaign.day_number if campaign else 0 }}</strong><span>{{ campaign.status|title if campaign else 'Unavailable' }}</span></article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="panel wide">
+    <header><div><small>CURRENT OPERATION</small><h2>{% if campaign and campaign.ships %}{{ campaign.ships[0].name }}{% else %}No active vessel{% endif %}</h2></div><span class="tag">{{ campaign.status|upper if campaign else 'IDLE' }}</span></header>
+    <div class="route-line"><span class="world current"></span><i></i><span class="world"></span><div><strong>{% if campaign and campaign.systems %}{{ campaign.systems[0].name }}{% else %}Sector awaiting import{% endif %}</strong><small>{% if campaign and campaign.ships %}{{ campaign.ships[0].class_code|replace('_',' ')|title }}{% else %}Create a ship or import campaign content{% endif %}</small></div></div>
+    <div class="actions"><a href="/trade">Review market</a><a href="/sector">Plot journey</a><a href="/ship">Inspect ship</a></div>
+  </article>
+  <article class="panel">
+    <header><div><small>WATCH LIST</small><h2>Needs attention</h2></div></header>
+    <ul class="alerts">
+      <li><span>01</span><div><strong>Vessel state</strong><small>{{ 'Ready for inspection' if campaign and campaign.ships else 'No ship instantiated' }}</small></div></li>
+      <li><span>02</span><div><strong>Sector state</strong><small>{{ (campaign.systems|length|string) + ' systems loaded' if campaign else 'No sector selected' }}</small></div></li>
+      <li><span>03</span><div><strong>Library import</strong><small>No active adventure module</small></div></li>
+    </ul>
+  </article>
+  <article class="panel wide">
+    <header><div><small>RECENT HISTORY</small><h2>Mechanical record</h2></div><button class="text-button">Open chronicle</button></header>
+    <table>{% if campaign and campaign.actors %}{% for actor in campaign.actors[:3] %}<tr><td>ACTOR</td><td>{{ actor.character_name }}</td><td>{{ actor.skill_count }} trained skills</td><td class="positive">Loaded</td></tr>{% endfor %}{% else %}<tr><td>—</td><td>No campaign events to display</td><td>State is not fabricated</td><td>Empty</td></tr>{% endif %}</table>
+  </article>
+</section>
+<section class="campaign-picker panel">
+  <header><div><small>CAMPAIGN REGISTRY</small><h2>Select or create campaign</h2></div></header>
+  <form class="campaign-create" method="post" action="/campaigns">
+    <input type="hidden" name="idempotency_key" value="{{ creation_key }}">
+    <label><span>Campaign name</span><input name="name" required maxlength="120" placeholder="The Long Account"></label>
+    <label><span>Referee mode</span><select name="play_mode"><option value="ai_refereed">AI refereed</option><option value="ai_assisted">AI assisted</option><option value="player_directed">Player directed</option><option value="human_refereed">Human refereed</option></select></label>
+    <button class="primary" type="submit">Create campaign</button>
+  </form>
+  <div class="campaign-list">{% for item in campaigns[:8] %}<a href="/?campaign={{ item.public_id }}"><strong>{{ item.name }}</strong><small>{{ item.actor_count }} actors · {{ item.ship_count }} ships · {{ item.system_count }} systems</small></a>{% else %}<p>No campaigns found.</p>{% endfor %}</div>
+</section>
+{% endblock %}

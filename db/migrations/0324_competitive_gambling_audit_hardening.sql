@@ -1,0 +1,13 @@
+CREATE FUNCTION cmd_validate_competitive_gambling_participant() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE normal cmd_actor_task_receipt%ROWTYPE; cheat cmd_actor_task_receipt%ROWTYPE;
+BEGIN SELECT * INTO STRICT normal FROM cmd_actor_task_receipt WHERE command_id=NEW.normal_task_command_id;
+ IF normal.actor_id<>NEW.actor_id OR normal.check_total<>NEW.normal_total OR normal.succeeded<>NEW.normal_succeeded OR normal.skill_rule_id<>(SELECT rule_id FROM rule_rule WHERE rule_code='skill.gambling') THEN RAISE EXCEPTION 'Competitive Gambling normal check snapshot mismatch'; END IF;
+ IF NEW.cheating_declared THEN SELECT * INTO STRICT cheat FROM cmd_actor_task_receipt WHERE command_id=NEW.cheat_task_command_id; IF cheat.actor_id<>NEW.actor_id OR cheat.check_total<>NEW.cheat_total OR cheat.skill_rule_id<>normal.skill_rule_id THEN RAISE EXCEPTION 'Competitive Gambling cheat check snapshot mismatch'; END IF; END IF; RETURN NEW; END $$;
+CREATE TRIGGER cmd_competitive_gambling_participant_valid BEFORE INSERT ON cmd_competitive_gambling_participant FOR EACH ROW EXECUTE FUNCTION cmd_validate_competitive_gambling_participant();
+
+CREATE FUNCTION cmd_validate_competitive_gambling_aggregate() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE actual_count integer; actual_cheats integer; actual_uncaught integer; actual_winners integer; g camp_competitive_gambling_game%ROWTYPE;
+BEGIN SELECT count(*),count(*) FILTER(WHERE cheating_declared),count(*) FILTER(WHERE cheating_declared AND NOT caught_cheating),count(*) FILTER(WHERE won_pot) INTO actual_count,actual_cheats,actual_uncaught,actual_winners FROM cmd_competitive_gambling_participant WHERE command_id=NEW.command_id; SELECT * INTO STRICT g FROM camp_competitive_gambling_game WHERE game_id=NEW.game_id;
+ IF (actual_count,actual_cheats,actual_uncaught)<>(NEW.participant_count,NEW.cheating_count,NEW.uncaught_cheater_count) OR actual_winners<>(CASE WHEN g.game_status='resolved' THEN 1 ELSE 0 END) OR (g.game_status='tied')<>NEW.tied_at_winning_score OR (g.winner_actor_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM cmd_competitive_gambling_participant p WHERE p.command_id=NEW.command_id AND p.actor_id=g.winner_actor_id AND p.won_pot)) THEN RAISE EXCEPTION 'Competitive Gambling aggregate receipt mismatch'; END IF; RETURN NULL; END $$;
+CREATE CONSTRAINT TRIGGER cmd_competitive_gambling_aggregate_valid AFTER INSERT ON cmd_competitive_gambling_receipt DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION cmd_validate_competitive_gambling_aggregate();
+CREATE TRIGGER camp_competitive_gambling_game_immutable BEFORE UPDATE OR DELETE ON camp_competitive_gambling_game FOR EACH ROW EXECUTE FUNCTION cmd_reject_competitive_gambling_mutation();

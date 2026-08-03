@@ -1,0 +1,13 @@
+import os,unittest,uuid
+import psycopg
+from engine.steward import resolve_steward_service_command
+class R:
+ def randint(self,a,b):return 4
+@unittest.skipUnless(os.environ.get('BASE_CEPHEUS_DATABASE_URL'),'requires PostgreSQL')
+class StewardTests(unittest.TestCase):
+ def test_service_requires_journey_crew_and_high_passage_and_replays(self):
+  with psycopg.connect(os.environ['BASE_CEPHEUS_DATABASE_URL']) as c:
+   with c.transaction(force_rollback=True):
+    camp=c.execute("INSERT INTO camp_campaign(name,owner_reference) VALUES(%s,'p') RETURNING campaign_id",(str(uuid.uuid4()),)).fetchone()[0];sid,spub=c.execute("INSERT INTO actor_actor(campaign_id,name,controller_reference) VALUES(%s,'Steward','p') RETURNING actor_id,public_id",(camp,)).fetchone();pid,ppub=c.execute("INSERT INTO actor_actor(campaign_id,name,controller_reference) VALUES(%s,'Noble','n') RETURNING actor_id,public_id",(camp,)).fetchone();c.execute("INSERT INTO actor_characteristic(actor_id,characteristic_rule_id,maximum_value,current_value) SELECT %s,rule_id,7,7 FROM rule_rule WHERE rule_code='characteristic.social-standing'",(sid,));c.execute("INSERT INTO actor_skill SELECT %s,rule_id,1 FROM rule_rule WHERE rule_code='skill.steward'",(sid,));jid,jpub=c.execute("INSERT INTO journey_journey(campaign_id,journey_kind,name) VALUES(%s,'commercial','Liner') RETURNING journey_id,public_id",(camp,)).fetchone();c.execute("INSERT INTO journey_participant(journey_id,campaign_id,actor_id,participant_role) VALUES(%s,%s,%s,'crew'),(%s,%s,%s,'passenger')",(jid,camp,sid,jid,camp,pid));c.execute("INSERT INTO journey_passage(journey_id,campaign_id,actor_id,passage_class,fare_minor,fare_basis,passage_status) VALUES(%s,%s,%s,'high',0,'benefit','booked')",(jid,camp,pid))
+    result=resolve_steward_service_command(c,initiator_reference='p',idempotency_key='meal',journey_public_id=str(jpub),steward_actor_public_id=str(spub),passenger_actor_public_id=str(ppub),service_code='meal-preparation-presentation',service_reference='formal dinner',characteristic_rule_code='characteristic.social-standing',difficulty_rule_code='difficulty.average',random_source=R());self.assertTrue(result.succeeded);self.assertEqual(result.check_total,9)
+    replay=resolve_steward_service_command(c,initiator_reference='p',idempotency_key='meal',journey_public_id=str(jpub),steward_actor_public_id=str(spub),passenger_actor_public_id=str(ppub),service_code='valet',service_reference='changed',characteristic_rule_code='characteristic.social-standing',difficulty_rule_code='difficulty.average',random_source=R());self.assertTrue(replay.replayed);self.assertEqual(replay.service_code,'meal-preparation-presentation')

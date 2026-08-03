@@ -1,0 +1,5 @@
+[book]
+authors = ["Jason 'Flynn' Kemp", "Jeff Hopper", "Richard Hazlewood", "Omer G. Joel", "Michael Johnson", "Donavan Lambertus", "Ian Stead", "Steve Simenic"]
+language = "en"
+src = "src"
+title = "Cepheus Engine SRD"

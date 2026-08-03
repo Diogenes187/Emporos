@@ -1,0 +1,2 @@
+DROP TRIGGER env_radiation_sickness_check_final ON env_radiation_sickness_check_receipt;
+CREATE TRIGGER env_radiation_sickness_check_final BEFORE INSERT ON env_radiation_sickness_check_receipt FOR EACH ROW EXECUTE FUNCTION env_finalize_radiation_sickness_check();

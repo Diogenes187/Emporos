@@ -1,0 +1,4 @@
+DROP TRIGGER senc_pursuit_full_tie_requires_reroll ON senc_pursuit_action_receipt;
+CREATE TRIGGER senc_pursuit_00_full_tie_requires_reroll
+BEFORE INSERT ON senc_pursuit_action_receipt
+FOR EACH ROW EXECUTE FUNCTION senc_reject_pursuit_full_tie();

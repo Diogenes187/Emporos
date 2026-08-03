@@ -1,0 +1,18 @@
+"""Immutable, task-backed Recon observations and concealment attempts."""
+from dataclasses import dataclass
+import psycopg
+from engine.tasks import resolve_actor_task_command
+@dataclass(frozen=True)
+class ReconResult:
+ command_public_id:str;actor_public_id:str;operation_code:str;subject_reference:str;location_public_id:str|None;target_actor_public_id:str|None;check_total:int;effect:int;succeeded:bool;replayed:bool
+def resolve_recon_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,actor_public_id:str,operation_code:str,subject_reference:str,characteristic_rule_code:str,difficulty_rule_code:str,location_public_id:str|None=None,target_actor_public_id:str|None=None,random_source=None)->ReconResult:
+ if not subject_reference.strip():raise ValueError('Recon subject is required')
+ with c.transaction():
+  old=c.execute("SELECT command_id,public_id,command_type,command_status FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s FOR UPDATE",(initiator_reference,idempotency_key)).fetchone()
+  if old:
+   if old[2:]!=('resolve_recon','completed'):raise RuntimeError('Idempotency key belongs to another command')
+   r=c.execute("SELECT a.public_id,x.operation_code,x.subject_reference,l.public_id,t.public_id,x.check_total,x.effect,x.succeeded FROM cmd_recon_receipt x JOIN actor_actor a ON a.actor_id=x.actor_id LEFT JOIN loc_location l ON l.location_id=x.location_id LEFT JOIN actor_actor t ON t.actor_id=x.target_actor_id WHERE x.command_id=%s",(old[0],)).fetchone();return ReconResult(str(old[1]),str(r[0]),r[1],r[2],None if r[3] is None else str(r[3]),None if r[4] is None else str(r[4]),r[5],r[6],r[7],True)
+  state=c.execute("SELECT a.actor_id,a.campaign_id,m.rule_id,o.operation_group,l.location_id,t.actor_id FROM actor_actor a JOIN rule_recon_mechanic m ON true JOIN rule_recon_operation o ON o.rule_id=m.rule_id AND o.operation_code=%s LEFT JOIN loc_location l ON l.public_id=%s AND l.campaign_id=a.campaign_id LEFT JOIN actor_actor t ON t.public_id=%s AND t.campaign_id=a.campaign_id WHERE a.public_id=%s AND a.controller_reference=%s FOR UPDATE OF a",(operation_code,location_public_id,target_actor_public_id,actor_public_id,initiator_reference)).fetchone()
+  if not state or (location_public_id is not None and state[4] is None) or (target_actor_public_id is not None and state[5] is None):raise ValueError('Recon context is not legal for this campaign')
+  if state[5]==state[0]:raise ValueError('Recon target actor must differ from observer')
+  task=resolve_actor_task_command(c,initiator_reference=initiator_reference,idempotency_key=f'recon:{idempotency_key}',actor_public_id=actor_public_id,characteristic_rule_code=characteristic_rule_code,skill_rule_code='skill.recon',difficulty_rule_code=difficulty_rule_code,random_source=random_source);task_id=c.execute("SELECT command_id FROM cmd_command WHERE public_id=%s",(task.command_public_id,)).fetchone()[0];cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('resolve_recon',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone();c.execute("INSERT INTO cmd_recon_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(cid,state[1],state[0],state[2],operation_code,subject_reference.strip(),state[4],state[5],task_id,task.total,task.effect,task.succeeded));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,));return ReconResult(str(pub),actor_public_id,operation_code,subject_reference.strip(),location_public_id,target_actor_public_id,task.total,task.effect,task.succeeded,False)

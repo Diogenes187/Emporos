@@ -1,0 +1,2952 @@
+{
+  "generated_at": "2026-07-27T16:28:41.992956+00:00",
+  "repository": "C:\\Users\\Raymond\\Documents\\baseCepheus\\sources\\cepheus-srd",
+  "branch": "mdbook",
+  "commit": "0839018902355215fb8148f0b4ce1b1f8e011080",
+  "tag": "v9.1",
+  "pages": [
+    {
+      "name": "Introduction",
+      "url": "https://cepheus-srd.opengamingnetwork.com/",
+      "sources": [
+        "src/introduction.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "e03b21773e0f7569fb1bba25a52f44e201dbc40e586f6e40f12fde06909abcc4",
+      "website_sha256": "f22f52d52c149d49846659329f97cc9c9805628cda78b3bb73ecf42bcd829190",
+      "github_tokens": 4661,
+      "website_tokens": 4925,
+      "matched_tokens": 4657,
+      "similarity": 0.971625,
+      "github_coverage": 0.999142,
+      "website_coverage": 0.945584,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home subpages adventures character creation environments and hazards equipment legal off world travel personal combat planetary wilderness encounters psionics refereeing the game skills social encounters space combat starship encounters worlds welcome to the cepheus engine",
+          "github_token_count": 0,
+          "website_token_count": 55
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "2",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "3",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table common cepheus engine themes",
+          "github_token_count": 0,
+          "website_token_count": 5
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 1,
+          "delete": 3,
+          "insert": 6
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "further information cepheus engine and samardan press are trademarks of jason flynn kemp credits srd proofreading jeff hopper vehicle design system proofreading playtesting richard hazlewood omer g joel michael johnson donavan lambertus ian stead conversion to html format steve simenic designation of open game content all of the text in this document is designated as open gaming content except for the titles of products published by samardan press and the trademarks cepheus engine and samardan press designation of product identity any title of a product published by samardan press is designated as product identity please note this product is derived",
+            "github_token_count": 0,
+            "website_token_count": 196
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home subpages adventures character creation environments and hazards equipment legal off world travel personal combat planetary wilderness encounters psionics refereeing the game skills social encounters space combat starship encounters worlds welcome to the cepheus engine system reference document which outlines the core rules used by a classic era science fiction 2d6 based open gaming system",
+            "github_token_count": 0,
+            "website_token_count": 55
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table common cepheus engine themes",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table degrees of success",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table pseudo hexadecimal notation",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table task difficulties",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "delete",
+            "github": "1",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "2",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "3",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "replace",
+            "github": "travelling",
+            "website": "traveling",
+            "github_token_count": 1,
+            "website_token_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "Adventures",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-adventures/",
+      "sources": [
+        "src/book3/adventures.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "0607d32ea04acd520f3a6593829f5b74dd69f872ca185ceb78028c1b8b71dc1d",
+      "website_sha256": "78c2d449ffdad0336f2b1e76d502a69d3a8b7d1410becb445e35f9e65195f0d3",
+      "github_tokens": 2252,
+      "website_tokens": 2258,
+      "matched_tokens": 2252,
+      "similarity": 0.99867,
+      "github_coverage": 1.0,
+      "website_coverage": 0.997343,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table example weekly event",
+          "github_token_count": 0,
+          "website_token_count": 4
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 0,
+          "insert": 2
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table example weekly event",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "Character Creation",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-character-creation/",
+      "sources": [
+        "src/book1/character-creation.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "a5122ba9b3a29f66342affb9ea055b951df1f7105a8b7510c739b0dd3cd8fdf1",
+      "website_sha256": "0a1639c5f820a98725df79948999dbdf8b7efaa588e7e752ce152cab500088f7",
+      "github_tokens": 10053,
+      "website_tokens": 8407,
+      "matched_tokens": 8357,
+      "similarity": 0.905417,
+      "github_coverage": 0.831294,
+      "website_coverage": 0.994053,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "replace",
+          "github": "chapter",
+          "website": "section",
+          "github_token_count": 1,
+          "website_token_count": 1
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "2",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 3,
+          "delete": 39,
+          "insert": 10
+        },
+        "largest_differences": [
+          {
+            "kind": "delete",
+            "github": "br career colonist diplomat drifter entertainer hunter marine qualifications end 5 soc 6 dex 5 soc 8 end 5 int 6 survival end 6 edu 5 end 5 int 4 str 8 end 6 commission int 7 int 7 edu 6 advancement edu 6 soc 7 soc 7 re enlistment 5 5 5 6 6 6 ranks and skills colonist diplomat drifter entertainer hunter marine 0 citizen survival -1 attach liaison -1 carousing -1 survival -1 trooper zero g -1 1 district leader third secretary lieutenant 2 district delegate second secretary captain 3 council advisor liaision -1 first secretary admin",
+            "website": "",
+            "github_token_count": 1653,
+            "website_token_count": 0
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table titles of nobility by social standing",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table characteristic modifier by score range",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table homeworld skills by planetary description",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "replace",
+            "github": "br",
+            "website": "table homeworld skills by trade code",
+            "github_token_count": 1,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table retirement pay by terms served",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "replace",
+            "github": "ayala 786a9a age",
+            "website": "ayala786a9aage",
+            "github_token_count": 3,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table the draft",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table survival mishaps",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table injury table",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Environments and Hazards",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-environments-and-hazards/",
+      "sources": [
+        "src/book3/environments-and-hazards.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "419a9524274a2a2668febb62f668e70d049fbc300250db0da6529de507181184",
+      "website_sha256": "6283e04899fa409bf459671e02dfc3fae7cb4b0cd82af25975190361b03cfca2",
+      "github_tokens": 1954,
+      "website_tokens": 1967,
+      "matched_tokens": 1954,
+      "similarity": 0.996685,
+      "github_coverage": 1.0,
+      "website_coverage": 0.993391,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table sample diseases",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table extreme temperatures",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table sample poisons",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table",
+          "github_token_count": 0,
+          "website_token_count": 1
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 0,
+          "insert": 6
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table sample diseases",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table extreme temperatures",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table sample poisons",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "Equipment",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/",
+      "sources": [
+        "src/book1/equipment.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "9312015429fbd94bd4ac275121a801efc9abc75238ffd9178653d2ac3ab53e54",
+      "website_sha256": "61da4bf5e55e33b1ac4a57c65927bf83206da88e399599b35ca6a2052826f8ac",
+      "github_tokens": 11520,
+      "website_tokens": 11579,
+      "matched_tokens": 11345,
+      "similarity": 0.982294,
+      "github_coverage": 0.984809,
+      "website_coverage": 0.979791,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table technology level overview",
+          "github_token_count": 0,
+          "website_token_count": 4
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table common personal armor",
+          "github_token_count": 0,
+          "website_token_count": 4
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table communications equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table computers by tl",
+          "github_token_count": 0,
+          "website_token_count": 4
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 1,
+          "delete": 6,
+          "insert": 21
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "the common ranged ammunition table describes the cost of ammunitions and power packs for certain ranged weapons each column is described as follows cost the cost of a full magazine of standard ammunition or power pack for a weapon tl the minimum tech level required to manufacture such an item wgt the weight of a full magazine or power pack for a weapon rounds the number of rounds the weapon may fire before it must be reloaded or recharged table common personal ranged weapons",
+            "github_token_count": 0,
+            "website_token_count": 84
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table common heavy weapons weapon tl cost wgt rof range damage recoil ll grenade launcher 7 400 6 1 ranged shotgun by grenade yes 3 rocket launcher 7 2 000 6 1 ranged rocket 4d6 no 3 ram grenade launcher 8 800 6 1 3 ranged assault weapon by grenade yes 3 pgmp 12 20 000 10 1 4 ranged rifle 10d6 yes 2 fgmp 14 100 000 12 1 4 ranged rifle 16d6 yes 2 table common heavy weapon ammunition",
+            "github_token_count": 0,
+            "website_token_count": 81
+          },
+          {
+            "kind": "delete",
+            "github": "the common ranged ammunition table describes the cost of ammunitions and power packs for certain ranged weapons each column is described as follows cost the cost of a full magazine of standard ammunition or power pack for a weapon tl the minimum tech level required to manufacture such an item wgt the weight of a full magazine or power pack for a weapon rounds the number of rounds the weapon may fire before it must be reloaded or recharged",
+            "website": "",
+            "github_token_count": 79,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "weapon tl cost wgt rof range damage recoil ll grenade launcher 7 400 6 1 ranged shotgun by grenade yes 3 rocket launcher 7 2 000 6 1 ranged rocket 4d6 no 3 ram grenade launcher 8 800 6 1 3 ranged assault weapon by grenade yes 3 pgmp 12 20 000 10 1 4 ranged rifle 10d6 yes 2 fgmp 14 100 000 12 1 4 ranged rifle 16d6 yes 2 common heavy weapon ammunition",
+            "website": "",
+            "github_token_count": 76,
+            "website_token_count": 0
+          },
+          {
+            "kind": "replace",
+            "github": "heavy weapons common",
+            "website": "table frag grenade damage by distance distance damage 3 meters 5d6 6 meters 3d6 9 meters 1d6",
+            "github_token_count": 3,
+            "website_token_count": 17
+          },
+          {
+            "kind": "delete",
+            "github": "distance damage 3 meters 5d6 6 meters 3d6 9 meters 1d6",
+            "website": "",
+            "github_token_count": 11,
+            "website_token_count": 0
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table technology level overview",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table common personal armor",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table computers by tl",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "delete",
+            "github": "common personal ranged weapons",
+            "website": "",
+            "github_token_count": 4,
+            "website_token_count": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "Off-World Travel",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-off-world-travel/",
+      "sources": [
+        "src/book2/off-world-travel.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "8bc365323a009873d64bde259ed372936fe0944c04a404fd64d571765d6d56bf",
+      "website_sha256": "9c02e68f3e5ca9ccab47ce5fd206a107d90d4fe78e6d55f87d177b7cb2205475",
+      "github_tokens": 6395,
+      "website_tokens": 6407,
+      "matched_tokens": 6367,
+      "similarity": 0.994688,
+      "github_coverage": 0.995622,
+      "website_coverage": 0.993757,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "delete",
+          "github": "center math xmlns http www w3 org 1998 math mathml mi",
+          "website": "",
+          "github_token_count": 11,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "mi mo mo mn",
+          "website": "",
+          "github_token_count": 4,
+          "website_token_count": 0
+        },
+        {
+          "kind": "replace",
+          "github": "mn msqrt mfrac mi d mi mi a mi mfrac msqrt math center",
+          "website": "da 2",
+          "github_token_count": 13,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table common travel times by acceleration",
+          "github_token_count": 0,
+          "website_token_count": 6
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 1,
+          "delete": 2,
+          "insert": 10
+        },
+        "largest_differences": [
+          {
+            "kind": "replace",
+            "github": "mn msqrt mfrac mi d mi mi a mi mfrac msqrt math center",
+            "website": "da 2",
+            "github_token_count": 13,
+            "website_token_count": 2
+          },
+          {
+            "kind": "delete",
+            "github": "center math xmlns http www w3 org 1998 math mathml mi",
+            "website": "",
+            "github_token_count": 11,
+            "website_token_count": 0
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table common travel times by acceleration",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table available freight and passengers",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table potential law enforcement encounters",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table sentencing modifiers by crime",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "delete",
+            "github": "mi mo mo mn",
+            "website": "",
+            "github_token_count": 4,
+            "website_token_count": 0
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table restricted access security",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table crew salaries",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table system degradation",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Personal Combat",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-personal-combat/",
+      "sources": [
+        "src/book1/personal-combat.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "04d29187aa71dc07c9c029819d66f81a81fd8a1d6bf8a6a4cfd5873846b9619a",
+      "website_sha256": "19c748e37db3bb0702bb8ea7c7522174a135a1544c424dc2b0b9b844038b09dc",
+      "github_tokens": 6787,
+      "website_tokens": 6816,
+      "matched_tokens": 6782,
+      "similarity": 0.997133,
+      "github_coverage": 0.999263,
+      "website_coverage": 0.995012,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "2",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "3",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "4",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 5,
+          "insert": 9
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table common modifiers to attacks in personal combat",
+            "github_token_count": 0,
+            "website_token_count": 8
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table personal combat range bands",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table personal combat range bands",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table burst fire effects",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table cover modifiers",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table damage results",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table vehicle damage",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "delete",
+            "github": "1",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "2",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "Planetary Wilderness Encounters",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-planetary-wilderness-encounters/",
+      "sources": [
+        "src/book3/planetary-wilderness-encounters.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "3b0ad9374b72357ddbf246973dc6104e7534c307ef2cc8df22a9dcb5842ee279",
+      "website_sha256": "fb0f3c57be154b604cbebff6c8a9d5c6b91aba8ce9ec417055d9d0cb07754805",
+      "github_tokens": 3025,
+      "website_tokens": 3051,
+      "matched_tokens": 3025,
+      "similarity": 0.995721,
+      "github_coverage": 1.0,
+      "website_coverage": 0.991478,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table terrain dm chart",
+          "github_token_count": 0,
+          "website_token_count": 4
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table subtype by animal type",
+          "github_token_count": 0,
+          "website_token_count": 5
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table",
+          "github_token_count": 0,
+          "website_token_count": 1
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table",
+          "github_token_count": 0,
+          "website_token_count": 1
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 0,
+          "insert": 11
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table subtype by animal type",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table animal reactions by subtype",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table terrain dm chart",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table animal weapon ranges",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "Psionics",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-psionics/",
+      "sources": [
+        "src/book1/psionics.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "d20abc43e71c834d758ad0335a03d2146296de532fbe23ce99139422712ea4da",
+      "website_sha256": "c285725087a25dd28fae7d0295f3111e43630b3c8cae116595cc6b64ebc4d817",
+      "github_tokens": 3911,
+      "website_tokens": 3938,
+      "matched_tokens": 3882,
+      "similarity": 0.989171,
+      "github_coverage": 0.992585,
+      "website_coverage": 0.98578,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table learning dms by talent",
+          "github_token_count": 0,
+          "website_token_count": 5
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table psionic range costs",
+          "github_token_count": 0,
+          "website_token_count": 4
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table awareness",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table clairvoyance",
+          "github_token_count": 0,
+          "website_token_count": 2
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 1,
+          "delete": 1,
+          "insert": 9
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table psi drug effects and cost drug tl psionic strength restored psionic strength boosted cost cr standard 8 3 2 1 000 double 9 6 4 4 000 special 10 9 6 10 000",
+            "github_token_count": 0,
+            "website_token_count": 34
+          },
+          {
+            "kind": "delete",
+            "github": "drug tl psionic strength restored psionic strength boosted cost cr standard 8 3 2 1 000 double 9 6 4 4 000 special 10 9 6 10 000",
+            "website": "",
+            "github_token_count": 28,
+            "website_token_count": 0
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table learning dms by talent",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table psionic range costs",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table awareness",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table clairvoyance",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table telekinesis",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table telepathy",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table teleportation",
+            "github_token_count": 0,
+            "website_token_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "Refereeing the Game",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-refereeing-the-game/",
+      "sources": [
+        "src/book3/refereeing-the-game.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "defd92fbdfd50839bf8f58701f91c9362f60fe586f20ca57c2df337bbd3d8326",
+      "website_sha256": "4ac34326ec7e3812493f2ad6a534a479d3155542b2beb810c252d74c295ef750",
+      "github_tokens": 3254,
+      "website_tokens": 3256,
+      "matched_tokens": 3252,
+      "similarity": 0.999078,
+      "github_coverage": 0.999385,
+      "website_coverage": 0.998771,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "replace",
+          "github": "chapter",
+          "website": "section",
+          "github_token_count": 1,
+          "website_token_count": 1
+        },
+        {
+          "kind": "replace",
+          "github": "revenue",
+          "website": "revenues",
+          "github_token_count": 1,
+          "website_token_count": 1
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 2,
+          "delete": 0,
+          "insert": 1
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "chapter",
+            "website": "section",
+            "github_token_count": 1,
+            "website_token_count": 1
+          },
+          {
+            "kind": "replace",
+            "github": "revenue",
+            "website": "revenues",
+            "github_token_count": 1,
+            "website_token_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "Skills",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-skills/",
+      "sources": [
+        "src/book1/skills.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "b0b4d9930c2c8ae0c55e4183b47faa34a27c7f19798609a87503e849b85e04ff",
+      "website_sha256": "e8930d15a52fedf0b143bc1b1c803d861dbc3316a6bc5cfdec8e64dc55f9cb80",
+      "github_tokens": 4571,
+      "website_tokens": 4594,
+      "matched_tokens": 4551,
+      "similarity": 0.993126,
+      "github_coverage": 0.995625,
+      "website_coverage": 0.99064,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table time frames",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table base difficulty by law level",
+          "github_token_count": 0,
+          "website_token_count": 6
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table available skills",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "replace",
+          "github": "airship",
+          "website": "grav vehicle",
+          "github_token_count": 1,
+          "website_token_count": 2
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 11,
+          "delete": 2,
+          "insert": 6
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table base difficulty by law level",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table gambling by odds of winning",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table bribery checks by offense",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table time frames",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table available skills",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "replace",
+            "github": "tracked vehicle",
+            "website": "watercraft cascade skill",
+            "github_token_count": 2,
+            "website_token_count": 3
+          },
+          {
+            "kind": "replace",
+            "github": "watercraft cascade skill",
+            "website": "motorboats",
+            "github_token_count": 3,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "airship",
+            "website": "grav vehicle",
+            "github_token_count": 1,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "grav vehicle",
+            "website": "rotor aircraft",
+            "github_token_count": 2,
+            "website_token_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "Social Encounters",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-social-encounters/",
+      "sources": [
+        "src/book3/social-encounters.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "273fef61b6bff6f5697a63d4eab59349e85107a7d4fd48da38dea4072dec81de",
+      "website_sha256": "5a1ac2902cc5abef2766baaef7330b268bb1a1d547ccf6e2377d2aaa69f034c7",
+      "github_tokens": 2257,
+      "website_tokens": 2270,
+      "matched_tokens": 2251,
+      "similarity": 0.994478,
+      "github_coverage": 0.997342,
+      "website_coverage": 0.99163,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table encounter types overview",
+          "github_token_count": 0,
+          "website_token_count": 4
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table random encounters",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table patron encounters",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 6,
+          "insert": 6
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table encounter types overview",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table random rumor content",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table random encounters",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table patron encounters",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table attitude descriptions",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "delete",
+            "github": "1",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "2",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "3",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "4",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "Space Combat",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-space-combat/",
+      "sources": [
+        "src/book2/space-combat.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "6a9c301e89fffd3210ed42d786f7e446998323feba54c86617b09527497e6da6",
+      "website_sha256": "fe749015527a02df2f4447d733c7cd3cb8556b4006a99627830fc5236f25b3bc",
+      "github_tokens": 5460,
+      "website_tokens": 5515,
+      "matched_tokens": 5449,
+      "similarity": 0.992984,
+      "github_coverage": 0.997985,
+      "website_coverage": 0.988033,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "2",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "3",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "4",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 2,
+          "delete": 9,
+          "insert": 16
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table space combat attack difficulties by weapon type",
+            "github_token_count": 0,
+            "website_token_count": 8
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table missile to hit by skill check effect",
+            "github_token_count": 0,
+            "website_token_count": 8
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table space combat range bands",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table space combat action summary",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table damage repair results",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table reactions by initiative",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table abstract boarding resolution",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table missile launch range",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table space combat damage",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table crew positions",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Starship Encounters",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-starship-encounters/",
+      "sources": [
+        "src/book3/starship-encounters.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "d88a8c2a7b01d5d25389739ef9c826a249e32c56a01317df2ef35fecf0ed050d",
+      "website_sha256": "e07ba46196e02b190a573229c603090b9d590223dbfe8a7547b1f077cc8557f2",
+      "github_tokens": 984,
+      "website_tokens": 996,
+      "matched_tokens": 972,
+      "similarity": 0.981818,
+      "github_coverage": 0.987805,
+      "website_coverage": 0.975904,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table",
+          "github_token_count": 0,
+          "website_token_count": 1
+        },
+        {
+          "kind": "replace",
+          "github": "encounter table",
+          "website": "encounters",
+          "github_token_count": 2,
+          "website_token_count": 1
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table",
+          "github_token_count": 0,
+          "website_token_count": 1
+        },
+        {
+          "kind": "replace",
+          "github": "table",
+          "website": "type",
+          "github_token_count": 1,
+          "website_token_count": 1
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 11,
+          "delete": 0,
+          "insert": 12
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "encounter table",
+            "website": "encounters",
+            "github_token_count": 2,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "replace",
+            "github": "table",
+            "website": "type",
+            "github_token_count": 1,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "replace",
+            "github": "table",
+            "website": "type",
+            "github_token_count": 1,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          },
+          {
+            "kind": "replace",
+            "github": "table",
+            "website": "type",
+            "github_token_count": 1,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table",
+            "github_token_count": 0,
+            "website_token_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "Worlds",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-worlds/",
+      "sources": [
+        "src/book3/worlds.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "e4cad29d7b99eadd5e2d143fd1a32fe6b6c0647ac7ffc86f20bf54198e486570",
+      "website_sha256": "9a2d92ce18cf0ccf0a73cd635318c7150b4858ea6c9c2f83da8e3dc561603b99",
+      "github_tokens": 3467,
+      "website_tokens": 3516,
+      "matched_tokens": 3463,
+      "similarity": 0.991837,
+      "github_coverage": 0.998846,
+      "website_coverage": 0.984926,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table world size",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table atmosphere",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table hydrographic dms by size and atmosphere",
+          "github_token_count": 0,
+          "website_token_count": 7
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table hydrographics",
+          "github_token_count": 0,
+          "website_token_count": 2
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 1,
+          "delete": 0,
+          "insert": 16
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table hydrographic dms by size and atmosphere",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table technology level dms by uwp values",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table uwp values for trade codes",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "replace",
+            "github": "4x10 sup 8 sup",
+            "website": "4x108",
+            "github_token_count": 4,
+            "website_token_count": 1
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table technology level minimums",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table trade route worlds",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table world size",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table primary starport",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table world government",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table law level",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Legal",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-legal/",
+      "sources": [
+        "src/legal.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "3372fec11d28eaac1409924139f74578293cd84ca8dfee9c4f6e6981a37a4ffc",
+      "website_sha256": "8ea316af3611906bee4bb1e68ea84ab256f6b2b2de1789c93a37c39fa29019fa",
+      "github_tokens": 1784,
+      "website_tokens": 1778,
+      "matched_tokens": 1776,
+      "similarity": 0.997193,
+      "github_coverage": 0.995516,
+      "website_coverage": 0.998875,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home",
+          "github_token_count": 0,
+          "website_token_count": 2
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "2",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "3",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "4",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 8,
+          "insert": 1
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home",
+            "github_token_count": 0,
+            "website_token_count": 2
+          },
+          {
+            "kind": "delete",
+            "github": "1",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "2",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "3",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "4",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "5",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "6",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "7",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "8",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "Common Aircraft",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-common-aircraft/",
+      "sources": [
+        "src/vds/common-aircraft.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "0dc437d143debc7ae2845ca5ff99cf84ded37049be30de9a60ca6529e5f84c0c",
+      "website_sha256": "e971cf75bd666cfc4f3038b15bcf458c4a64f0372e261c557a374a1b5455fc11",
+      "github_tokens": 751,
+      "website_tokens": 771,
+      "matched_tokens": 751,
+      "similarity": 0.986859,
+      "github_coverage": 1.0,
+      "website_coverage": 0.97406,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl5 biplane design specifications",
+          "github_token_count": 0,
+          "website_token_count": 5
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl7 helicopter design specifications",
+          "github_token_count": 0,
+          "website_token_count": 5
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl7 twin engine jet design specifications",
+          "github_token_count": 0,
+          "website_token_count": 7
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 0,
+          "insert": 4
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl7 twin engine jet design specifications",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl5 biplane design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl7 helicopter design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home equipment",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Common Grav Vehicles",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-common-grav-vehicles/",
+      "sources": [
+        "src/vds/common-grav-vehicles.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "f7531ee7400767be7cf54e4fb40fd33a01a6a4a2ac660476a37f5a4db6e23ff8",
+      "website_sha256": "e537f07cb0c4c897fc937aa94fd3f431f03cbd24c581c445ef4a26443b3d1dd4",
+      "github_tokens": 1819,
+      "website_tokens": 1857,
+      "matched_tokens": 1819,
+      "similarity": 0.989663,
+      "github_coverage": 1.0,
+      "website_coverage": 0.979537,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl9 air raft design specifications",
+          "github_token_count": 0,
+          "website_token_count": 6
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl15 g carrier design specifications",
+          "github_token_count": 0,
+          "website_token_count": 6
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl12 grav bike design specifications",
+          "github_token_count": 0,
+          "website_token_count": 6
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl11 grav floater design specifications",
+          "github_token_count": 0,
+          "website_token_count": 6
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 0,
+          "insert": 7
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl9 air raft design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl15 g carrier design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl12 grav bike design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl11 grav floater design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl9 grav tank design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl9 speeder design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home equipment",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Common Ground Vehicles",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-common-ground-vehicles/",
+      "sources": [
+        "src/vds/common-ground-vehicles.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "c3c913c18fec49549a7c6e4c525156c93ce20af62791a9b95c01f449c9560fa3",
+      "website_sha256": "5b55a9ab3c35b62ffa8bec1c561f794a57ffc9cc77021c53361b0b64cd09ceba",
+      "github_tokens": 1394,
+      "website_tokens": 1425,
+      "matched_tokens": 1394,
+      "similarity": 0.989003,
+      "github_coverage": 1.0,
+      "website_coverage": 0.978246,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl12 afv tracked design specifications",
+          "github_token_count": 0,
+          "website_token_count": 6
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl12 atv tracked design specifications",
+          "github_token_count": 0,
+          "website_token_count": 6
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl5 ground car design specifications",
+          "github_token_count": 0,
+          "website_token_count": 6
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl3 stagecoach design specifications",
+          "github_token_count": 0,
+          "website_token_count": 5
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 0,
+          "insert": 6
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl12 afv tracked design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl12 atv tracked design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl5 ground car design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl3 stagecoach design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl5 van design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home equipment",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Common Vessels",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-common-vessels/",
+      "sources": [
+        "src/book2/common-vessels.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "857e2726c60dade850db8671ae276c606fdcb36d14e059eee8979e4055317518",
+      "website_sha256": "d3851471c30e7f73ca9db1d5a80dc55c6bd399bcf1726d9e3f3e83a295246d26",
+      "github_tokens": 5639,
+      "website_tokens": 5652,
+      "matched_tokens": 5633,
+      "similarity": 0.997786,
+      "github_coverage": 0.998936,
+      "website_coverage": 0.996638,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "replace",
+          "github": "tl9",
+          "website": "tl 9",
+          "github_token_count": 1,
+          "website_token_count": 2
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table cutter module options",
+          "github_token_count": 0,
+          "website_token_count": 4
+        },
+        {
+          "kind": "replace",
+          "github": "tl9",
+          "website": "tl 9",
+          "github_token_count": 1,
+          "website_token_count": 2
+        },
+        {
+          "kind": "replace",
+          "github": "tl9",
+          "website": "tl 9",
+          "github_token_count": 1,
+          "website_token_count": 2
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 6,
+          "delete": 0,
+          "insert": 2
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table cutter module options",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home equipment",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "replace",
+            "github": "tl9",
+            "website": "tl 9",
+            "github_token_count": 1,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "tl9",
+            "website": "tl 9",
+            "github_token_count": 1,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "tl9",
+            "website": "tl 9",
+            "github_token_count": 1,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "tl9",
+            "website": "tl 9",
+            "github_token_count": 1,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "tl9",
+            "website": "tl 9",
+            "github_token_count": 1,
+            "website_token_count": 2
+          },
+          {
+            "kind": "replace",
+            "github": "tl9",
+            "website": "tl 9",
+            "github_token_count": 1,
+            "website_token_count": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "Common Watercraft",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-common-watercraft/",
+      "sources": [
+        "src/vds/common-watercraft.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "d062a0b63c18e6c0e0bffc3af286fc49bb76d9eb8b57de94ae36ec1a59d1f8ec",
+      "website_sha256": "b8aac0ac102d35e439d61345c4e454ead0c3fcbb22f2edf4827ce86994f159a6",
+      "github_tokens": 1690,
+      "website_tokens": 1719,
+      "matched_tokens": 1690,
+      "similarity": 0.991493,
+      "github_coverage": 1.0,
+      "website_coverage": 0.98313,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl9 destroyer design specifications",
+          "github_token_count": 0,
+          "website_token_count": 5
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl7 hovercraft design specifications",
+          "github_token_count": 0,
+          "website_token_count": 5
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl5 motor boat design specifications",
+          "github_token_count": 0,
+          "website_token_count": 6
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl4 steamship design specifications",
+          "github_token_count": 0,
+          "website_token_count": 5
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 0,
+          "insert": 6
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl5 motor boat design specifications",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl9 destroyer design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl7 hovercraft design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl4 steamship design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl6 submersible design specifications",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home equipment",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ship Design and Construction",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-ship-design-and-construction/",
+      "sources": [
+        "src/book2/ship-design-and-construction.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "70f746f01823628d2387dd959b3302236fa855326ca44c2a7da29d143d7bcb18",
+      "website_sha256": "22fc89169addcade0befef2e78cbfb9ea4cbef5150ad7305adc4ac5fc6bf6b2b",
+      "github_tokens": 7153,
+      "website_tokens": 7235,
+      "matched_tokens": 7124,
+      "similarity": 0.99027,
+      "github_coverage": 0.995946,
+      "website_coverage": 0.984658,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "2",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "2",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 24,
+          "insert": 29
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table hangar cost and tonnage for vehicles and drones",
+            "github_token_count": 0,
+            "website_token_count": 9
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table maximum small craft armor by type",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table small craft power plant fuel requirements",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table small craft cockpits and control cabins",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table maximum energy weapons by power plant",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "j drive m drive p plant",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table ship hull by displacement",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table ship armor by type",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table turret displacement and cost",
+            "github_token_count": 0,
+            "website_token_count": 5
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table ship hull by displacement",
+            "github_token_count": 0,
+            "website_token_count": 5
+          }
+        ]
+      }
+    },
+    {
+      "name": "Trade and Commerce",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-trade-and-commerce/",
+      "sources": [
+        "src/book2/trade-and-commerce.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "6cb57e103486f95c79c7f32218f895bae289f9bc16726da4cfc821308fbaf959",
+      "website_sha256": "6efcde6a9a9815f2692dce7abc7b6010135efb2d82c9609577e47d461985a157",
+      "github_tokens": 1481,
+      "website_tokens": 1487,
+      "matched_tokens": 1474,
+      "similarity": 0.993261,
+      "github_coverage": 0.995273,
+      "website_coverage": 0.991258,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "replace",
+          "github": "revenue",
+          "website": "revenues",
+          "github_token_count": 1,
+          "website_token_count": 1
+        },
+        {
+          "kind": "delete",
+          "github": "1",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "2",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "delete",
+          "github": "3",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 1,
+          "delete": 6,
+          "insert": 5
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table modified price table",
+            "github_token_count": 0,
+            "website_token_count": 4
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home equipment",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table local brokers",
+            "github_token_count": 0,
+            "website_token_count": 3
+          },
+          {
+            "kind": "replace",
+            "github": "revenue",
+            "website": "revenues",
+            "github_token_count": 1,
+            "website_token_count": 1
+          },
+          {
+            "kind": "delete",
+            "github": "1",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "2",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "3",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "4",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "5",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          },
+          {
+            "kind": "delete",
+            "github": "6",
+            "website": "",
+            "github_token_count": 1,
+            "website_token_count": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "Uncommon Vehicles",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-uncommon-vehicles/",
+      "sources": [
+        "src/vds/uncommon-vehicles.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "186e50a0550ba8d97d14b437a0edf93bf6220c22853f6cf0fd7acb43ee0d4007",
+      "website_sha256": "d1ae15c6eb9420264487ae3a5d966e246bca6a7bee01e269c395b8cdf18fe639",
+      "github_tokens": 313,
+      "website_tokens": 323,
+      "matched_tokens": 313,
+      "similarity": 0.984277,
+      "github_coverage": 1.0,
+      "website_coverage": 0.96904,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table tl8 tunnel boring machine design specifications",
+          "github_token_count": 0,
+          "website_token_count": 7
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 0,
+          "insert": 2
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table tl8 tunnel boring machine design specifications",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "home home equipment",
+            "github_token_count": 0,
+            "website_token_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vehicle Design System",
+      "url": "https://cepheus-srd.opengamingnetwork.com/cepheus-engine-srd/cepheus-engine-equipment/cepheus-engine-introduction-2/",
+      "sources": [
+        "src/vds/introduction.md",
+        "src/vds/vehicle-design.md"
+      ],
+      "missing_sources": [],
+      "http_status": 200,
+      "github_sha256": "63c70e7b626c6d65d00fbcfa6b0414540ae5588bb6f27dfe37d3d504937d294e",
+      "website_sha256": "3c3cc057cf10a8790b160193c4e411eab1ac8d127b334d7bcfb2a95cc2ab3774",
+      "github_tokens": 15599,
+      "website_tokens": 15700,
+      "matched_tokens": 15479,
+      "similarity": 0.989105,
+      "github_coverage": 0.992307,
+      "website_coverage": 0.985924,
+      "diff_samples": [
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "home home equipment",
+          "github_token_count": 0,
+          "website_token_count": 3
+        },
+        {
+          "kind": "delete",
+          "github": "introduction",
+          "website": "",
+          "github_token_count": 1,
+          "website_token_count": 0
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table task difficulty abbreviations",
+          "github_token_count": 0,
+          "website_token_count": 4
+        },
+        {
+          "kind": "insert",
+          "github": "",
+          "website": "table",
+          "github_token_count": 0,
+          "website_token_count": 1
+        },
+        {
+          "kind": "delete",
+          "github": "vehicle design",
+          "website": "",
+          "github_token_count": 2,
+          "website_token_count": 0
+        }
+      ],
+      "diff_audit": {
+        "opcode_counts": {
+          "replace": 0,
+          "delete": 52,
+          "insert": 44
+        },
+        "largest_differences": [
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table cargo trailer by size trailer size price cr capacity spaces description 0 25 ton 1 450 3 light 0 5 ton 1 700 6 moving standard 1 ton 2 200 12 moving large 2 ton 3 200 24 light duty standard 4 ton 5 700 48 light duty large 8 ton 12 000 96 commercial standard",
+            "github_token_count": 0,
+            "website_token_count": 57
+          },
+          {
+            "kind": "delete",
+            "github": "trailer size price cr capacity spaces description 0 25 ton 1 450 3 light 0 5 ton 1 700 6 moving standard 1 ton 2 200 12 moving large 2 ton 3 200 24 light duty standard 4 ton 5 700 48 light duty large 8 ton 12 000 96 commercial standard",
+            "website": "",
+            "github_token_count": 52,
+            "website_token_count": 0
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table manipulator arm maximums by tech level tl max str max dex 5 6 4 8 12 8 11 18 12 14 24 16 table",
+            "github_token_count": 0,
+            "website_token_count": 25
+          },
+          {
+            "kind": "delete",
+            "github": "tl max str max dex 5 6 4 8 12 8 11 18 12 14 24 16",
+            "website": "",
+            "github_token_count": 17,
+            "website_token_count": 0
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table submersible safe dive depth and crush depth by tech level",
+            "github_token_count": 0,
+            "website_token_count": 11
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table vehicle hull and structure personal combat scale",
+            "github_token_count": 0,
+            "website_token_count": 8
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table missile to hit by skill check effect",
+            "github_token_count": 0,
+            "website_token_count": 8
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table lift envelope size by atmosphere density",
+            "github_token_count": 0,
+            "website_token_count": 7
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table missile torpedo time to impact",
+            "github_token_count": 0,
+            "website_token_count": 6
+          },
+          {
+            "kind": "insert",
+            "github": "",
+            "website": "table vehicle chassis by displacement",
+            "github_token_count": 0,
+            "website_token_count": 5
+          }
+        ]
+      }
+    }
+  ],
+  "repository_only_content": [
+    "src/tools/sector-generator.md",
+    "src/tools/sector.js",
+    "src/tools/space-encounter-generator.md",
+    "src/tools/space-encounter.js",
+    "src/tools/roll.js",
+    "src/tools/pseudohex.js",
+    "src/vds/updated-common-vehicles-table.md"
+  ]
+}

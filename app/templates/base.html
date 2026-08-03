@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Emporos{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/responsive.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/ship.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/sector-forms.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/travel.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/jump-operations.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/trade.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/quotes.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/trade-deals.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/journal.css') }}">
+</head>
+<body>
+  <aside class="rail">
+    <a class="brand" href="/" aria-label="Emporos command">
+      <img src="{{ url_for('logos', path='emporos_thumbnail_256.jpg') }}" alt="">
+      <span><strong>EMPOROS</strong><small>Free Trader Registry</small></span>
+    </a>
+    <nav aria-label="Primary">
+      {% for route, label in navigation %}
+      <a href="{{ ('/' if route == 'dashboard' else '/' + route) + campaign_query }}" class="{{ 'active' if active == route else '' }}">
+        <span class="nav-mark"></span>{{ label }}
+      </a>
+      {% endfor %}
+    </nav>
+    <div class="rail-status">
+      <span class="signal"></span>
+      <div><strong>Engine connected</strong><small>AI has narration authority</small></div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <small>CAMPAIGN</small>
+        <strong>{{ campaign.name if campaign else 'No campaign selected' }}</strong>
+      </div>
+      <div class="topbar-center">{% if campaign %}Day {{ campaign.day_number }} · {{ campaign.play_mode|replace('_',' ')|title }}{% else %}Awaiting campaign{% endif %}</div>
+      <button class="profile">RW</button>
+    </header>
+    {% block content %}{% endblock %}
+  </main>
+
+  <aside class="referee">
+    <header>
+      <div><span class="signal"></span><strong>Referee</strong></div>
+      <small>Grounded narration</small>
+    </header>
+    <section class="transcript">
+      <article class="narration">
+        <small>SCENE</small>
+        <p>{% if campaign %}Campaign state is loaded. The referee is waiting for an established scene or a player action.{% else %}Select or create a campaign to begin play.{% endif %}</p>
+      </article>
+      <article class="receipt">
+        <strong>Mechanics remain outside narration</strong>
+        <span>Travel, trade, combat, and inventory changes appear here only after the engine commits them.</span>
+      </article>
+    </section>
+    <form class="composer">
+      <textarea aria-label="Tell the referee what you do" placeholder="What do you do?"></textarea>
+      <div><button type="button" class="quiet">× Reject narration</button><button type="button">Send</button></div>
+    </form>
+  </aside>
+</body>
+</html>

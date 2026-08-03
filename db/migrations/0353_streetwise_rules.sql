@@ -1,0 +1,3 @@
+CREATE TABLE rule_streetwise_mechanic(rule_id bigint PRIMARY KEY REFERENCES rule_rule(rule_id),skill_rule_id bigint NOT NULL UNIQUE REFERENCES rule_skill(rule_id));
+CREATE TABLE rule_streetwise_operation(rule_id bigint NOT NULL REFERENCES rule_streetwise_mechanic(rule_id),operation_code text NOT NULL CHECK(operation_code IN('understand-urban-environment','assess-power-structure','find-information','handle-stranger','locate-fringe-contact')),display_order smallint NOT NULL CHECK(display_order>0),PRIMARY KEY(rule_id,operation_code),UNIQUE(rule_id,display_order));
+COMMENT ON TABLE rule_streetwise_operation IS 'CE-SKILL-013 paired-source urban knowledge, information, stranger, and fringe-contact capabilities.';

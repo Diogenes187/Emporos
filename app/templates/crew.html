@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Crew · Emporos{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><small>CHARACTERS & CREW</small><h1>Crew manifest</h1><p>Authoritative characteristics, lifepath state, assignments, and health.</p></div>
+</section>
+{% if campaign %}
+<section class="crew-layout">
+  <article class="panel">
+    <header><div><small>ROSTER</small><h2>{{ campaign.actors|length }} character{{ '' if campaign.actors|length == 1 else 's' }}</h2></div></header>
+    <div class="crew-list">
+      {% for actor in campaign.actors %}
+      <article class="crew-card">
+        <div class="crew-identity"><span>{{ actor.character_name[:1]|upper }}</span><div><strong>{{ actor.character_name }}</strong><small>{{ actor.location_name or 'No established location' }} · {{ actor.lifepath_status or 'Lifepath not begun' }}</small></div></div>
+        <div class="characteristics">{% for stat in actor.characteristics %}<div><small>{{ stat.abbreviation }}</small><strong>{{ stat.current }}</strong></div>{% else %}<span>No characteristics recorded</span>{% endfor %}</div>
+        <div class="crew-meta"><span>{{ actor.skill_count }} trained skills</span><span>{% if actor.age_years %}Age {{ actor.age_years }}{% else %}Career entry available{% endif %}</span></div>
+      </article>
+      {% else %}<div class="empty-inline">No characters have been initialized.</div>{% endfor %}
+    </div>
+  </article>
+  <aside class="panel create-character">
+    <small>NEW CHARACTER</small><h2>Begin lifepath</h2><p>Initialization rolls the six normal Cepheus characteristics. Career choices follow as separate, resumable commands.</p>
+    <form method="post" action="/campaigns/{{ campaign.public_id }}/characters">
+      <input type="hidden" name="idempotency_key" value="{{ creation_key }}">
+      <label><span>Character name</span><input name="name" required maxlength="120" placeholder="Elara Venn"></label>
+      <button class="primary full" type="submit">Roll characteristics</button>
+    </form>
+  </aside>
+</section>
+{% if campaign.ships %}<section class="panel crew-stations"><header><div><small>SHIP STATIONS</small><h2>Crew assignments</h2></div></header><div class="station-list">{% for position in campaign.crew_positions %}<article><div><strong>{{ position.position_name }}</strong><small>{{ position.ship_name }}{% if position.standard_monthly_salary_minor %} · Cr{{ position.standard_monthly_salary_minor }}/month{% endif %}</small></div>{% if position.assigned_actor_name %}<span>{{ position.assigned_actor_name }}</span>{% else %}<form method="post" action="/campaigns/{{ campaign.public_id }}/crew-assignments"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-station-{{ loop.index }}"><input type="hidden" name="ship_public_id" value="{{ position.ship_public_id }}"><input type="hidden" name="ship_crew_position_id" value="{{ position.ship_crew_position_id }}"><select name="actor_public_id" required>{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select><button type="submit">Assign</button></form>{% endif %}</article>{% endfor %}</div></section>{% endif %}
+{% else %}
+<section class="empty-state"><h2>Select a campaign first.</h2><p>Characters always belong to an authoritative campaign.</p><a href="/">Open campaign registry</a></section>
+{% endif %}
+{% endblock %}

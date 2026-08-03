@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Library · Emporos{% endblock %}
+{% block content %}
+<section class="page-heading compact">
+  <div><small>CAMPAIGN SOURCES</small><h1>Library</h1><p>Adventures, sectors, rules, and setting material with complete import accounting.</p></div>
+  <button class="primary">Upload content</button>
+</section>
+<section class="library-grid">
+  <article class="upload-card">
+    <div class="upload-icon">↑</div><h2>Bring a source aboard</h2><p>PDF, text, or T5 sector data. Every page or record must be accounted for before a source can be marked ready.</p><button>Choose file</button>
+  </article>
+  <article class="panel source-list">
+    <header><div><small>INSTALLED</small><h2>Campaign sources</h2></div></header>
+    <div class="source-row"><span class="file-mark">SEC</span><div><strong>Spinward Marches</strong><small>Sector · 437 systems · Ready</small></div><span class="tag">ACTIVE</span></div>
+    <div class="source-row muted"><span class="file-mark">PDF</span><div><strong>No adventure loaded</strong><small>Strict module play is available after import review.</small></div><button>Upload</button></div>
+  </article>
+</section>
+<section class="panel principles"><small>IMPORT CONTRACT</small><h2>The source remains authoritative</h2><div><p><strong>Complete coverage</strong><br>Every page, table, map, and appendix receives an import status.</p><p><strong>Traceable use</strong><br>Extracted locations, people, secrets, and rules retain exact source references.</p><p><strong>No silent invention</strong><br>The referee identifies source gaps instead of fabricating consequential facts.</p></div></section>
+{% endblock %}
+

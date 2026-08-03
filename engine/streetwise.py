@@ -1,0 +1,18 @@
+"""Campaign-safe, task-backed Streetwise resolutions."""
+from dataclasses import dataclass
+import psycopg
+from engine.tasks import resolve_actor_task_command
+@dataclass(frozen=True)
+class StreetwiseResult:
+ command_public_id:str;actor_public_id:str;operation_code:str;objective_reference:str;check_total:int;effect:int;succeeded:bool;replayed:bool
+def resolve_streetwise_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,actor_public_id:str,operation_code:str,objective_reference:str,characteristic_rule_code:str,difficulty_rule_code:str,location_public_id:str|None=None,faction_public_id:str|None=None,target_actor_public_id:str|None=None,random_source=None)->StreetwiseResult:
+ if not objective_reference.strip():raise ValueError('Streetwise objective is required')
+ with c.transaction():
+  old=c.execute("SELECT command_id,public_id,command_type,command_status FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s FOR UPDATE",(initiator_reference,idempotency_key)).fetchone()
+  if old:
+   if old[2:]!=('resolve_streetwise','completed'):raise RuntimeError('Idempotency key belongs to another command')
+   r=c.execute("SELECT a.public_id,x.operation_code,x.objective_reference,x.check_total,x.effect,x.succeeded FROM cmd_streetwise_receipt x JOIN actor_actor a ON a.actor_id=x.actor_id WHERE x.command_id=%s",(old[0],)).fetchone();return StreetwiseResult(str(old[1]),str(r[0]),r[1],r[2],r[3],r[4],r[5],True)
+  state=c.execute("SELECT a.actor_id,a.campaign_id,m.rule_id,l.location_id,f.faction_id,t.actor_id FROM actor_actor a JOIN rule_streetwise_mechanic m ON true JOIN rule_streetwise_operation o ON o.rule_id=m.rule_id AND o.operation_code=%s LEFT JOIN loc_location l ON l.public_id=%s AND l.campaign_id=a.campaign_id LEFT JOIN actor_faction f ON f.public_id=%s AND f.campaign_id=a.campaign_id LEFT JOIN actor_actor t ON t.public_id=%s AND t.campaign_id=a.campaign_id WHERE a.public_id=%s AND a.controller_reference=%s FOR UPDATE OF a",(operation_code,location_public_id,faction_public_id,target_actor_public_id,actor_public_id,initiator_reference)).fetchone()
+  if not state or (location_public_id is not None and state[3] is None) or (faction_public_id is not None and state[4] is None) or (target_actor_public_id is not None and state[5] is None):raise ValueError('Streetwise context is not legal for this campaign')
+  if state[5]==state[0]:raise ValueError('Streetwise target actor must differ from acting character')
+  task=resolve_actor_task_command(c,initiator_reference=initiator_reference,idempotency_key=f'streetwise:{idempotency_key}',actor_public_id=actor_public_id,characteristic_rule_code=characteristic_rule_code,skill_rule_code='skill.streetwise',difficulty_rule_code=difficulty_rule_code,random_source=random_source);task_id=c.execute("SELECT command_id FROM cmd_command WHERE public_id=%s",(task.command_public_id,)).fetchone()[0];cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('resolve_streetwise',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone();c.execute("INSERT INTO cmd_streetwise_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(cid,state[1],state[0],state[2],operation_code,objective_reference.strip(),state[3],state[4],state[5],task_id,task.total,task.effect,task.succeeded));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,));return StreetwiseResult(str(pub),actor_public_id,operation_code,objective_reference.strip(),task.total,task.effect,task.succeeded,False)

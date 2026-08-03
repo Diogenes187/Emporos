@@ -1,0 +1,4 @@
+DROP TRIGGER senc_storage_damage_final_apply ON senc_storage_damage_final_receipt;
+CREATE TRIGGER senc_storage_damage_final_apply
+AFTER INSERT ON senc_storage_damage_final_receipt
+FOR EACH ROW EXECUTE FUNCTION senc_apply_storage_damage();
