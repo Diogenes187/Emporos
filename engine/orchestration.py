@@ -16,6 +16,22 @@ from engine.steward import resolve_steward_service_command
 from engine.streetwise import resolve_streetwise_command
 from engine.survival import resolve_survival_task_command
 from engine.transport import resolve_transport_operation_command
+from engine.travel_planning import plan_jump_journey_command
+from engine.jump_attempts import resolve_jump_attempt_command
+from engine.markets import open_trade_market_command
+from engine.commerce_setup import prepare_trading_command
+from engine.purchases import purchase_trade_goods_command
+from engine.sales import sell_trade_goods_command
+from engine.refueling import refuel_ship_command
+from engine.ship_expenses import pay_ship_operating_expense_command
+from engine.route_revenue import open_route_revenue_command
+from engine.freight_contracts import accept_freight_contract_command
+from engine.freight_delivery import deliver_freight_contract_command
+from engine.passenger_booking import book_route_passengers_command
+from engine.passenger_boarding import board_route_passengers_command
+from engine.passenger_manifest import finalize_passenger_manifest_command
+from engine.low_passage_revival import revive_low_passenger_command
+from engine.postal_contracts import accept_postal_contract_command,deliver_postal_contract_command
 
 @dataclass(frozen=True)
 class ToolSpec:
@@ -41,6 +57,23 @@ _DEFINITIONS=(
  ('resolve_transport_operation','Resolve spacecraft or vehicle operation using its canonical skill.','actor','initiator_reference',resolve_transport_operation_command),
  ('start_spacecraft_journey_leg','Depart on a ready spacecraft journey leg and consume reserved resources.','referee','referee_reference',start_spacecraft_journey_leg_command),
  ('complete_spacecraft_journey_leg','Arrive from an underway spacecraft leg and advance campaign state.','referee','referee_reference',complete_spacecraft_journey_leg_command),
+ ('plan_jump_journey','Plan a legal Jump route and reserve its ship fuel.','actor','initiator_reference',plan_jump_journey_command),
+ ('resolve_jump_attempt','Resolve the committed engineering Jump attempt.','actor','initiator_reference',resolve_jump_attempt_command),
+ ('open_trade_market','Open the current system trade exchange and generate audited stock.','actor','initiator_reference',open_trade_market_command),
+ ('prepare_trading','Create the trader account and ship cargo-hold custody boundary.','actor','initiator_reference',prepare_trading_command),
+ ('purchase_trade_goods','Purchase quoted goods into the selected ship cargo hold.','actor','initiator_reference',purchase_trade_goods_command),
+ ('sell_trade_goods','Sell owned cargo against an audited market quote.','actor','initiator_reference',sell_trade_goods_command),
+ ('refuel_ship','Purchase refined or unrefined fuel for a ship.','actor','initiator_reference',refuel_ship_command),
+ ('pay_ship_operating_expense','Pay a supported berthing, maintenance, or life-support expense.','actor','initiator_reference',pay_ship_operating_expense_command),
+ ('open_route_revenue','Generate freight and passenger availability for a destination.','actor','initiator_reference',open_route_revenue_command),
+ ('accept_freight_contract','Reserve available freight for a planned journey.','actor','initiator_reference',accept_freight_contract_command),
+ ('deliver_freight_contract','Deliver arrived freight and collect its payment.','actor','initiator_reference',deliver_freight_contract_command),
+ ('book_route_passengers','Book available passengers into journey accommodations.','actor','initiator_reference',book_route_passengers_command),
+ ('board_route_passengers','Board booked passengers and collect their fares.','actor','initiator_reference',board_route_passengers_command),
+ ('finalize_passenger_manifest','Validate accommodations and steward coverage before departure.','actor','initiator_reference',finalize_passenger_manifest_command),
+ ('revive_low_passenger','Resolve an arrived low-passage revival check.','actor','initiator_reference',revive_low_passenger_command),
+ ('accept_postal_contract','Attempt to secure a postal contract for an armed, crewed ship.','actor','initiator_reference',accept_postal_contract_command),
+ ('deliver_postal_contract','Deliver carried mail and collect its payment.','actor','initiator_reference',deliver_postal_contract_command),
 )
 _HOST_ARGUMENTS=frozenset({'c','connection','idempotency_key','initiator_reference','referee_reference','random_source'})
 def _register(definition)->_RegisteredTool:

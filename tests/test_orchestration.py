@@ -5,7 +5,7 @@ class R:
  def randint(self,a,b):return 4
 class OrchestrationContractTests(unittest.TestCase):
  def test_registry_is_explicit_and_host_arguments_are_hidden(self):
-  specs=available_tools();self.assertEqual(len(specs),13);self.assertEqual(len({s.name for s in specs}),13);self.assertIn('start_spacecraft_journey_leg',{s.name for s in specs});self.assertTrue(all('initiator_reference' not in s.required_arguments+s.optional_arguments for s in specs))
+  specs=available_tools();self.assertEqual(len(specs),30);self.assertEqual(len({s.name for s in specs}),30);self.assertIn('start_spacecraft_journey_leg',{s.name for s in specs});self.assertIn('purchase_trade_goods',{s.name for s in specs});self.assertIn('deliver_postal_contract',{s.name for s in specs});self.assertTrue(all('initiator_reference' not in s.required_arguments+s.optional_arguments for s in specs))
 @unittest.skipUnless(os.environ.get('BASE_CEPHEUS_DATABASE_URL'),'requires PostgreSQL')
 class OrchestrationDatabaseTests(unittest.TestCase):
  def test_dispatch_preserves_command_idempotency_and_rejects_injection(self):
