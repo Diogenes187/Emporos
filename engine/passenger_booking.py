@@ -1,12 +1,13 @@
 """Book actual passenger actors into available ship accommodations."""
 from dataclasses import dataclass
+import secrets
 import psycopg
 @dataclass(frozen=True)
 class PassengerBookingResult:
  command_public_id:str;journey_public_id:str;ship_public_id:str;passage_class:str;passenger_count:int;total_fare:int;replayed:bool
 def _load(c,cid,pub,replayed):
  r=c.execute("""SELECT journey.public_id,ship.public_id,receipt.passage_class,receipt.passenger_count,receipt.total_fare_minor FROM cmd_passenger_booking_receipt receipt JOIN journey_journey journey ON journey.journey_id=receipt.journey_id JOIN ship_ship ship ON ship.ship_id=receipt.ship_id WHERE receipt.command_id=%s""",(cid,)).fetchone();return PassengerBookingResult(str(pub),str(r[0]),str(r[1]),r[2],r[3],r[4],replayed)
-def book_route_passengers_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,cycle_public_id:str,journey_public_id:str,passage_class:str,passenger_count:int)->PassengerBookingResult:
+def book_route_passengers_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,cycle_public_id:str,journey_public_id:str,passage_class:str,passenger_count:int,random_source=None)->PassengerBookingResult:
  if passage_class not in ('high','middle','low'):raise ValueError('Only high, middle, or low passage may be booked from route availability')
  if passenger_count<=0:raise ValueError('Passenger count must be positive')
  traffic=passage_class+'_passengers'
@@ -26,7 +27,12 @@ def book_route_passengers_command(c:psycopg.Connection,*,initiator_reference:str
   else:
    crew=c.execute("SELECT count(*) FROM ship_crew_assignment WHERE ship_id=%s AND duty_status='active'",(s[4],)).fetchone()[0];capacity=s[10]-((crew+1)//2)-existing[0]
   if passenger_count>capacity:raise ValueError(f'Only {max(0,capacity)} suitable passenger berths remain')
-  cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('book_route_passengers',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone();total=s[8]*passenger_count;c.execute("INSERT INTO cmd_passenger_booking_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,%s)",(cid,s[0],s[2],s[4],s[1],passage_class,passenger_count,total))
+  cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('book_route_passengers',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone();total=s[8]*passenger_count;c.execute("INSERT INTO cmd_passenger_booking_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,%s)",(cid,s[0],s[2],s[4],s[1],passage_class,passenger_count,total));rng=random_source or secrets.SystemRandom();draw_order=0
   for order in range(1,passenger_count+1):
-   ordinal=accepted+order;actor=c.execute("INSERT INTO actor_actor(campaign_id,name,controller_reference) VALUES(%s,%s,'emporos-passenger') RETURNING actor_id",(s[0],f'{passage_class.title()} Passenger {ordinal}')).fetchone()[0];c.execute("INSERT INTO journey_participant(journey_id,campaign_id,actor_id,participant_role) VALUES(%s,%s,%s,'passenger')",(s[2],s[0],actor));passage=c.execute("INSERT INTO journey_passage(journey_id,campaign_id,actor_id,passage_class,fare_minor,baggage_mass_kg) VALUES(%s,%s,%s,%s,%s,%s) RETURNING journey_passage_id",(s[2],s[0],actor,passage_class,s[8],s[9])).fetchone()[0];c.execute("INSERT INTO journey_passage_availability_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,clock_timestamp(),%s)",(passage,s[0],s[2],s[3],s[1],traffic,ordinal,cid));c.execute("INSERT INTO cmd_passenger_booking_line VALUES(%s,%s,%s,%s,%s)",(cid,order,s[0],actor,passage))
+   ordinal=accepted+order;actor=c.execute("INSERT INTO actor_actor(campaign_id,name,controller_reference) VALUES(%s,%s,'emporos-passenger') RETURNING actor_id",(s[0],f'{passage_class.title()} Passenger {ordinal}')).fetchone()[0]
+   for characteristic in ('strength','dexterity','endurance','intelligence','education','social-standing'):
+    dice=[rng.randint(1,6),rng.randint(1,6)]
+    for die in dice:draw_order+=1;c.execute("INSERT INTO cmd_random_draw(command_id,draw_group,draw_order,die_sides,result) VALUES(%s,'passenger_creation',%s,6,%s)",(cid,draw_order,die))
+    c.execute("INSERT INTO actor_characteristic(actor_id,characteristic_rule_id,maximum_value,current_value) SELECT %s,rule_id,%s,%s FROM rule_rule WHERE rule_code=%s",(actor,sum(dice),sum(dice),'characteristic.'+characteristic))
+   c.execute("INSERT INTO journey_participant(journey_id,campaign_id,actor_id,participant_role) VALUES(%s,%s,%s,'passenger')",(s[2],s[0],actor));passage=c.execute("INSERT INTO journey_passage(journey_id,campaign_id,actor_id,passage_class,fare_minor,baggage_mass_kg) VALUES(%s,%s,%s,%s,%s,%s) RETURNING journey_passage_id",(s[2],s[0],actor,passage_class,s[8],s[9])).fetchone()[0];c.execute("INSERT INTO journey_passage_availability_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,clock_timestamp(),%s)",(passage,s[0],s[2],s[3],s[1],traffic,ordinal,cid));c.execute("INSERT INTO cmd_passenger_booking_line VALUES(%s,%s,%s,%s,%s)",(cid,order,s[0],actor,passage))
   c.execute("INSERT INTO cmd_domain_event(command_id,event_order,event_type) VALUES(%s,1,'route_passengers_booked')",(cid,));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,));return _load(c,cid,pub,False)
