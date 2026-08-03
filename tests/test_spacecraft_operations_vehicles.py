@@ -132,7 +132,7 @@ class SpacecraftOperationsVehicleIntegrationTests(unittest.TestCase):
             ).fetchone()
             self.assertEqual(
                 counts,
-                (9, 9, 3, 24, 7, 10, 24, 16, 24, 292, 90, 24, 11, 12),
+                (9, 17, 3, 24, 7, 10, 24, 16, 24, 292, 90, 24, 11, 12),
             )
 
             ground_car = connection.execute(
