@@ -91,9 +91,9 @@ def mechanical_long_text_columns(
 
 def main() -> int:
     orchestration_tools = available_tools()
-    expect(len(orchestration_tools) == 13, "AI gameplay tool count changed.")
+    expect(len(orchestration_tools) == 30, "AI gameplay tool count changed.")
     expect(
-        len({tool.name for tool in orchestration_tools}) == 13,
+        len({tool.name for tool in orchestration_tools}) == 30,
         "AI gameplay tool names are not unique.",
     )
     forbidden = {
