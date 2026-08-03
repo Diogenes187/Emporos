@@ -13,3 +13,14 @@ def review_next_text_page(c,*,initiator_reference,document_public_id,idempotency
   if not verified and issue is None:issue='partial_text'
   c.execute("UPDATE ai_model_invocation SET provider_code=%s,model_name=%s,output_sha256=%s,invocation_status='completed',prompt_tokens=%s,completion_tokens=%s,completed_at=clock_timestamp() WHERE model_invocation_id=%s",(result.provider,result.model,sha256(result.content.encode()).hexdigest(),result.prompt_tokens,result.completion_tokens,invocation));review_campaign_source_page_command(c,initiator_reference=initiator_reference,idempotency_key=idempotency_key,document_public_id=document_public_id,page_number=page[1],text_verified=verified,visual_verified=False,generic_issue_code=issue,private_review_note=note);return page[1],verified
  except Exception as exc:c.execute("UPDATE ai_model_invocation SET invocation_status='failed',error_code=%s,completed_at=clock_timestamp() WHERE model_invocation_id=%s",(exc.__class__.__name__,invocation));raise
+
+def review_document_text_queue(c,*,initiator_reference,document_public_id,idempotency_key,provider=None,max_pages=None):
+ """Privately review all available text pages, without leaking their contents."""
+ client=provider or provider_from_environment();reviewed=0
+ while max_pages is None or reviewed<max_pages:
+  pending=c.execute("SELECT count(*) FROM camp_source_document document JOIN camp_campaign campaign USING(campaign_id) JOIN camp_source_page page USING(source_document_id,campaign_id) WHERE document.public_id=%s AND campaign.owner_reference=%s AND page.review_status='pending' AND NOT page.visual_review_required",(document_public_id,initiator_reference)).fetchone()[0]
+  if not pending:break
+  review_next_text_page(c,initiator_reference=initiator_reference,document_public_id=document_public_id,idempotency_key=f'{idempotency_key}-page-{reviewed+1}',provider=client);reviewed+=1
+ status=c.execute("SELECT document.ingestion_status,count(*) FILTER(WHERE page.review_status='pending'),count(*) FILTER(WHERE page.review_status='pending' AND page.visual_review_required) FROM camp_source_document document JOIN camp_campaign campaign USING(campaign_id) JOIN camp_source_page page USING(source_document_id,campaign_id) WHERE document.public_id=%s AND campaign.owner_reference=%s GROUP BY document.ingestion_status",(document_public_id,initiator_reference)).fetchone()
+ if not status:raise ValueError('Campaign source does not exist')
+ return {'reviewed_pages':reviewed,'ingestion_status':status[0],'pending_pages':status[1],'pending_visual_pages':status[2]}

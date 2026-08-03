@@ -54,6 +54,7 @@ from engine.postal_contracts import accept_postal_contract_command, deliver_post
 from engine.starship_charters import quote_starship_charter_command, accept_starship_charter_command, complete_starship_charter_command  # noqa: E402
 from engine.ship_mortgages import open_ship_mortgage_command, pay_ship_mortgage_command  # noqa: E402
 from engine.source_library import ingest_campaign_source_command  # noqa: E402
+from ai.source_reviewer import review_document_text_queue  # noqa: E402
 
 
 def create_campaign(
@@ -252,3 +253,8 @@ def pay_ship_mortgage(*,ship_public_id:str,actor_public_id:str,idempotency_key:s
 def ingest_campaign_source(*,campaign_public_id:str,title:str,source_kind:str,original_filename:str,media_type:str,content:bytes,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return ingest_campaign_source_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,title=title,source_kind=source_kind,original_filename=original_filename,media_type=media_type,content=content,storage_root=foundation/"uploads"/"sources")
+
+def review_campaign_source(*,document_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    if not url:raise RuntimeError("No Emporos database URL is configured")
+    with psycopg.connect(url) as connection:return review_document_text_queue(connection,initiator_reference=authority,document_public_id=document_public_id,idempotency_key=idempotency_key)

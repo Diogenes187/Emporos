@@ -26,6 +26,12 @@ def test_primary_pages_render():
         assert "Emporos" in response.text
 
 
+def test_library_keeps_source_review_private():
+    response = client.get("/library")
+    assert "Every page is accounted for" in response.text
+    assert "PAGE TEXT" not in response.text
+
+
 def test_unselected_dashboard_does_not_invent_a_location():
     response = client.get("/")
     assert "Select or create a campaign" in response.text
