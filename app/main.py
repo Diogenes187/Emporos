@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -292,6 +292,14 @@ def mortgage_pay(campaign_id:str,ship_id:str,actor_public_id:str=Form(...),idemp
     except (ValueError,PermissionError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/ship?campaign={campaign_id}",status_code=303)
 
+@app.post("/campaigns/{campaign_id}/sources")
+async def source_upload(campaign_id:str,title:str=Form(...),source_kind:str=Form(...),idempotency_key:str=Form(...),source:UploadFile=File(...)):
+    content=await source.read()
+    media_type=source.content_type or ('application/pdf' if (source.filename or '').lower().endswith('.pdf') else 'text/plain')
+    try:ingest_campaign_source(campaign_public_id=campaign_id,title=title,source_kind=source_kind,original_filename=source.filename or 'source',media_type=media_type,content=content,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
+
 @app.post("/campaigns/{campaign_id}/markets/{market_session_id}/quotes")
 def purchase_quote(campaign_id:str,market_session_id:int,actor_public_id:str=Form(...),trade_good_code:str=Form(...),idempotency_key:str=Form(...)):
     try:roll_purchase_price(actor_public_id=actor_public_id,market_session_id=market_session_id,trade_good_code=trade_good_code,idempotency_key=idempotency_key)
@@ -380,7 +388,7 @@ def library(request: Request, campaign: str | None = None):
     return templates.TemplateResponse(
         request=request,
         name="library.html",
-        context=page_context(request, "library", campaign=current),
+        context=page_context(request, "library", campaign=current,creation_key=str(uuid.uuid4())),
     )
 
 

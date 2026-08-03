@@ -3,18 +3,16 @@
 {% block content %}
 <section class="page-heading compact">
   <div><small>CAMPAIGN SOURCES</small><h1>Library</h1><p>Adventures, sectors, rules, and setting material with complete import accounting.</p></div>
-  <button class="primary">Upload content</button>
+  {% if campaign %}<span>{{ campaign.source_documents|length }} installed source{{ '' if campaign.source_documents|length==1 else 's' }}</span>{% endif %}
 </section>
 <section class="library-grid">
   <article class="upload-card">
-    <div class="upload-icon">↑</div><h2>Bring a source aboard</h2><p>PDF, text, or T5 sector data. Every page or record must be accounted for before a source can be marked ready.</p><button>Choose file</button>
+    <div class="upload-icon">↑</div><h2>Bring a source aboard</h2><p>PDF or text. Every page is accounted for before a source can be marked ready.</p>{% if campaign %}<form method="post" enctype="multipart/form-data" action="/campaigns/{{ campaign.public_id }}/sources"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-source"><label><span>Title</span><input name="title" required></label><label><span>Kind</span><select name="source_kind"><option value="adventure">Adventure</option><option value="sourcebook">Sourcebook</option><option value="handout">Handout</option><option value="notes">Notes</option></select></label><input type="file" name="source" accept=".pdf,.txt,application/pdf,text/plain" required><button type="submit">Ingest complete source</button></form>{% else %}<p>Select a campaign first.</p>{% endif %}
   </article>
   <article class="panel source-list">
     <header><div><small>INSTALLED</small><h2>Campaign sources</h2></div></header>
-    <div class="source-row"><span class="file-mark">SEC</span><div><strong>Spinward Marches</strong><small>Sector · 437 systems · Ready</small></div><span class="tag">ACTIVE</span></div>
-    <div class="source-row muted"><span class="file-mark">PDF</span><div><strong>No adventure loaded</strong><small>Strict module play is available after import review.</small></div><button>Upload</button></div>
+    {% if campaign %}{% for source in campaign.source_documents %}<div class="source-row"><span class="file-mark">{{ 'PDF' if source.media_type=='application/pdf' else 'TXT' }}</span><div><strong>{{ source.title }}</strong><small>{{ source.source_kind|title }} · {{ source.page_count }} pages · {{ source.verified_pages }} verified{% if source.visual_review_pages %} · {{ source.visual_review_pages }} visual review{% endif %}</small></div><span class="tag">{{ source.ingestion_status|replace('_',' ')|upper }}</span></div>{% else %}<div class="source-row muted"><div><strong>No campaign source installed</strong><small>Strict module play begins after complete import accounting.</small></div></div>{% endfor %}{% endif %}
   </article>
 </section>
 <section class="panel principles"><small>IMPORT CONTRACT</small><h2>The source remains authoritative</h2><div><p><strong>Complete coverage</strong><br>Every page, table, map, and appendix receives an import status.</p><p><strong>Traceable use</strong><br>Extracted locations, people, secrets, and rules retain exact source references.</p><p><strong>No silent invention</strong><br>The referee identifies source gaps instead of fabricating consequential facts.</p></div></section>
 {% endblock %}
-

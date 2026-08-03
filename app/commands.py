@@ -53,6 +53,7 @@ from engine.passenger_manifest import finalize_passenger_manifest_command  # noq
 from engine.postal_contracts import accept_postal_contract_command, deliver_postal_contract_command  # noqa: E402
 from engine.starship_charters import quote_starship_charter_command, accept_starship_charter_command, complete_starship_charter_command  # noqa: E402
 from engine.ship_mortgages import open_ship_mortgage_command, pay_ship_mortgage_command  # noqa: E402
+from engine.source_library import ingest_campaign_source_command  # noqa: E402
 
 
 def create_campaign(
@@ -248,3 +249,6 @@ def open_ship_mortgage(*,campaign_public_id:str,ship_public_id:str,actor_public_
 def pay_ship_mortgage(*,ship_public_id:str,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return pay_ship_mortgage_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,ship_public_id=ship_public_id,actor_public_id=actor_public_id)
+def ingest_campaign_source(*,campaign_public_id:str,title:str,source_kind:str,original_filename:str,media_type:str,content:bytes,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return ingest_campaign_source_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,title=title,source_kind=source_kind,original_filename=original_filename,media_type=media_type,content=content,storage_root=foundation/"uploads"/"sources")
