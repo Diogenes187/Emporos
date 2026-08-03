@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -339,6 +339,36 @@ def encounter_combat_begin(campaign_id:str,encounter_id:str,reason:str=Form(...)
 @app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/personal-combat/initialize")
 def encounter_combat_initialize(campaign_id:str,encounter_id:str,aware_actor_public_ids:list[str]=Form([]),starting_context_code:str=Form(...),light_condition:str=Form(...),starting_range_rule_code:str=Form(''),idempotency_key:str=Form(...)):
     try:initialize_personal_combat(encounter_public_id=encounter_id,aware_actor_public_ids=tuple(aware_actor_public_ids),starting_context_code=starting_context_code,light_condition=light_condition,starting_range_rule_code=starting_range_rule_code or None,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/begin")
+def combat_turn_begin(campaign_id:str,encounter_id:str,actor_id:str,idempotency_key:str=Form(...)):
+    try:begin_combat_turn(encounter_public_id=encounter_id,actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/move")
+def combat_move(campaign_id:str,encounter_id:str,actor_id:str,metres:float=Form(...),difficult_terrain:bool=Form(False),idempotency_key:str=Form(...)):
+    try:move_combatant(encounter_public_id=encounter_id,actor_public_id=actor_id,metres=metres,difficult_terrain=difficult_terrain,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/aim")
+def combat_aim(campaign_id:str,encounter_id:str,actor_id:str,target_actor_public_id:str=Form(...),idempotency_key:str=Form(...)):
+    try:aim_combatant(encounter_public_id=encounter_id,actor_public_id=actor_id,target_actor_public_id=target_actor_public_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/complete")
+def combat_turn_complete(campaign_id:str,encounter_id:str,actor_id:str,idempotency_key:str=Form(...)):
+    try:complete_combat_turn(encounter_public_id=encounter_id,actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/rounds/advance")
+def combat_round_advance(campaign_id:str,encounter_id:str,idempotency_key:str=Form(...)):
+    try:advance_combat_round(encounter_public_id=encounter_id,idempotency_key=idempotency_key)
     except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
 

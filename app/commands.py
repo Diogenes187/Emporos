@@ -58,7 +58,7 @@ from ai.source_reviewer import review_document_text_queue  # noqa: E402
 from ai.referee import submit_referee_turn  # noqa: E402
 from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
 from engine.encounters import create_encounter_command,add_encounter_participant_command,transition_encounter_mode_command  # noqa: E402
-from engine.combat_runtime import initialize_personal_combat_command  # noqa: E402
+from engine.combat_runtime import initialize_personal_combat_command,begin_personal_turn_command,move_personal_combatant_command,aim_personal_attack_command,complete_personal_turn_command,advance_personal_combat_round_command  # noqa: E402
 
 
 def create_campaign(
@@ -288,3 +288,23 @@ def begin_personal_combat(*,encounter_public_id:str,reason:str,idempotency_key:s
 def initialize_personal_combat(*,encounter_public_id:str,aware_actor_public_ids:tuple[str,...],starting_context_code:str,light_condition:str,starting_range_rule_code:str|None,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return initialize_personal_combat_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,aware_actor_public_ids=aware_actor_public_ids,starting_context_code=starting_context_code,light_condition=light_condition,starting_range_rule_code=starting_range_rule_code or None)
+
+def begin_combat_turn(*,encounter_public_id:str,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return begin_personal_turn_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id)
+
+def move_combatant(*,encounter_public_id:str,actor_public_id:str,metres:float,difficult_terrain:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return move_personal_combatant_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,metres=metres,difficult_terrain=difficult_terrain)
+
+def aim_combatant(*,encounter_public_id:str,actor_public_id:str,target_actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return aim_personal_attack_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,target_actor_public_id=target_actor_public_id)
+
+def complete_combat_turn(*,encounter_public_id:str,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return complete_personal_turn_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id)
+
+def advance_combat_round(*,encounter_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return advance_personal_combat_round_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id)
