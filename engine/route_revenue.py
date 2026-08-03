@@ -25,11 +25,11 @@ def open_route_revenue_command(c:psycopg.Connection,*,initiator_reference:str,id
  JOIN loc_world_profile origin_profile ON origin_profile.location_id=origin_world.location_id AND origin_profile.profile_status='current'
  WHERE campaign.public_id=%s AND campaign.owner_reference=%s AND ship.public_id=%s AND origin_system.location_id<>destination_system.location_id FOR UPDATE OF ship,clock""",(destination_system_public_id,campaign_public_id,initiator_reference,ship_public_id)).fetchone()
   if not s:raise ValueError('Ship must be at a charted world and destination must be another charted system')
-  prior=c.execute("SELECT available_day,refresh_number FROM journey_revenue_availability_cycle WHERE campaign_id=%s AND origin_location_id=%s AND destination_location_id=%s ORDER BY refresh_number DESC LIMIT 1",(s[0],s[4],s[5])).fetchone()
+  prior=c.execute("SELECT available_day,refresh_number FROM journey_revenue_availability_cycle WHERE campaign_id=%s AND origin_location_id=%s AND destination_location_id=%s ORDER BY refresh_number DESC LIMIT 1",(s[0],s[2],s[3])).fetchone()
   if prior and s[9]<prior[0]+3:raise ValueError(f'Route opportunities refresh on campaign day {prior[0]+3}')
   refresh=1 if not prior else prior[1]+1
   cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('open_route_revenue',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone()
-  cycle,cycle_pub=c.execute("INSERT INTO journey_revenue_availability_cycle(campaign_id,origin_location_id,destination_location_id,starport_code,available_day,refresh_number,source_command_id) VALUES(%s,%s,%s,%s,%s,%s,%s) RETURNING revenue_availability_cycle_id,public_id",(s[0],s[4],s[5],s[8],s[9],refresh,cid)).fetchone()
+  cycle,cycle_pub=c.execute("INSERT INTO journey_revenue_availability_cycle(campaign_id,origin_location_id,destination_location_id,starport_code,available_day,refresh_number,source_command_id) VALUES(%s,%s,%s,%s,%s,%s,%s) RETURNING revenue_availability_cycle_id,public_id",(s[0],s[2],s[3],s[8],s[9],refresh,cid)).fetchone()
   rules=c.execute("SELECT traffic_kind,dice_count,die_sides,flat_modifier,multiplier FROM rule_starport_traffic_expression WHERE starport_code=%s ORDER BY traffic_kind",(s[8],)).fetchall()
   for kind,dice,sides,modifier,multiplier in rules:
    natural=sum(rng.randint(1,sides) for _ in range(dice)) if dice else 0;available=max(0,natural+modifier)*multiplier
