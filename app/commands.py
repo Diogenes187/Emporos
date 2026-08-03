@@ -51,6 +51,7 @@ from engine.passenger_boarding import board_route_passengers_command  # noqa: E4
 from engine.low_passage_revival import revive_low_passenger_command  # noqa: E402
 from engine.passenger_manifest import finalize_passenger_manifest_command  # noqa: E402
 from engine.postal_contracts import accept_postal_contract_command, deliver_postal_contract_command  # noqa: E402
+from engine.starship_charters import quote_starship_charter_command, accept_starship_charter_command, complete_starship_charter_command  # noqa: E402
 
 
 def create_campaign(
@@ -230,3 +231,13 @@ def accept_postal_contract(*,journey_public_id:str,idempotency_key:str):
 def deliver_postal_contract(*,contract_public_id:str,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return deliver_postal_contract_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,contract_public_id=contract_public_id,actor_public_id=actor_public_id)
+
+def quote_starship_charter(*,campaign_public_id:str,ship_public_id:str,billing_blocks:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return quote_starship_charter_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,ship_public_id=ship_public_id,billing_blocks=billing_blocks)
+def accept_starship_charter(*,quote_public_id:str,journey_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return accept_starship_charter_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,quote_public_id=quote_public_id,journey_public_id=journey_public_id)
+def complete_starship_charter(*,contract_public_id:str,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return complete_starship_charter_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,contract_public_id=contract_public_id,actor_public_id=actor_public_id)
