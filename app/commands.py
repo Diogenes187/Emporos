@@ -45,6 +45,7 @@ from engine.journal import add_campaign_note_command, archive_play_session_comma
 from engine.crew_payroll import pay_ship_crew_command  # noqa: E402
 from engine.route_revenue import open_route_revenue_command  # noqa: E402
 from engine.freight_contracts import accept_freight_contract_command  # noqa: E402
+from engine.freight_delivery import deliver_freight_contract_command  # noqa: E402
 
 
 def create_campaign(
@@ -196,3 +197,7 @@ def open_route_revenue(*,campaign_public_id:str,ship_public_id:str,destination_s
 def accept_freight_contract(*,cycle_public_id:str,journey_public_id:str,accepted_tons:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return accept_freight_contract_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,cycle_public_id=cycle_public_id,journey_public_id=journey_public_id,accepted_tons=accepted_tons)
+
+def deliver_freight_contract(*,contract_public_id:str,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return deliver_freight_contract_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,contract_public_id=contract_public_id,actor_public_id=actor_public_id)
