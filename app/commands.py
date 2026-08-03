@@ -55,6 +55,7 @@ from engine.starship_charters import quote_starship_charter_command, accept_star
 from engine.ship_mortgages import open_ship_mortgage_command, pay_ship_mortgage_command  # noqa: E402
 from engine.source_library import ingest_campaign_source_command  # noqa: E402
 from ai.source_reviewer import review_document_text_queue  # noqa: E402
+from ai.referee import submit_referee_turn  # noqa: E402
 
 
 def create_campaign(
@@ -258,3 +259,8 @@ def review_campaign_source(*,document_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     if not url:raise RuntimeError("No Emporos database URL is configured")
     with psycopg.connect(url) as connection:return review_document_text_queue(connection,initiator_reference=authority,document_public_id=document_public_id,idempotency_key=idempotency_key)
+
+def send_referee_message(*,campaign_public_id:str,player_text:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    if not url:raise RuntimeError("No Emporos database URL is configured")
+    with psycopg.connect(url) as connection:return submit_referee_turn(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,player_text=player_text)

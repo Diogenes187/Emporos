@@ -52,18 +52,25 @@
       <small>Grounded narration</small>
     </header>
     <section class="transcript">
+      {% if campaign %}{% for message in campaign.referee_messages %}
+      <article class="{{ 'narration' if message.speaker_kind=='referee' else 'receipt' }}">
+        <small>{{ 'REFEREE' if message.speaker_kind=='referee' else 'YOU' }}</small><p>{{ message.message_text }}</p>
+      </article>
+      {% else %}
       <article class="narration">
         <small>SCENE</small>
-        <p>{% if campaign %}Campaign state is loaded. The referee is waiting for an established scene or a player action.{% else %}Select or create a campaign to begin play.{% endif %}</p>
+        <p>Campaign state is loaded. The referee is waiting for an established scene or a player action.</p>
       </article>
+      {% endfor %}{% else %}<article class="narration"><small>SCENE</small><p>Select or create a campaign to begin play.</p></article>{% endif %}
       <article class="receipt">
         <strong>Mechanics remain outside narration</strong>
         <span>Travel, trade, combat, and inventory changes appear here only after the engine commits them.</span>
       </article>
     </section>
-    <form class="composer">
-      <textarea aria-label="Tell the referee what you do" placeholder="What do you do?"></textarea>
-      <div><button type="button" class="quiet">× Reject narration</button><button type="button">Send</button></div>
+    <form class="composer" method="post" {% if campaign %}action="/campaigns/{{ campaign.public_id }}/referee-turns"{% endif %}>
+      {% if campaign %}<input type="hidden" name="idempotency_key" value="{{ creation_key }}-referee">{% endif %}
+      <textarea name="player_text" aria-label="Tell the referee what you do" placeholder="What do you do?" required {% if not campaign %}disabled{% endif %}></textarea>
+      <div><button type="button" class="quiet">× Reject narration</button><button type="submit" {% if not campaign %}disabled{% endif %}>Send</button></div>
     </form>
   </aside>
 </body>
