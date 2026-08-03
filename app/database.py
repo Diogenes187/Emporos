@@ -198,6 +198,7 @@ class CampaignReader:
             journal_notes=connection.execute("SELECT public_id::text AS public_id,title,note_kind,note_text,ai_memory_enabled,created_at FROM camp_journal_note WHERE campaign_id=%s ORDER BY created_at DESC LIMIT 100",(campaign_id,)).fetchall()
             session_archives=connection.execute("SELECT public_id::text AS public_id,title,campaign_day,transcript_text,ai_memory_enabled,archived_at FROM camp_session_archive WHERE campaign_id=%s ORDER BY archived_at DESC LIMIT 100",(campaign_id,)).fetchall()
             crew_payrolls=connection.execute("""SELECT ship.name AS ship_name,receipt.payroll_day,receipt.total_amount_minor,count(line.line_order) AS crew_paid,command.completed_at FROM cmd_ship_crew_payroll_receipt receipt JOIN ship_ship ship USING(ship_id) JOIN cmd_ship_crew_payroll_line line USING(command_id) JOIN cmd_command command USING(command_id) WHERE receipt.campaign_id=%s GROUP BY ship.name,receipt.payroll_day,receipt.total_amount_minor,command.completed_at,receipt.command_id ORDER BY receipt.command_id DESC LIMIT 20""",(campaign_id,)).fetchall()
+            route_revenues=connection.execute("""SELECT cycle.public_id::text AS public_id,ship.public_id::text AS ship_public_id,ship.name AS ship_name,origin.name AS origin_name,destination.name AS destination_name,cycle.available_day,max(draw.available_quantity) FILTER(WHERE draw.traffic_kind='freight_tons') AS freight_tons,max(draw.available_quantity) FILTER(WHERE draw.traffic_kind='high_passengers') AS high_passengers,max(draw.available_quantity) FILTER(WHERE draw.traffic_kind='middle_passengers') AS middle_passengers,max(draw.available_quantity) FILTER(WHERE draw.traffic_kind='low_passengers') AS low_passengers FROM cmd_route_revenue_availability_receipt receipt JOIN journey_revenue_availability_cycle cycle USING(revenue_availability_cycle_id) JOIN ship_ship ship USING(ship_id) JOIN loc_location origin ON origin.location_id=cycle.origin_location_id JOIN loc_location destination ON destination.location_id=cycle.destination_location_id JOIN journey_revenue_availability_draw draw USING(revenue_availability_cycle_id) WHERE receipt.campaign_id=%s GROUP BY cycle.public_id,ship.public_id,ship.name,origin.name,destination.name,cycle.available_day,receipt.command_id ORDER BY receipt.command_id DESC LIMIT 20""",(campaign_id,)).fetchall()
         return {
             **campaign,
             "actors": actors,
@@ -217,6 +218,7 @@ class CampaignReader:
             "journal_notes": journal_notes,
             "session_archives": session_archives,
             "crew_payrolls": crew_payrolls,
+            "route_revenues": route_revenues,
         }
 
     def ship_classes(self) -> list[dict[str, Any]]:

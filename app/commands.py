@@ -43,6 +43,7 @@ from engine.ship_expenses import pay_ship_operating_expense_command  # noqa: E40
 from engine.crew_assignments import assign_ship_crew_command  # noqa: E402
 from engine.journal import add_campaign_note_command, archive_play_session_command  # noqa: E402
 from engine.crew_payroll import pay_ship_crew_command  # noqa: E402
+from engine.route_revenue import open_route_revenue_command  # noqa: E402
 
 
 def create_campaign(
@@ -186,3 +187,7 @@ def archive_play_session(*,campaign_public_id:str,title:str,transcript_text:str,
 def pay_ship_crew(*,campaign_public_id:str,payer_actor_public_id:str,ship_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return pay_ship_crew_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,payer_actor_public_id=payer_actor_public_id,ship_public_id=ship_public_id)
+
+def open_route_revenue(*,campaign_public_id:str,ship_public_id:str,destination_system_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return open_route_revenue_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,ship_public_id=ship_public_id,destination_system_public_id=destination_system_public_id)

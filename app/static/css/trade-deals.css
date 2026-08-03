@@ -1,1 +1,2 @@
 .trade-deal{margin:10px 0;padding:10px;border:1px solid var(--line);align-items:center}.trade-deal strong{min-width:180px}.trade-deal input[type=number]{width:70px;background:#0b1115;color:var(--ink);border:1px solid var(--line);padding:7px}
+.revenue-card{display:grid;gap:.3rem;margin-top:.8rem;padding:.75rem;border:1px solid var(--line);background:#0b1115}.revenue-card span{font-size:.75rem;color:var(--muted)}
