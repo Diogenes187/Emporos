@@ -51,8 +51,10 @@ from engine.health_runtime import (
 from engine.tasks import resolve_actor_task_command
 from engine.injury_runtime import resolve_personal_natural_healing_command
 from engine.medical_runtime import (
+    apply_determined_personal_first_aid_command,
     apply_personal_first_aid_command,
     apply_personal_medical_care_command,
+    determine_personal_first_aid_command,
     resolve_personal_surgery_command,
 )
 from engine.mental_healing import resolve_personal_mental_healing_command
@@ -2614,18 +2616,47 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                     damage_instance_public_id=attack.damage_instance_public_id,
                     allocations=damage_allocations,
                 )
-                first_aid = apply_personal_first_aid_command(
+                determined = determine_personal_first_aid_command(
                     connection, initiator_reference="referee",
-                    idempotency_key="medical-first-aid",
+                    idempotency_key="medical-first-aid-determine",
                     patient_actor_public_id=actors[1],
                     doctor_actor_public_id=actors[2],
                     damage_instance_public_id=damage.damage_instance_public_id,
-                    allocations=damage_allocations,
                     random_source=FixedRandom((6, 6)),
+                )
+                self.assertEqual(determined.effect, 6)
+                self.assertEqual(determined.available_points, 12)
+                self.assertIsNone(
+                    determined.applied_treatment_command_public_id)
+                replayed_determination = determine_personal_first_aid_command(
+                    connection, initiator_reference="referee",
+                    idempotency_key="medical-first-aid-determine",
+                    patient_actor_public_id=actors[1],
+                    doctor_actor_public_id=actors[2],
+                    damage_instance_public_id=damage.damage_instance_public_id,
+                    random_source=FixedRandom((1, 1)),
+                )
+                self.assertTrue(replayed_determination.replayed)
+                self.assertEqual(replayed_determination.dice, (6, 6))
+                first_aid = apply_determined_personal_first_aid_command(
+                    connection, initiator_reference="referee",
+                    idempotency_key="medical-first-aid",
+                    determination_command_public_id=
+                        determined.command_public_id,
+                    allocations=damage_allocations,
                 )
                 self.assertEqual(first_aid.effect, 6)
                 self.assertEqual(first_aid.signed_points, 12)
                 self.assertEqual(first_aid.injury_status_after, "uninjured")
+                replayed_first_aid = (
+                    apply_determined_personal_first_aid_command(
+                        connection, initiator_reference="referee",
+                        idempotency_key="medical-first-aid",
+                        determination_command_public_id=
+                            determined.command_public_id,
+                        allocations=damage_allocations,
+                    ))
+                self.assertTrue(replayed_first_aid.replayed)
                 connection.execute(
                     """UPDATE actor_characteristic state SET current_value=5
                        FROM rule_rule rule

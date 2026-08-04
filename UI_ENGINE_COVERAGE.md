@@ -4,8 +4,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 
 ## Snapshot
 
-- Engine command entry points: 162
-- Direct web-application wrappers: 93
+- Engine command entry points: 164
+- Direct web-application wrappers: 95
 - Engine-only review candidates: 69
 
 ## Engine-only review candidates
@@ -154,6 +154,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `jump_attempts.py` | `resolve_jump_attempt_command` |
 | `low_passage_revival.py` | `revive_low_passenger_command` |
 | `markets.py` | `open_trade_market_command` |
+| `medical_runtime.py` | `determine_personal_first_aid_command` |
+| `medical_runtime.py` | `apply_determined_personal_first_aid_command` |
 | `mental_healing.py` | `resolve_personal_mental_healing_command` |
 | `navigation.py` | `resolve_navigation_command` |
 | `passenger_boarding.py` | `board_route_passengers_command` |

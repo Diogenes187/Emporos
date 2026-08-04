@@ -23,6 +23,52 @@ class MedicalTreatmentResult:
     replayed: bool
 
 
+@dataclass(frozen=True)
+class FirstAidDeterminationResult:
+    command_public_id: str
+    patient_actor_public_id: str
+    doctor_actor_public_id: str
+    damage_instance_public_id: str
+    dice: tuple[int, int]
+    check_total: int
+    effect: int
+    effectiveness_tier: str
+    effect_multiplier: int
+    available_points: int
+    applied_treatment_command_public_id: str | None
+    replayed: bool
+
+
+def _load_first_aid_determination(connection, command_id, public_id, replayed):
+    row = connection.execute(
+        """SELECT patient.public_id,doctor.public_id,damage.public_id,
+                  result.die_one,result.die_two,result.check_total,result.effect,
+                  result.effectiveness_tier,result.effect_multiplier,
+                  result.available_points,treatment.public_id
+           FROM cmd_personal_first_aid_determination result
+           JOIN actor_actor patient ON patient.actor_id=result.patient_actor_id
+           JOIN actor_actor doctor ON doctor.actor_id=result.doctor_actor_id
+           JOIN health_damage_instance damage
+             ON damage.damage_instance_id=result.damage_instance_id
+           LEFT JOIN cmd_personal_first_aid_determination_application applied
+             ON applied.determination_command_id=result.command_id
+           LEFT JOIN cmd_command treatment
+             ON treatment.command_id=applied.treatment_command_id
+           WHERE result.command_id=%s""", (command_id,)).fetchone()
+    return FirstAidDeterminationResult(
+        str(public_id), str(row[0]), str(row[1]), str(row[2]),
+        (row[3], row[4]), row[5], row[6], row[7], row[8], row[9],
+        str(row[10]) if row[10] else None, replayed)
+
+
+class _FixedDice:
+    def __init__(self, dice):
+        self._dice = iter(dice)
+
+    def randint(self, minimum, maximum):
+        return next(self._dice)
+
+
 def _load(connection, command_id, public_id, replayed):
     row = connection.execute(
         """SELECT receipt.procedure_code,patient.public_id,doctor.public_id,
@@ -284,6 +330,150 @@ def apply_personal_first_aid_command(
             """INSERT INTO cmd_personal_first_aid_link
                VALUES (%s,%s,%s,%s,%s)""",
             link_values=(damage[0],elapsed,tier,multiplier))
+
+
+def determine_personal_first_aid_command(
+    connection: psycopg.Connection, *, initiator_reference: str,
+    idempotency_key: str, patient_actor_public_id: str,
+    doctor_actor_public_id: str, damage_instance_public_id: str,
+    random_source=None,
+):
+    rng = random_source or secrets.SystemRandom()
+    with connection.transaction():
+        existing = connection.execute(
+            """SELECT command_id,public_id,command_type,command_status
+               FROM cmd_command WHERE initiator_reference=%s
+                 AND idempotency_key=%s FOR UPDATE""",
+            (initiator_reference, idempotency_key)).fetchone()
+        if existing:
+            if existing[2:] != ("determine_personal_first_aid", "completed"):
+                raise RuntimeError("Idempotency key belongs to another command")
+            return _load_first_aid_determination(
+                connection, existing[0], existing[1], True)
+        context, _ = _context(
+            connection, patient_actor_public_id, doctor_actor_public_id,
+            initiator_reference)
+        damage = connection.execute(
+            """SELECT damage_instance_id,target_actor_id,
+                      applied_campaign_day,applied_campaign_second
+               FROM health_damage_instance WHERE public_id=%s
+                 AND allocation_status='applied' FOR UPDATE""",
+            (damage_instance_public_id,)).fetchone()
+        if damage is None or damage[1] != context[0]:
+            raise ValueError("Applied injury does not belong to patient")
+        if connection.execute(
+            """SELECT 1 FROM cmd_personal_first_aid_link
+               WHERE damage_instance_id=%s""", (damage[0],)).fetchone():
+            raise ValueError("First Aid has already been applied to this injury")
+        elapsed = (context[4]-damage[2])*86400+context[5]-damage[3]
+        if elapsed < 0:
+            raise ValueError("Campaign clock precedes the injury")
+        if elapsed <= 300:
+            tier, multiplier = "full", 2
+        elif elapsed <= 3600:
+            tier, multiplier = "late", 1
+        else:
+            tier, multiplier = "expired", 0
+        dice = (rng.randint(1, 6), rng.randint(1, 6))
+        self_mod = -2 if context[0] == context[3] else 0
+        cross = -2 if (
+            context[7] is not None and context[8] is not None
+            and context[7] != context[8]) else 0
+        total = sum(dice)+context[6]+self_mod+cross
+        effect = total-8
+        points = max(0, effect)*multiplier
+        command_id, public_id = connection.execute(
+            """INSERT INTO cmd_command
+               (command_type,initiator_reference,idempotency_key)
+               VALUES ('determine_personal_first_aid',%s,%s)
+               RETURNING command_id,public_id""",
+            (initiator_reference, idempotency_key)).fetchone()
+        connection.execute(
+            """INSERT INTO cmd_personal_first_aid_determination
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,8,%s,%s,%s,%s,%s)""",
+            (command_id, context[1], context[0], context[3], damage[0],
+             context[4], context[5], context[2], context[6], self_mod, cross,
+             dice[0], dice[1], total, effect, elapsed, tier, multiplier, points))
+        for order, die in enumerate(dice, 1):
+            connection.execute(
+                """INSERT INTO cmd_random_draw
+                   (command_id,draw_group,draw_order,die_sides,result)
+                   VALUES (%s,'task',%s,6,%s)""", (command_id, order, die))
+        connection.execute(
+            """INSERT INTO cmd_domain_event
+               (command_id,event_order,event_type)
+               VALUES (%s,1,'personal_first_aid_determined')""",
+            (command_id,))
+        connection.execute(
+            """UPDATE cmd_command SET command_status='completed',
+                      completed_at=clock_timestamp() WHERE command_id=%s""",
+            (command_id,))
+        return _load_first_aid_determination(
+            connection, command_id, public_id, False)
+
+
+def apply_determined_personal_first_aid_command(
+    connection: psycopg.Connection, *, initiator_reference: str,
+    idempotency_key: str, determination_command_public_id: str,
+    allocations: tuple[tuple[str, int], ...],
+):
+    with connection.transaction():
+        determination = connection.execute(
+            """SELECT result.command_id,patient.public_id,doctor.public_id,
+                      damage.public_id,result.die_one,result.die_two,
+                      result.patient_version,patient.concurrency_version,
+                      result.campaign_day_number,result.campaign_second_of_day,
+                      clock.day_number,clock.second_of_day
+               FROM cmd_personal_first_aid_determination result
+               JOIN cmd_command command ON command.command_id=result.command_id
+               JOIN actor_actor patient ON patient.actor_id=result.patient_actor_id
+               JOIN actor_actor doctor ON doctor.actor_id=result.doctor_actor_id
+               JOIN health_damage_instance damage
+                 ON damage.damage_instance_id=result.damage_instance_id
+               JOIN camp_clock clock ON clock.campaign_id=result.campaign_id
+               WHERE command.public_id=%s
+                 AND command.initiator_reference=%s FOR UPDATE OF result""",
+            (determination_command_public_id, initiator_reference)).fetchone()
+        if determination is None:
+            raise ValueError("First Aid determination does not exist")
+        applied = connection.execute(
+            """SELECT treatment.public_id
+               FROM cmd_personal_first_aid_determination_application link
+               JOIN cmd_command treatment
+                 ON treatment.command_id=link.treatment_command_id
+               WHERE link.determination_command_id=%s""",
+            (determination[0],)).fetchone()
+        if applied:
+            existing = connection.execute(
+                """SELECT command_id,public_id FROM cmd_command
+                   WHERE initiator_reference=%s AND idempotency_key=%s
+                     AND command_type='apply_personal_first_aid'
+                     AND command_status='completed'""",
+                (initiator_reference, idempotency_key)).fetchone()
+            if existing and str(existing[1]) == str(applied[0]):
+                return _load(connection, existing[0], existing[1], True)
+            raise ValueError("First Aid determination has already been applied")
+        if determination[6] != determination[7] or (
+            determination[8], determination[9]
+        ) != (determination[10], determination[11]):
+            raise ValueError(
+                "First Aid determination is stale because patient state or "
+                "campaign time changed")
+        result = apply_personal_first_aid_command(
+            connection, initiator_reference=initiator_reference,
+            idempotency_key=idempotency_key,
+            patient_actor_public_id=str(determination[1]),
+            doctor_actor_public_id=str(determination[2]),
+            damage_instance_public_id=str(determination[3]),
+            allocations=allocations,
+            random_source=_FixedDice((determination[4], determination[5])))
+        treatment_id = connection.execute(
+            "SELECT command_id FROM cmd_command WHERE public_id=%s",
+            (result.command_public_id,)).fetchone()[0]
+        connection.execute(
+            """INSERT INTO cmd_personal_first_aid_determination_application
+               VALUES (%s,%s)""", (determination[0], treatment_id))
+        return result
 
 
 def resolve_personal_surgery_command(

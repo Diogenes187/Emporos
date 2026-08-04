@@ -409,3 +409,15 @@ def test_condition_and_recovery_controls_dispatch(monkeypatch):
     assert rest=={"actor_public_id":"actor","completed_hours":3.5,"idempotency_key":"rest-test"}
     assert recovery=={"actor_public_id":"actor","minutes_elapsed":2,"idempotency_key":"wake-test"}
     assert mental=={"actor_public_id":"actor","idempotency_key":"mental-test"}
+
+
+def test_first_aid_roll_and_allocation_dispatch(monkeypatch):
+    determined={};applied={}
+    monkeypatch.setattr(main_module,"determine_personal_first_aid",lambda **kwargs:determined.update(kwargs))
+    monkeypatch.setattr(main_module,"apply_determined_personal_first_aid",lambda **kwargs:applied.update(kwargs))
+    base="/campaigns/campaign/characters/actor/first-aid"
+    rolled=client.post(f"{base}/determine",data={"doctor_actor_public_id":"doctor","damage_instance_public_id":"damage","idempotency_key":"aid-roll"},follow_redirects=False)
+    restored=client.post(f"{base}/apply",data={"determination_command_public_id":"determination","strength_points":"2","dexterity_points":"0","endurance_points":"3","idempotency_key":"aid-apply"},follow_redirects=False)
+    assert rolled.status_code==303 and restored.status_code==303
+    assert determined=={"patient_actor_public_id":"actor","doctor_actor_public_id":"doctor","damage_instance_public_id":"damage","idempotency_key":"aid-roll"}
+    assert applied=={"determination_command_public_id":"determination","strength_points":2,"dexterity_points":0,"endurance_points":3,"idempotency_key":"aid-apply"}
