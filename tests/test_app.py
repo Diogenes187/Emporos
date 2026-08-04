@@ -257,3 +257,11 @@ def test_career_survival_dispatches_engine_roll(monkeypatch):
     assert response.status_code==303
     assert response.headers["location"]=="/crew?campaign=campaign"
     assert captured=={"actor_public_id":"actor","idempotency_key":"survival-test"}
+
+
+def test_career_rank_attempt_dispatches_player_decision(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"resolve_career_rank_attempt",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/career-rank-attempt",data={"attempt_kind":"commission","decision":"attempt","cascade_specialization":"skill.slug-pistol","idempotency_key":"commission-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured=={"actor_public_id":"actor","attempt_kind":"commission","decision":"attempt","cascade_specialization":"skill.slug-pistol","idempotency_key":"commission-test"}
