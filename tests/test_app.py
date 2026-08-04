@@ -421,6 +421,20 @@ def test_grapple_check_and_option_dispatch(monkeypatch):
     assert applied=={"grapple_public_id":"grapple","option_code":"damage","continue_grapple":True,"displacement_metres":0.0,"idempotency_key":"grapple-option"}
 
 
+def test_free_coup_and_extended_action_batch_dispatch(monkeypatch):
+    free={};coup={};started={};progress=[]
+    monkeypatch.setattr(main_module,"perform_combat_free_action",lambda **kwargs:free.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_combat_coup_de_grace",lambda **kwargs:coup.update(kwargs))
+    monkeypatch.setattr(main_module,"start_combat_extended_action",lambda **kwargs:started.update(kwargs))
+    monkeypatch.setattr(main_module,"progress_combat_extended_action",lambda **kwargs:progress.append(kwargs))
+    base="/campaigns/campaign/encounters/encounter/turns/actor"
+    responses=[client.post(f"{base}/free-actions",data={"action_reference":"Drop pack","idempotency_key":"free"},follow_redirects=False),client.post(f"{base}/coup-de-grace",data={"target_actor_public_id":"target","weapon_rule_code":"weapon","delivery_kind":"melee","idempotency_key":"coup"},follow_redirects=False),client.post(f"{base}/extended-actions/start",data={"task_reference":"Repair relay","characteristic_rule_code":"characteristic.education","skill_rule_code":"skill.electronics","time_frame_rule_code":"time-frame.1-round","idempotency_key":"start"},follow_redirects=False),client.post(f"{base}/extended-actions/advance",data={"idempotency_key":"advance"},follow_redirects=False),client.post(f"{base}/extended-actions/abandon",data={"idempotency_key":"abandon"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert free["action_reference"]=="Drop pack" and coup["delivery_kind"]=="melee"
+    assert started["task_reference"]=="Repair relay"
+    assert [item["operation"] for item in progress]==["advance","abandon"]
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

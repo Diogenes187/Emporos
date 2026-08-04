@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 105
-- Engine-only review candidates: 65
+- Direct web-application wrappers: 110
+- Engine-only review candidates: 60
 
 ## Engine-only review candidates
 
@@ -27,7 +27,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `competitive_gambling.py` | `resolve_competitive_gambling_command` |
 | `computer.py` | `perform_computer_basic_operation_command` |
 | `conditions_runtime.py` | `set_personal_battlefield_conditions_command` |
-| `coup_de_grace_runtime.py` | `resolve_personal_coup_de_grace_command` |
 | `devices.py` | `resolve_device_operation_command` |
 | `encounters.py` | `set_encounter_attitude_command` |
 | `encounters.py` | `attempt_attitude_influence_command` |
@@ -35,12 +34,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `explosions_runtime.py` | `declare_personal_explosion_command` |
 | `explosions_runtime.py` | `declare_personal_explosion_reaction_command` |
 | `explosions_runtime.py` | `resolve_personal_explosion_command` |
-| `extended_actions_runtime.py` | `start_personal_extended_action_command` |
-| `extended_actions_runtime.py` | `advance_personal_extended_action_command` |
-| `extended_actions_runtime.py` | `abandon_personal_extended_action_command` |
 | `extended_actions_runtime.py` | `resolve_personal_extended_action_interruption_command` |
 | `extreme_range_runtime.py` | `authorize_extreme_range_command` |
-| `free_actions_runtime.py` | `perform_personal_free_action_command` |
 | `gambling.py` | `resolve_house_gambling_command` |
 | `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
 | `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
@@ -136,12 +131,17 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `commands.py` | `resolve_personal_attack_command` |
 | `commands.py` | `apply_personal_damage_command` |
 | `commerce_setup.py` | `prepare_trading_command` |
+| `coup_de_grace_runtime.py` | `resolve_personal_coup_de_grace_command` |
 | `crew_assignments.py` | `assign_ship_crew_command` |
 | `crew_payroll.py` | `pay_ship_crew_command` |
 | `encounters.py` | `create_encounter_command` |
 | `encounters.py` | `transition_encounter_mode_command` |
 | `encounters.py` | `add_encounter_participant_command` |
 | `equipment_purchases.py` | `purchase_personal_equipment_command` |
+| `extended_actions_runtime.py` | `start_personal_extended_action_command` |
+| `extended_actions_runtime.py` | `advance_personal_extended_action_command` |
+| `extended_actions_runtime.py` | `abandon_personal_extended_action_command` |
+| `free_actions_runtime.py` | `perform_personal_free_action_command` |
 | `freight_contracts.py` | `accept_freight_contract_command` |
 | `freight_delivery.py` | `deliver_freight_contract_command` |
 | `grappling_runtime.py` | `resolve_personal_grapple_check_command` |

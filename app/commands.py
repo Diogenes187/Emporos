@@ -65,6 +65,9 @@ from engine.combat_resolution_runtime import resolve_personal_combat_command  # 
 from engine.armor_runtime import equip_personal_armor_command,unequip_personal_armor_command  # noqa: E402
 from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
 from engine.grappling_runtime import apply_personal_grapple_option_command, resolve_personal_grapple_check_command  # noqa: E402
+from engine.coup_de_grace_runtime import resolve_personal_coup_de_grace_command  # noqa: E402
+from engine.free_actions_runtime import perform_personal_free_action_command  # noqa: E402
+from engine.extended_actions_runtime import abandon_personal_extended_action_command, advance_personal_extended_action_command, start_personal_extended_action_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
@@ -357,6 +360,24 @@ def resolve_combat_grapple(*,encounter_public_id:str,challenger_actor_public_id:
 def apply_combat_grapple_option(*,grapple_public_id:str,option_code:str,continue_grapple:bool,displacement_metres:float,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return apply_personal_grapple_option_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,grapple_public_id=grapple_public_id,option_code=option_code,continue_grapple=continue_grapple,displacement_metres=displacement_metres)
+
+def perform_combat_free_action(*,encounter_public_id:str,actor_public_id:str,action_reference:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return perform_personal_free_action_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,action_reference=action_reference,assessed_cost="free")
+
+def resolve_combat_coup_de_grace(*,encounter_public_id:str,actor_public_id:str,target_actor_public_id:str,weapon_rule_code:str,delivery_kind:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    relationship="close-quarters" if delivery_kind=="melee" else "adjacent"
+    with psycopg.connect(url) as connection:return resolve_personal_coup_de_grace_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,target_actor_public_id=target_actor_public_id,weapon_rule_code=weapon_rule_code,delivery_kind=delivery_kind,range_relationship=relationship,helpless_basis="unconscious",helpless_evidence="Authoritative actor_personal_condition.unconscious state")
+
+def start_combat_extended_action(*,encounter_public_id:str,actor_public_id:str,task_reference:str,characteristic_rule_code:str,skill_rule_code:str,time_frame_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return start_personal_extended_action_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,task_reference=task_reference,characteristic_rule_code=characteristic_rule_code,skill_rule_code=skill_rule_code,time_frame_rule_code=time_frame_rule_code)
+
+def progress_combat_extended_action(*,encounter_public_id:str,actor_public_id:str,operation:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    command=advance_personal_extended_action_command if operation=="advance" else abandon_personal_extended_action_command
+    with psycopg.connect(url) as connection:return command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id)
 
 def complete_combat_turn(*,encounter_public_id:str,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
