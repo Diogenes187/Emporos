@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 158
-- Engine-only review candidates: 12
+- Direct web-application wrappers: 160
+- Engine-only review candidates: 10
 
 ## Engine-only review candidates
 
@@ -18,8 +18,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
 | `medical_runtime.py` | `apply_personal_medical_care_command` |
 | `misc_actions_runtime.py` | `perform_personal_miscellaneous_action_command` |
-| `social_content.py` | `select_social_content_command` |
-| `social_content.py` | `create_patron_brief_command` |
 | `source_review.py` | `review_campaign_source_page_command` |
 | `source_review.py` | `publish_campaign_source_intro_command` |
 | `source_review.py` | `reveal_campaign_source_excerpt_command` |
@@ -168,6 +166,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ship_mortgages.py` | `pay_ship_mortgage_command` |
 | `ships.py` | `acquire_ship_command` |
 | `skill_training.py` | `allocate_skill_training_week_command` |
+| `social_content.py` | `select_social_content_command` |
+| `social_content.py` | `create_patron_brief_command` |
 | `source_library.py` | `ingest_campaign_source_command` |
 | `spacecraft_journeys.py` | `start_spacecraft_journey_leg_command` |
 | `spacecraft_journeys.py` | `complete_spacecraft_journey_leg_command` |

@@ -87,6 +87,7 @@ from engine.extended_actions_runtime import resolve_personal_extended_action_int
 from engine.scenes import SceneFact,create_scene_snapshot_command  # noqa: E402
 from engine.tasks import resolve_species_hive_mentality_command,resolve_species_naturally_curious_command,evaluate_species_low_light_visibility_command  # noqa: E402
 from engine.ground_starship_runtime import resolve_ground_starship_volley_attacks_command,finalize_ground_starship_volley_command  # noqa: E402
+from engine.social_content import PatronObjective,PatronRequirement,select_social_content_command,create_patron_brief_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
 from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
@@ -522,6 +523,16 @@ def resolve_ground_starship_volley(*,target_ship_public_id:str,target_range_code
 def finalize_ground_starship_volley(*,volley_command_public_id:str,primary_attack_order:int,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return finalize_ground_starship_volley_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,volley_command_public_id=volley_command_public_id,primary_attack_order=primary_attack_order)
+
+def select_social_content(*,encounter_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return select_social_content_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id)
+
+def create_patron_brief(*,campaign_public_id:str,brief_code:str,patron_name_reference:str,role_reference:str,reward_summary:str,player_mission_summary:str,requirement_reference:str,truth_one:str,truth_two:str,objective_actor_role:str,objective_kind:str,objective_reference:str,objective_priority:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    requirements=(PatronRequirement("resource",requirement_reference),)
+    objectives=(PatronObjective(objective_actor_role,objective_kind,objective_reference,objective_priority),)
+    with psycopg.connect(url) as connection:return create_patron_brief_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,brief_code=brief_code,patron_name_reference=patron_name_reference,role_reference=role_reference,reward_summary=reward_summary,player_mission_summary=player_mission_summary,requirements=requirements,truth_variants=(truth_one,truth_two),objectives=objectives)
 
 def perform_ship_transport_operation(*,actor_public_id:str,ship_public_id:str,operation_kind:str,operation_reference:str,challenging_conditions:bool,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

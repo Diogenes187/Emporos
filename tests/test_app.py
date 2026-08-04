@@ -666,6 +666,15 @@ def test_species_traits_and_ground_starship_dispatch(monkeypatch):
     assert light["human_visibility_metres"]==12.5 and volley["battery_quantity"]==4 and final["primary_attack_order"]==2
 
 
+def test_social_content_and_patron_brief_dispatch(monkeypatch):
+    selection={};brief={}
+    monkeypatch.setattr(main_module,"select_social_content",lambda **kwargs:selection.update(kwargs));monkeypatch.setattr(main_module,"create_patron_brief",lambda **kwargs:brief.update(kwargs))
+    selected=client.post("/campaigns/campaign/encounters/encounter/social-content",data={"idempotency_key":"selection"},follow_redirects=False)
+    created=client.post("/campaigns/campaign/patron-briefs",data={"brief_code":"courier","patron_name_reference":"Factor","role_reference":"Broker","reward_summary":"Cr 2000","player_mission_summary":"Recover dispatch","requirement_reference":"secure case","truth_one":"Courier defected","truth_two":"Courier captured","objective_actor_role":"rival broker","objective_kind":"acquire","objective_reference":"Take the case","objective_priority":"4","idempotency_key":"brief"},follow_redirects=False)
+    assert selected.status_code==303 and created.status_code==303
+    assert selection["encounter_public_id"]=="encounter" and brief["truth_two"]=="Courier captured" and brief["objective_priority"]==4
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
