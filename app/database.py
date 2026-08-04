@@ -98,6 +98,7 @@ class CampaignReader:
                 SELECT actor.actor_id,actor.public_id::text AS public_id,actor.name,
                        actor.concurrency_version,
                        COALESCE(profile.character_name,actor.name) AS character_name,
+                       profile.gender_identity,profile.appearance,
                        position.name AS location_name,
                        lifepath.age_years,lifepath.lifepath_status,
                        (SELECT count(*) FROM actor_skill skill
@@ -119,6 +120,7 @@ class CampaignReader:
             ).fetchall()
             for actor in actors:
                 actor_id=actor.pop("actor_id")
+                actor["personal_goals"]=[row["goal_text"] for row in connection.execute("""SELECT goal.goal_text FROM actor_current_character_profile profile JOIN actor_character_personal_goal goal USING(character_profile_revision_id) WHERE profile.actor_id=%s ORDER BY goal.goal_order""",(actor_id,)).fetchall()]
                 actor["characteristics"]=connection.execute("SELECT rule.rule_code AS code,rule.name,definition.abbreviation,score.current_value AS current,score.maximum_value AS maximum FROM actor_characteristic score JOIN rule_characteristic definition ON definition.rule_id=score.characteristic_rule_id JOIN rule_rule rule ON rule.rule_id=definition.rule_id WHERE score.actor_id=%s ORDER BY definition.display_order",(actor_id,)).fetchall()
                 actor["skills"]=connection.execute("SELECT rule.rule_code AS code,rule.name,skill.skill_level FROM actor_skill skill JOIN rule_rule rule ON rule.rule_id=skill.skill_rule_id WHERE skill.actor_id=%s ORDER BY rule.name",(actor_id,)).fetchall()
                 actor["careers"]=connection.execute("""SELECT career_rule.name AS career_name,assignment_rule.name AS assignment_name,stint.entry_method,stint.stint_order,stint.terms_completed,stint.rank_number,stint.stint_status,count(term.career_term_id) AS recorded_terms FROM actor_career_stint stint JOIN rule_rule career_rule ON career_rule.rule_id=stint.career_rule_id LEFT JOIN rule_rule assignment_rule ON assignment_rule.rule_id=stint.assignment_rule_id LEFT JOIN actor_career_term term USING(career_stint_id) WHERE stint.actor_id=%s GROUP BY stint.career_stint_id,career_rule.name,assignment_rule.name ORDER BY stint.stint_order""",(actor_id,)).fetchall()

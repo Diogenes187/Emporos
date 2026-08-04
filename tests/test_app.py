@@ -370,3 +370,14 @@ def test_career_aging_workflow_dispatch(monkeypatch):
     assert applied=={"actor_public_id":"actor","physical_characteristic_codes":("characteristic.strength","characteristic.dexterity"),"mental_characteristic_code":"characteristic.education","idempotency_key":"aging-apply-test"}
     assert priced=={"actor_public_id":"actor","idempotency_key":"aging-cost-test"}
     assert resolved=={"actor_public_id":"actor","resolution_kind":"pay","idempotency_key":"aging-pay-test"}
+
+
+def test_final_details_and_character_completion_dispatch(monkeypatch):
+    details={};finished={}
+    monkeypatch.setattr(main_module,"update_character_final_details",lambda **kwargs:details.update(kwargs))
+    monkeypatch.setattr(main_module,"finish_character_creation",lambda **kwargs:finished.update(kwargs))
+    saved=client.post("/campaigns/campaign/characters/actor/final-details",data={"character_name":"Sera Venn","gender_identity":"woman","appearance":"Weathered flight coat","personal_goals":["Find the survey vessel","","Earn command"],"idempotency_key":"details-test"},follow_redirects=False)
+    completed=client.post("/campaigns/campaign/characters/actor/finish-creation",data={"idempotency_key":"finish-test"},follow_redirects=False)
+    assert saved.status_code==303 and completed.status_code==303
+    assert details=={"actor_public_id":"actor","character_name":"Sera Venn","gender_identity":"woman","appearance":"Weathered flight coat","personal_goals":("Find the survey vessel","Earn command"),"idempotency_key":"details-test"}
+    assert finished=={"actor_public_id":"actor","idempotency_key":"finish-test"}
