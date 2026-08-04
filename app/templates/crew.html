@@ -94,6 +94,14 @@
 </form></article>{% endfor %}</div>
 {% endif %}
 </div>
+{% elif actor.rank_zero_award %}
+<form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/rank-zero-award">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-r0-{{ actor_index }}">
+<strong>Enter at Rank 0{% if actor.rank_zero_award.title %}: {{ actor.rank_zero_award.title }}{% endif %}</strong>
+<p>{{ actor.rank_zero_award.source_grant_text }}</p>
+{% if actor.rank_zero_award.cascade_skill %}<label><span>{{ actor.rank_zero_award.skill_name }} specialty</span><select name="cascade_specialization" required>{% for specialty in actor.rank_zero_award.specializations %}<option value="{{ specialty.rule_code }}">{{ specialty.name }}</option>{% endfor %}</select></label>{% endif %}
+<button type="submit">Apply Rank 0 award</button>
+</form>
 {% endif %}
 {% endif %}
 </details>

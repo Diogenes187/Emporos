@@ -216,3 +216,27 @@ def test_later_career_basic_training_dispatches_selected_service_result(monkeypa
     assert response.status_code == 303
     assert captured["selected_roll_value"] == 4
     assert captured["cascade_specializations"] == {}
+
+
+def test_rank_zero_award_dispatches_specialization_and_returns_to_crew(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "apply_career_rank_zero_award",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/characters/actor/rank-zero-award",
+        data={
+            "cascade_specialization": "skill.slug-pistol",
+            "idempotency_key": "rank-zero-test",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/crew?campaign=campaign"
+    assert captured == {
+        "actor_public_id": "actor",
+        "cascade_specialization": "skill.slug-pistol",
+        "idempotency_key": "rank-zero-test",
+    }
