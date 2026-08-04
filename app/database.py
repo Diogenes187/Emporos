@@ -138,6 +138,7 @@ class CampaignReader:
                        (SELECT count(*) FROM ship_component component WHERE component.ship_id=ship.ship_id AND component.operational_status<>'removed') AS component_count,
                        (SELECT count(*) FROM ship_crew_position position WHERE position.ship_id=ship.ship_id AND position.position_status<>'removed') AS crew_position_count,
                        (SELECT actor.name FROM ship_legal_interest interest JOIN actor_actor actor ON actor.actor_id=interest.actor_id WHERE interest.ship_id=ship.ship_id AND interest.interest_kind='ownership' AND interest.ended_at IS NULL LIMIT 1) AS owner_name,
+                       NOT EXISTS(SELECT 1 FROM journey_journey active_journey WHERE active_journey.ship_id=ship.ship_id AND active_journey.journey_status IN('planning','ready','underway')) AS journey_available,
                        COALESCE((SELECT jsonb_agg(jsonb_build_object('code',resource.resource_type_code,'current',resource.current_quantity,'capacity',resource.capacity_quantity) ORDER BY resource.resource_type_code) FROM ship_resource resource WHERE resource.ship_id=ship.ship_id),'[]'::jsonb) AS resources
                 FROM ship_ship ship
                 JOIN ship_class class
