@@ -49,7 +49,7 @@ from engine.health_runtime import (
     resolve_personal_unconscious_recovery_command,
 )
 from engine.tasks import resolve_actor_task_command
-from engine.injury_runtime import resolve_personal_natural_healing_command
+from engine.injury_runtime import apply_determined_personal_natural_healing_command, determine_personal_natural_healing_command, resolve_personal_natural_healing_command
 from engine.medical_runtime import (
     apply_determined_personal_first_aid_command,
     apply_determined_personal_surgery_command,
@@ -2469,12 +2469,18 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                          AND state.actor_id=%s
                          AND rule.rule_code='characteristic.dexterity'""",
                     (actor_ids[actors[1]],))
-                healed = resolve_personal_natural_healing_command(
+                healing_roll = determine_personal_natural_healing_command(
                     connection, initiator_reference="referee",
-                    idempotency_key="wounded-natural-healing",
+                    idempotency_key="wounded-natural-healing-determine",
                     actor_public_id=actors[1], lifestyle="full_rest",
-                    allocations=(("characteristic.dexterity", 2),),
                     random_source=FixedRandom((2,)),
+                )
+                self.assertEqual(healing_roll.signed_points,2)
+                healed = apply_determined_personal_natural_healing_command(
+                    connection,initiator_reference="referee",
+                    idempotency_key="wounded-natural-healing",
+                    determination_command_public_id=healing_roll.command_public_id,
+                    allocations=(("characteristic.dexterity",2),),
                 )
                 self.assertEqual(healed.healing_die_result, 2)
                 self.assertEqual(healed.signed_points, 2)

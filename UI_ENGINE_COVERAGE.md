@@ -4,9 +4,9 @@ This generated inventory identifies authoritative engine commands with a direct 
 
 ## Snapshot
 
-- Engine command entry points: 168
+- Engine command entry points: 170
 - Direct web-application wrappers: 99
-- Engine-only review candidates: 69
+- Engine-only review candidates: 71
 
 ## Engine-only review candidates
 
@@ -49,6 +49,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
 | `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
+| `injury_runtime.py` | `determine_personal_natural_healing_command` |
+| `injury_runtime.py` | `apply_determined_personal_natural_healing_command` |
 | `leadership.py` | `begin_leadership_coordination_command` |
 | `leadership.py` | `allocate_leadership_coordination_command` |
 | `liaison.py` | `resolve_liaison_negotiation_command` |
