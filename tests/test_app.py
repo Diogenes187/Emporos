@@ -293,3 +293,12 @@ def test_reenlistment_roll_and_choice_dispatch_engine_commands(monkeypatch):
     assert roll.status_code==303 and choice.status_code==303
     assert rolled=={"actor_public_id":"actor","idempotency_key":"reenlist-roll-test"}
     assert decided=={"actor_public_id":"actor","decision":"continue","idempotency_key":"reenlist-choice-test"}
+
+
+def test_survival_mishap_dispatches_engine_command(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"resolve_survival_mishap",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/survival-mishap",data={"idempotency_key":"mishap-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert response.headers["location"]=="/crew?campaign=campaign"
+    assert captured=={"actor_public_id":"actor","idempotency_key":"mishap-test"}
