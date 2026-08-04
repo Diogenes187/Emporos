@@ -1518,6 +1518,7 @@ def declare_personal_attack_command(
     intelligent_weapon_suppressed: bool = False,
     intelligent_weapon_suppression_referee_reference: str | None = None,
     intelligent_weapon_suppression_reason: str | None = None,
+    require_actor_holding: bool = False,
 ) -> DeclaredPersonalAttack:
     with connection.transaction():
         existing = connection.execute(
@@ -1660,6 +1661,14 @@ def declare_personal_attack_command(
             if not eligible:
                 raise ValueError(
                     "Actor's species has no source-defined natural weapon")
+        elif require_actor_holding:
+            held = connection.execute(
+                """SELECT holding.quantity
+                   FROM actor_item_holding holding
+                   WHERE holding.actor_id=%s AND holding.item_rule_id=%s""",
+                (state[2],state[6])).fetchone()
+            if held is None or held[0] < 1:
+                raise ValueError("Actor does not hold the declared weapon")
         if (burst_size_rounds is None) != (burst_option is None):
             raise ValueError("Burst size and burst option must be selected together")
         if panic_fire and (burst_size_rounds is not None or suppression_fire):

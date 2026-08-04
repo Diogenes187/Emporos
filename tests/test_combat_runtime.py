@@ -174,6 +174,34 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                 ).fetchone()
                 self.assertEqual(state, (14, 2))
 
+    def test_player_attack_requires_a_held_weapon_when_enforced(self):
+        with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
+            with connection.transaction(force_rollback=True):
+                encounter,actors=self._initialized_combat(connection)
+                begin_personal_turn_command(
+                    connection,initiator_reference="player",
+                    idempotency_key="held-begin",encounter_public_id=encounter,
+                    actor_public_id=actors[0])
+                arguments=dict(
+                    initiator_reference="player",encounter_public_id=encounter,
+                    attacker_actor_public_id=actors[0],target_actor_public_id=actors[1],
+                    item_rule_code="equipment.weapon.dagger",
+                    attack_profile_code="close-quarters",
+                    range_rule_code="combat.range.personal",require_actor_holding=True)
+                with self.assertRaisesRegex(ValueError,"does not hold"):
+                    declare_personal_attack_command(
+                        connection,idempotency_key="held-rejected",**arguments)
+                connection.execute(
+                    """INSERT INTO actor_item_holding(actor_id,item_rule_id,quantity)
+                       SELECT actor.actor_id,weapon.rule_id,1
+                       FROM actor_actor actor CROSS JOIN rule_rule weapon
+                       WHERE actor.public_id=%s
+                         AND weapon.rule_code='equipment.weapon.dagger'""",
+                    (actors[0],))
+                declared=declare_personal_attack_command(
+                    connection,idempotency_key="held-accepted",**arguments)
+                self.assertEqual(declared.item_rule_code,"equipment.weapon.dagger")
+
     def test_slow_metabolism_penalty_uses_relational_trait_assignment(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
             with connection.transaction(force_rollback=True):
