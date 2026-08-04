@@ -556,6 +556,14 @@ def test_species_starship_encounter_and_trade_work_dispatch(monkeypatch):
     assert started["employer_account_public_id"]=="employer" and completed["work_week_public_id"]=="week"
 
 
+def test_armor_resource_usage_dispatches_from_crew(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"consume_actor_armor_resources",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/armor/armor/usage",data={"laser_hits":"2","life_support_seconds_used":"60","idempotency_key":"armor-use"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured=={"actor_public_id":"actor","item_public_id":"armor","laser_hits":2,"life_support_seconds_used":60,"idempotency_key":"armor-use"}
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

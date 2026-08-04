@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 133
-- Engine-only review candidates: 37
+- Direct web-application wrappers: 134
+- Engine-only review candidates: 36
 
 ## Engine-only review candidates
 
@@ -15,7 +15,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `animal_skills.py` | `resolve_animal_skill_operation_command` |
 | `animals.py` | `set_animal_reaction_context_command` |
 | `animals.py` | `resolve_animal_reaction_command` |
-| `armor_runtime.py` | `apply_personal_armor_usage_command` |
 | `combat_runtime.py` | `move_species_flyer_command` |
 | `combat_runtime.py` | `resolve_species_great_leap_command` |
 | `comms_runtime.py` | `set_battlefield_communication_command` |
@@ -57,6 +56,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ammunition_purchases.py` | `purchase_personal_ammunition_command` |
 | `armor_runtime.py` | `equip_personal_armor_command` |
 | `armor_runtime.py` | `unequip_personal_armor_command` |
+| `armor_runtime.py` | `apply_personal_armor_usage_command` |
 | `bribery.py` | `attempt_bribery_command` |
 | `bribery.py` | `resolve_bribery_consequence_command` |
 | `broker_carousing.py` | `resolve_broker_operation_command` |

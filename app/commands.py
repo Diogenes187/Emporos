@@ -485,6 +485,10 @@ def complete_trade_work_week(*,work_week_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return complete_trade_work_week_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,work_week_public_id=work_week_public_id)
 
+def consume_actor_armor_resources(*,actor_public_id:str,item_public_id:str,laser_hits:int,life_support_seconds_used:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return apply_personal_armor_usage_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,item_public_id=item_public_id,laser_hits=laser_hits,life_support_seconds_used=life_support_seconds_used)
+
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return recover_psionic_strength_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)
