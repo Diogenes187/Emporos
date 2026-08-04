@@ -5,6 +5,7 @@ primary_region = "dfw"
   dockerfile = "Dockerfile"
 
 [env]
+  EMPOROS_COOKIE_SECURE = "true"
   EMPOROS_UPLOAD_ROOT = "/data/uploads"
   PORT = "8080"
 

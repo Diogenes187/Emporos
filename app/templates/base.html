@@ -43,7 +43,7 @@
         <strong>{{ campaign.name if campaign else 'No campaign selected' }}</strong>
       </div>
       <div class="topbar-center">{% if campaign %}Day {{ campaign.day_number }} · {{ campaign.play_mode|replace('_',' ')|title }}{% else %}Awaiting campaign{% endif %}</div>
-      <button class="profile">RW</button>
+      <div class="account-menu"><span class="profile">{{ current_user.display_name[:2]|upper }}</span><form method="post" action="/logout"><button class="quiet" type="submit">Sign out</button></form></div>
     </header>
     {% block content %}{% endblock %}
   </main>

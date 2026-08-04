@@ -132,3 +132,22 @@ main > .panel > .receipt form label { display: grid; gap: 5px; }
   main > .panel > form:not(.market-form) { align-items: stretch; flex-direction: column; }
   main > .panel > form:not(.market-form) > * { width: 100%; }
 }
+
+.account-menu { align-items: center; display: flex; gap: 9px; justify-self: end; }
+.account-menu form { margin: 0; }
+.auth-body { display: grid; grid-template-columns: 1fr; min-height: 100vh; place-items: center; }
+.auth-shell { background: transparent; padding: 24px; width: min(100%, 500px); }
+.auth-card { background: rgba(255,255,255,.96); border: 1px solid var(--line); border-radius: 9px; box-shadow: 0 18px 55px rgba(24,45,58,.14); padding: 38px; }
+.auth-brand { align-items: center; color: var(--ink); display: flex; gap: 12px; margin-bottom: 32px; text-decoration: none; }
+.auth-brand img { border: 1px solid #a77b30; border-radius: 50%; height: 48px; width: 48px; }
+.auth-brand span { display: flex; flex-direction: column; letter-spacing: .15em; }
+.auth-brand small { color: var(--muted); font-size: 8px; margin-top: 3px; }
+.auth-card > small { color: var(--gold); font-size: 9px; letter-spacing: .16em; }
+.auth-card h1 { font: 31px Georgia,serif; margin: 8px 0; }
+.auth-card > p { color: var(--muted); line-height: 1.55; }
+.auth-card form { display: grid; gap: 14px; margin-top: 24px; }
+.auth-card label { display: grid; gap: 6px; }
+.auth-card input { width: 100%; }
+.auth-error { background: #fff1ee; border: 1px solid #dbb2a9; border-radius: 4px; color: #7e3025; margin-top: 18px; padding: 11px 13px; }
+.auth-switch { border-top: 1px solid var(--line); margin: 24px 0 0!important; padding-top: 18px; text-align: center; }
+.auth-switch a { color: var(--blue); font-weight: 700; }

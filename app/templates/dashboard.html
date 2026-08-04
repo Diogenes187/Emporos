@@ -32,6 +32,14 @@
     <table>{% if campaign and campaign.actors %}{% for actor in campaign.actors[:3] %}<tr><td>ACTOR</td><td>{{ actor.character_name }}</td><td>{{ actor.skill_count }} trained skills</td><td class="positive">Loaded</td></tr>{% endfor %}{% else %}<tr><td>—</td><td>No campaign events to display</td><td>State is not fabricated</td><td>Empty</td></tr>{% endif %}</table>
   </article>
 </section>
+{% if campaign and campaign_role == 'owner' %}<section class="campaign-picker panel">
+  <header><div><small>CAMPAIGN ACCESS</small><h2>Invite a registered player</h2></div><span class="tag">OWNER</span></header>
+  <form class="campaign-create" method="post" action="/campaigns/{{ campaign.public_id }}/invitations">
+    <label><span>Player email</span><input type="email" name="email" required placeholder="player@example.com"></label>
+    <button type="submit">Create private invitation</button>
+  </form>
+  {% if invite_created %}<div class="receipt"><strong>Invitation ready</strong><span>Send this private link to the matching account:</span><input readonly value="{{ request.base_url }}join/{{ invite_created }}" aria-label="Invitation link"></div>{% endif %}
+</section>{% endif %}
 <section id="campaign-registry" class="campaign-picker panel">
   <header><div><small>CAMPAIGN REGISTRY</small><h2>Select or create campaign</h2></div></header>
   <form class="campaign-create" method="post" action="/campaigns">

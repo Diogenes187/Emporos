@@ -2,6 +2,15 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 import app.main as main_module
+from app.auth import User
+
+
+main_module.user_for_session = lambda token: User(
+    -1, "test-user", "test@emporos.invalid", "Test User"
+)
+main_module.can_access_campaign = lambda user_id, campaign_id: True
+main_module.campaign_role = lambda user_id, campaign_id: "owner"
+main_module.grant_campaign_owner = lambda campaign_id, user_id: None
 
 
 client = TestClient(app)

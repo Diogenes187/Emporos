@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ 'Create account' if mode == 'register' else 'Sign in' }} · Emporos</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}?v=20260804">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/theme-light.css') }}?v=20260804">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/polish.css') }}?v=20260804b">
+</head>
+<body class="auth-body">
+  <main class="auth-shell">
+    <section class="auth-card">
+      <a class="auth-brand" href="/"><img src="{{ url_for('logos', path='emporos_thumbnail_256.jpg') }}" alt=""><span><strong>EMPOROS</strong><small>Free Trader Registry</small></span></a>
+      <small>SECURE CAMPAIGN ACCESS</small>
+      <h1>{{ 'Create your account' if mode == 'register' else 'Return to your campaigns' }}</h1>
+      <p>Campaign records remain private to their owner and invited crew.</p>
+      {% if error %}<div class="auth-error" role="alert">{{ error }}</div>{% endif %}
+      <form method="post" action="/{{ mode }}">
+        {% if mode == 'login' %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <label><span>Email</span><input type="email" name="email" autocomplete="email" required></label>
+        {% if mode == 'register' %}<label><span>Display name</span><input name="display_name" autocomplete="name" required maxlength="80"></label>{% endif %}
+        <label><span>Password</span><input type="password" name="password" autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}" minlength="10" required></label>
+        <button class="primary" type="submit">{{ 'Create secure account' if mode == 'register' else 'Sign in' }}</button>
+      </form>
+      <p class="auth-switch">{% if mode == 'register' %}Already registered? <a href="/login">Sign in</a>{% else %}New to Emporos? <a href="/register">Create an account</a>{% endif %}</p>
+    </section>
+  </main>
+</body>
+</html>

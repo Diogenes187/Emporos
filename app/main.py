@@ -1,12 +1,17 @@
 from pathlib import Path
+import re
 import uuid
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
+from app.auth import (SESSION_COOKIE, accept_invitation, authenticate,
+                      campaign_role, can_access_campaign, create_invitation,
+                      create_session, grant_campaign_owner, register,
+                      revoke_session, secure_cookie, user_for_session)
 from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure, apply_career_basic_training, apply_career_rank_zero_award, declare_career_anagathics, attempt_career_survival, resolve_career_rank_attempt, apply_career_term_training, complete_career_term, determine_career_reenlistment, decide_career_reenlistment, resolve_survival_mishap, determine_career_injury, apply_career_injury, resolve_career_medical_care, determine_injury_crisis_cost, resolve_injury_crisis, initialize_career_muster, roll_career_benefit, resolve_career_weapon_benefit, determine_career_aging, apply_career_aging, determine_aging_crisis_cost, resolve_aging_crisis, update_character_final_details, finish_character_creation, hasten_combatant, delay_combat_turn, resume_combat_turn, forfeit_combat_turn, change_combat_stance, set_combat_cover, apply_personal_fatigue, complete_personal_fatigue_rest, resolve_personal_unconscious_recovery, resolve_personal_mental_healing, determine_personal_first_aid, apply_determined_personal_first_aid, determine_personal_surgery, apply_determined_personal_surgery, determine_personal_medical_care, apply_determined_personal_medical_care, determine_personal_natural_healing, apply_determined_personal_natural_healing, spend_combat_action, aim_combatant_for_kill, resolve_combat_grapple, apply_combat_grapple_option, perform_combat_free_action, resolve_combat_coup_de_grace, start_combat_extended_action, progress_combat_extended_action, activate_self_psionic_power, recover_actor_psionic_strength, set_actor_telepathic_shield, send_psionic_thought, perform_streetwise_operation, attempt_bribe, resolve_bribe_consequence, perform_carousing_influence, gamble_against_house, perform_recon_operation, perform_survival_operation, perform_ship_transport_operation, perform_regulatory_operation, perform_basic_computer_operation, perform_device_operation, begin_leadership_coordination, allocate_leadership_coordination, assign_actor_language, decipher_language_specimen, train_actor_skill_week, assign_actor_species, check_for_starship_encounter, start_trade_work_week, complete_trade_work_week, consume_actor_armor_resources, set_battlefield_communication, apply_combat_initiative_support, move_combatant_in_flight, resolve_combatant_great_leap, set_social_attitude, attempt_social_influence, perform_animal_skill_operation, set_animal_reaction_context, resolve_animal_reaction, advance_environmental_exposure, resolve_competitive_gambling, resolve_liaison_negotiation, resolve_steward_service, set_battlefield_conditions, declare_combat_explosion, react_to_combat_explosion, resolve_combat_explosion, create_scene_snapshot, resolve_species_hive_mentality, resolve_species_naturally_curious, evaluate_species_low_light, resolve_ground_starship_volley, finalize_ground_starship_volley
 from app.commands import select_social_content,create_patron_brief,authorize_extreme_range
 
@@ -21,6 +26,28 @@ app.mount(
     StaticFiles(directory=ROOT / "logos", check_dir=False),
     name="logos",
 )
+
+PUBLIC_PATHS = {"/health", "/login", "/register"}
+CAMPAIGN_PATH = re.compile(r"^/(?:api/)?campaigns/([^/]+)")
+
+
+@app.middleware("http")
+async def require_account_and_campaign_access(request: Request, call_next):
+    path = request.url.path
+    if path in PUBLIC_PATHS or path.startswith("/static/") or path.startswith("/logos/"):
+        return await call_next(request)
+    user = user_for_session(request.cookies.get(SESSION_COOKIE))
+    if user is None:
+        if path.startswith("/api/"):
+            return JSONResponse({"detail": "Authentication required"}, status_code=401)
+        destination = path + (f"?{request.url.query}" if request.url.query else "")
+        return RedirectResponse(url=f"/login?next={destination}", status_code=303)
+    request.state.user = user
+    match = CAMPAIGN_PATH.match(path)
+    campaign_id = match.group(1) if match else request.query_params.get("campaign")
+    if campaign_id and not can_access_campaign(user.user_id, campaign_id):
+        return JSONResponse({"detail": "Campaign not found"}, status_code=404)
+    return await call_next(request)
 
 
 NAVIGATION = (
@@ -288,6 +315,9 @@ def page_context(request: Request, active: str, campaign=None, **values):
         "navigation": NAVIGATION,
         "active": active,
         "campaign": campaign,
+        "current_user": getattr(request.state, "user", None),
+        "campaign_role": (campaign_role(request.state.user.user_id, campaign["public_id"])
+                          if campaign and getattr(request.state, "user", None) else None),
         "campaign_query": (
             f"?campaign={campaign['public_id']}" if campaign else ""
         ),
@@ -305,9 +335,78 @@ def health():
     }
 
 
+@app.get("/login", response_class=HTMLResponse)
+def login_page(request: Request, next: str = "/"):
+    return templates.TemplateResponse(request=request, name="login.html", context={
+        "request": request, "next": next, "mode": "login", "error": None,
+    })
+
+
+@app.post("/login")
+def login_submit(request: Request, email: str = Form(...), password: str = Form(...), next: str = Form("/")):
+    user = authenticate(email, password)
+    if user is None:
+        return templates.TemplateResponse(request=request, name="login.html", context={
+            "request": request, "next": next, "mode": "login",
+            "error": "Email or password was not recognized.",
+        }, status_code=400)
+    destination = next if next.startswith("/") and not next.startswith("//") else "/"
+    response = RedirectResponse(destination, status_code=303)
+    response.set_cookie(SESSION_COOKIE, create_session(user.user_id), httponly=True,
+                        secure=secure_cookie(), samesite="lax", max_age=30*24*60*60)
+    return response
+
+
+@app.get("/register", response_class=HTMLResponse)
+def register_page(request: Request):
+    return templates.TemplateResponse(request=request, name="login.html", context={
+        "request": request, "next": "/", "mode": "register", "error": None,
+    })
+
+
+@app.post("/register")
+def register_submit(request: Request, email: str = Form(...), display_name: str = Form(...), password: str = Form(...)):
+    try:
+        user = register(email, display_name, password)
+    except ValueError as exc:
+        return templates.TemplateResponse(request=request, name="login.html", context={
+            "request": request, "next": "/", "mode": "register", "error": str(exc),
+        }, status_code=400)
+    response = RedirectResponse("/", status_code=303)
+    response.set_cookie(SESSION_COOKIE, create_session(user.user_id), httponly=True,
+                        secure=secure_cookie(), samesite="lax", max_age=30*24*60*60)
+    return response
+
+
+@app.post("/logout")
+def logout(request: Request):
+    revoke_session(request.cookies.get(SESSION_COOKIE))
+    response = RedirectResponse("/login", status_code=303)
+    response.delete_cookie(SESSION_COOKIE)
+    return response
+
+
+@app.post("/campaigns/{campaign_id}/invitations")
+def invitation_create(request: Request, campaign_id: str, email: str = Form(...)):
+    try:
+        token = create_invitation(campaign_id, request.state.user.user_id, email)
+    except (ValueError, PermissionError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return RedirectResponse(url=f"/?campaign={campaign_id}&invite_created={token}", status_code=303)
+
+
+@app.get("/join/{token}")
+def invitation_accept(request: Request, token: str):
+    try:
+        campaign_id = accept_invitation(token, request.state.user)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return RedirectResponse(url=f"/?campaign={campaign_id}", status_code=303)
+
+
 @app.get("/api/campaigns")
-def campaign_list():
-    return [summary_dict(item) for item in reader.campaigns()]
+def campaign_list(request: Request):
+    return [summary_dict(item) for item in reader.campaigns(user_id=request.state.user.user_id)]
 
 
 @app.get("/api/campaigns/{campaign_id}")
@@ -320,6 +419,7 @@ def campaign_overview(campaign_id: str):
 
 @app.post("/campaigns")
 def campaign_create(
+    request: Request,
     name: str = Form(...),
     play_mode: str = Form("ai_refereed"),
     idempotency_key: str = Form(...),
@@ -329,6 +429,7 @@ def campaign_create(
         play_mode=play_mode,
         idempotency_key=idempotency_key,
     )
+    grant_campaign_owner(result.campaign_public_id, request.state.user.user_id)
     return RedirectResponse(
         url=f"/?campaign={result.campaign_public_id}", status_code=303
     )
@@ -1120,15 +1221,16 @@ def session_archive(campaign_id:str,title:str=Form(...),transcript_text:str=Form
 
 
 @app.get("/", response_class=HTMLResponse)
-def dashboard(request: Request, campaign: str | None = None):
+def dashboard(request: Request, campaign: str | None = None, invite_created: str | None = None):
     current = selected_campaign(campaign)
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
         context=page_context(
             request, "dashboard", campaign=current,
-            campaigns=reader.campaigns(),
+            campaigns=reader.campaigns(user_id=request.state.user.user_id),
             creation_key=str(uuid.uuid4()),
+            invite_created=invite_created,
         ),
     )
 

@@ -47,7 +47,7 @@ class CampaignReader:
             options="-c default_transaction_read_only=on",
         )
 
-    def campaigns(self, limit: int = 30) -> list[CampaignSummary]:
+    def campaigns(self, limit: int = 30, user_id: int | None = None) -> list[CampaignSummary]:
         if not self.url:
             return []
         with self._connect() as connection:
@@ -66,10 +66,14 @@ class CampaignReader:
                 FROM camp_campaign campaign
                 LEFT JOIN camp_clock clock USING (campaign_id)
                 WHERE campaign.campaign_status='active'
+                  AND (%s::bigint IS NULL OR EXISTS (
+                      SELECT 1 FROM auth_campaign_membership membership
+                      WHERE membership.campaign_id=campaign.campaign_id
+                        AND membership.user_id=%s))
                 ORDER BY campaign.created_at DESC,campaign.campaign_id DESC
                 LIMIT %s
                 """,
-                (limit,),
+                (user_id,user_id,limit),
             ).fetchall()
         return [CampaignSummary(**row) for row in rows]
 
