@@ -5,17 +5,13 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 147
-- Engine-only review candidates: 23
+- Direct web-application wrappers: 151
+- Engine-only review candidates: 19
 
 ## Engine-only review candidates
 
 | Engine module | Command |
 |---|---|
-| `conditions_runtime.py` | `set_personal_battlefield_conditions_command` |
-| `explosions_runtime.py` | `declare_personal_explosion_command` |
-| `explosions_runtime.py` | `declare_personal_explosion_reaction_command` |
-| `explosions_runtime.py` | `resolve_personal_explosion_command` |
 | `extended_actions_runtime.py` | `resolve_personal_extended_action_interruption_command` |
 | `extreme_range_runtime.py` | `authorize_extreme_range_command` |
 | `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
@@ -108,6 +104,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `comms_runtime.py` | `apply_personal_initiative_support_command` |
 | `competitive_gambling.py` | `resolve_competitive_gambling_command` |
 | `computer.py` | `perform_computer_basic_operation_command` |
+| `conditions_runtime.py` | `set_personal_battlefield_conditions_command` |
 | `coup_de_grace_runtime.py` | `resolve_personal_coup_de_grace_command` |
 | `crew_assignments.py` | `assign_ship_crew_command` |
 | `crew_payroll.py` | `pay_ship_crew_command` |
@@ -119,6 +116,9 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `encounters.py` | `attempt_attitude_influence_command` |
 | `environment.py` | `advance_species_environmental_exposure_command` |
 | `equipment_purchases.py` | `purchase_personal_equipment_command` |
+| `explosions_runtime.py` | `declare_personal_explosion_command` |
+| `explosions_runtime.py` | `declare_personal_explosion_reaction_command` |
+| `explosions_runtime.py` | `resolve_personal_explosion_command` |
 | `extended_actions_runtime.py` | `start_personal_extended_action_command` |
 | `extended_actions_runtime.py` | `advance_personal_extended_action_command` |
 | `extended_actions_runtime.py` | `abandon_personal_extended_action_command` |

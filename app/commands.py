@@ -81,6 +81,8 @@ from engine.environment import advance_species_environmental_exposure_command  #
 from engine.competitive_gambling import resolve_competitive_gambling_command  # noqa: E402
 from engine.liaison import resolve_liaison_negotiation_command  # noqa: E402
 from engine.steward import resolve_steward_service_command  # noqa: E402
+from engine.conditions_runtime import set_personal_battlefield_conditions_command  # noqa: E402
+from engine.explosions_runtime import declare_personal_explosion_command,declare_personal_explosion_reaction_command,resolve_personal_explosion_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
 from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
@@ -469,6 +471,27 @@ def resolve_liaison_negotiation(*,scene_reference:str,subject_reference:str,firs
 def resolve_steward_service(*,journey_public_id:str,steward_actor_public_id:str,passenger_actor_public_id:str,service_code:str,service_reference:str,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_steward_service_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,journey_public_id=journey_public_id,steward_actor_public_id=steward_actor_public_id,passenger_actor_public_id=passenger_actor_public_id,service_code=service_code,service_reference=service_reference,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code)
+
+def set_battlefield_conditions(*,encounter_public_id:str,light_code:str,obscurant_code:str,extreme_weather:bool,gravity_code:str,expected_version:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return set_personal_battlefield_conditions_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,light_code=light_code,obscurant_code=obscurant_code,extreme_weather=extreme_weather,gravity_code=gravity_code,expected_version=expected_version)
+
+def declare_combat_explosion(*,encounter_public_id:str,source_reference:str,damage_dice:int,damage_die_sides:int,flat_damage:int,target_actor_public_ids:tuple[str,...],idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:
+        targets=[]
+        for actor_public_id in target_actor_public_ids:
+            armor=connection.execute("""SELECT rule.rule_code FROM actor_actor actor LEFT JOIN inv_actor_armor_layer layer ON layer.actor_id=actor.actor_id AND layer.campaign_id=actor.campaign_id LEFT JOIN inv_item_instance item ON item.item_instance_id=layer.item_instance_id AND item.campaign_id=layer.campaign_id LEFT JOIN rule_rule rule ON rule.rule_id=item.item_rule_id WHERE actor.public_id=%s ORDER BY layer.layer_order LIMIT 1""",(actor_public_id,)).fetchone()
+            targets.append((actor_public_id,armor[0] if armor and armor[0] else "combat.armor.unarmored"))
+        return declare_personal_explosion_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,source_reference=source_reference,damage_dice=damage_dice,damage_die_sides=damage_die_sides,flat_damage=flat_damage,targets=tuple(targets))
+
+def react_to_combat_explosion(*,explosion_public_id:str,actor_public_id:str,reaction_kind:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return declare_personal_explosion_reaction_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,explosion_public_id=explosion_public_id,actor_public_id=actor_public_id,reaction_kind=reaction_kind)
+
+def resolve_combat_explosion(*,explosion_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_personal_explosion_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,explosion_public_id=explosion_public_id)
 
 def perform_ship_transport_operation(*,actor_public_id:str,ship_public_id:str,operation_kind:str,operation_reference:str,challenging_conditions:bool,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

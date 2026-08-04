@@ -634,6 +634,20 @@ def test_steward_service_dispatch(monkeypatch):
     assert captured["service_code"]=="valet" and captured["service_reference"]=="formal dinner"
 
 
+def test_battlefield_conditions_and_explosion_dispatch(monkeypatch):
+    conditions={};declared={};reaction={};resolved={}
+    monkeypatch.setattr(main_module,"set_battlefield_conditions",lambda **kwargs:conditions.update(kwargs))
+    monkeypatch.setattr(main_module,"declare_combat_explosion",lambda **kwargs:declared.update(kwargs))
+    monkeypatch.setattr(main_module,"react_to_combat_explosion",lambda **kwargs:reaction.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_combat_explosion",lambda **kwargs:resolved.update(kwargs))
+    base="/campaigns/campaign/encounters/encounter"
+    responses=[client.post(f"{base}/battlefield-conditions",data={"light_code":"low-light","obscurant_code":"smoke","extreme_weather":"true","gravity_code":"zero-gravity","expected_version":"2","idempotency_key":"conditions"},follow_redirects=False),client.post(f"{base}/explosions",data={"source_reference":"grenade","damage_dice":"3","damage_die_sides":"6","flat_damage":"1","target_actor_public_ids":["one","two"],"idempotency_key":"declare"},follow_redirects=False),client.post(f"{base}/explosions/explosion/reactions",data={"actor_public_id":"one","reaction_kind":"dive","idempotency_key":"react"},follow_redirects=False),client.post(f"{base}/explosions/explosion/resolve",data={"idempotency_key":"resolve"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert conditions["expected_version"]==2 and conditions["gravity_code"]=="zero-gravity"
+    assert declared["target_actor_public_ids"]==("one","two") and declared["flat_damage"]==1
+    assert reaction["reaction_kind"]=="dive" and resolved["explosion_public_id"]=="explosion"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
