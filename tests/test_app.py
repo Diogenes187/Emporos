@@ -543,6 +543,19 @@ def test_language_and_weekly_training_dispatch(monkeypatch):
     assert decipher["language_code"] is None and training["skill_rule_code"]=="skill.piloting"
 
 
+def test_species_starship_encounter_and_trade_work_dispatch(monkeypatch):
+    species={};encounter={};started={};completed={}
+    monkeypatch.setattr(main_module,"assign_actor_species",lambda **kwargs:species.update(kwargs))
+    monkeypatch.setattr(main_module,"check_for_starship_encounter",lambda **kwargs:encounter.update(kwargs))
+    monkeypatch.setattr(main_module,"start_trade_work_week",lambda **kwargs:started.update(kwargs))
+    monkeypatch.setattr(main_module,"complete_trade_work_week",lambda **kwargs:completed.update(kwargs))
+    responses=[client.post("/campaigns/campaign/characters/actor/species",data={"species_code":"human","idempotency_key":"species"},follow_redirects=False),client.post("/campaigns/campaign/starship-encounter-checks",data={"region_context":"near_planet","target_transponder_active":"true","target_stealth_modifier":"-1","idempotency_key":"encounter"},follow_redirects=False),client.post("/campaigns/campaign/trade-work",data={"work_selection":"actor||skill.mechanics||employer||worker","idempotency_key":"work"},follow_redirects=False),client.post("/campaigns/campaign/trade-work/week/complete",data={"idempotency_key":"finish"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert species["species_code"]=="human"
+    assert encounter["region_context"]=="near_planet" and encounter["target_transponder_active"] is True
+    assert started["employer_account_public_id"]=="employer" and completed["work_week_public_id"]=="week"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

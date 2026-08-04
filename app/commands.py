@@ -81,6 +81,9 @@ from engine.devices import resolve_device_operation_command  # noqa: E402
 from engine.leadership import begin_leadership_coordination_command, allocate_leadership_coordination_command  # noqa: E402
 from engine.linguistics import assign_actor_language_command, decipher_preserved_language_command  # noqa: E402
 from engine.skill_training import allocate_skill_training_week_command  # noqa: E402
+from engine.characters import assign_actor_species_command  # noqa: E402
+from engine.starships import check_starship_encounter_command  # noqa: E402
+from engine.trade_work import start_trade_work_week_command, complete_trade_work_week_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
@@ -465,6 +468,22 @@ def decipher_language_specimen(*,actor_public_id:str,specimen_reference:str,spec
 def train_actor_skill_week(*,actor_public_id:str,skill_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return allocate_skill_training_week_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,skill_rule_code=skill_rule_code)
+
+def assign_actor_species(*,actor_public_id:str,species_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return assign_actor_species_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,species_code=species_code,assignment_kind="player_edit")
+
+def check_for_starship_encounter(*,campaign_public_id:str,region_context:str,target_transponder_active:bool,target_stealth_modifier:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return check_starship_encounter_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,region_context=region_context,target_transponder_active=target_transponder_active,target_stealth_modifier=target_stealth_modifier)
+
+def start_trade_work_week(*,actor_public_id:str,skill_rule_code:str,employer_account_public_id:str,worker_account_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return start_trade_work_week_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,skill_rule_code=skill_rule_code,employer_account_public_id=employer_account_public_id,worker_account_public_id=worker_account_public_id)
+
+def complete_trade_work_week(*,work_week_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return complete_trade_work_week_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,work_week_public_id=work_week_public_id)
 
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

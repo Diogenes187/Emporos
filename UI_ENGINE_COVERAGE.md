@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 129
-- Engine-only review candidates: 41
+- Direct web-application wrappers: 133
+- Engine-only review candidates: 37
 
 ## Engine-only review candidates
 
@@ -16,7 +16,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `animals.py` | `set_animal_reaction_context_command` |
 | `animals.py` | `resolve_animal_reaction_command` |
 | `armor_runtime.py` | `apply_personal_armor_usage_command` |
-| `characters.py` | `assign_actor_species_command` |
 | `combat_runtime.py` | `move_species_flyer_command` |
 | `combat_runtime.py` | `resolve_species_great_leap_command` |
 | `comms_runtime.py` | `set_battlefield_communication_command` |
@@ -45,14 +44,11 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `source_review.py` | `review_campaign_source_page_command` |
 | `source_review.py` | `publish_campaign_source_intro_command` |
 | `source_review.py` | `reveal_campaign_source_excerpt_command` |
-| `starships.py` | `check_starship_encounter_command` |
 | `steward.py` | `resolve_steward_service_command` |
 | `tasks.py` | `resolve_actor_task_command` |
 | `tasks.py` | `resolve_species_hive_mentality_command` |
 | `tasks.py` | `resolve_species_naturally_curious_command` |
 | `tasks.py` | `evaluate_species_low_light_visibility_command` |
-| `trade_work.py` | `start_trade_work_week_command` |
-| `trade_work.py` | `complete_trade_work_week_command` |
 
 ## Directly wrapped commands
 
@@ -94,6 +90,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `careers.py` | `finish_character_creation_command` |
 | `character_creation.py` | `initialize_character_command` |
 | `characters.py` | `update_character_final_details_command` |
+| `characters.py` | `assign_actor_species_command` |
 | `combat_resolution_runtime.py` | `resolve_personal_combat_command` |
 | `combat_runtime.py` | `initialize_personal_combat_command` |
 | `combat_runtime.py` | `spend_personal_action_command` |
@@ -181,8 +178,11 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `starship_charters.py` | `quote_starship_charter_command` |
 | `starship_charters.py` | `accept_starship_charter_command` |
 | `starship_charters.py` | `complete_starship_charter_command` |
+| `starships.py` | `check_starship_encounter_command` |
 | `streetwise.py` | `resolve_streetwise_command` |
 | `survival.py` | `resolve_survival_task_command` |
+| `trade_work.py` | `start_trade_work_week_command` |
+| `trade_work.py` | `complete_trade_work_week_command` |
 | `transport.py` | `resolve_transport_operation_command` |
 | `travel_planning.py` | `place_ship_command` |
 | `travel_planning.py` | `plan_jump_journey_command` |
