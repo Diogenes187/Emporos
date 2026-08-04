@@ -625,6 +625,15 @@ def test_competitive_gambling_and_liaison_dispatch(monkeypatch):
     assert liaison["scene_reference"]=="embassy" and liaison["second_actor_public_id"]=="two"
 
 
+def test_steward_service_dispatch(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"resolve_steward_service",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/steward-services",data={"service_selection":"journey||steward||passenger||valet","service_reference":"formal dinner","characteristic_rule_code":"characteristic.social-standing","difficulty_rule_code":"difficulty.average","idempotency_key":"service"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured["journey_public_id"]=="journey" and captured["passenger_actor_public_id"]=="passenger"
+    assert captured["service_code"]=="valet" and captured["service_reference"]=="formal dinner"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 146
-- Engine-only review candidates: 24
+- Direct web-application wrappers: 147
+- Engine-only review candidates: 23
 
 ## Engine-only review candidates
 
@@ -31,7 +31,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `source_review.py` | `review_campaign_source_page_command` |
 | `source_review.py` | `publish_campaign_source_intro_command` |
 | `source_review.py` | `reveal_campaign_source_excerpt_command` |
-| `steward.py` | `resolve_steward_service_command` |
 | `tasks.py` | `resolve_actor_task_command` |
 | `tasks.py` | `resolve_species_hive_mentality_command` |
 | `tasks.py` | `resolve_species_naturally_curious_command` |
@@ -179,6 +178,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `starship_charters.py` | `accept_starship_charter_command` |
 | `starship_charters.py` | `complete_starship_charter_command` |
 | `starships.py` | `check_starship_encounter_command` |
+| `steward.py` | `resolve_steward_service_command` |
 | `streetwise.py` | `resolve_streetwise_command` |
 | `survival.py` | `resolve_survival_task_command` |
 | `trade_work.py` | `start_trade_work_week_command` |
