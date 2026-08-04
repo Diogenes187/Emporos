@@ -137,6 +137,7 @@ class CampaignReader:
                 LEFT JOIN actor_lifepath_state lifepath
                   ON lifepath.actor_id=actor.actor_id
                 WHERE actor.campaign_id=%s
+                  AND actor.lifecycle_status='active'
                 ORDER BY actor.name
                 """,
                 (campaign_id,),

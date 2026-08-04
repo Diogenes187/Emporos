@@ -41,7 +41,7 @@
 <small>STEP 1 · CHARACTERISTICS</small>
 <h3>Keep these rolls or try another set</h3>
 <p>Total {{ actor.characteristics|sum(attribute='current') }}. As in the original creator, you may reroll all six as often as you like before entering a career. Every set remains audited.</p>
-<div class="button-row"><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/reroll-characteristics"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-reroll-{{ actor.public_id }}"><button type="submit">Reroll all six</button></form><a class="primary-link" href="#career-{{ actor.public_id }}">Keep rolls and choose career</a></div>
+<div class="button-row"><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/reroll-characteristics"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-reroll-{{ actor.public_id }}"><button type="submit">Reroll all six</button></form><a class="primary-link" href="#career-{{ actor.public_id }}">Keep rolls and choose career</a><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/discard" onsubmit="return confirm('Discard this unfinished character and start over?')"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-discard-{{ actor.public_id }}"><button class="quiet-danger" type="submit">Discard character</button></form></div>
 </section>
 {% endif %}
         <div class="crew-meta">

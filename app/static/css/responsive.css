@@ -165,6 +165,7 @@
 .chargen-step p{margin:0 0 14px;color:var(--muted);line-height:1.5}
 .chargen-step .button-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .chargen-step form{margin:0}
+.quiet-danger{background:transparent;color:#a9473f;border-color:#c78b85;box-shadow:none}
 .chargen-overlay{position:fixed;z-index:1000;inset:28px max(28px,calc((100vw - 980px)/2));overflow:auto;background:var(--panel);padding:24px;border:2px solid var(--gold);box-shadow:0 0 0 100vmax rgba(16,28,34,.72),0 24px 70px rgba(0,0,0,.35)}
 .chargen-overlay .chargen-header{display:flex;justify-content:space-between;align-items:flex-start;margin:-4px 0 20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .chargen-overlay .chargen-header h2{margin:3px 0 0;font:30px Georgia,serif}

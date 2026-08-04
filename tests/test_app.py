@@ -125,6 +125,25 @@ def test_characteristic_reroll_dispatches(monkeypatch):
     }
 
 
+def test_unfinished_character_discard_dispatches(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "abandon_unfinished_character",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/characters/actor/discard",
+        data={"idempotency_key": "discard-test"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert captured == {
+        "actor_public_id": "actor",
+        "idempotency_key": "discard-test",
+    }
+
+
 def test_ship_requires_campaign_and_has_no_decorative_vessel():
     response=client.get("/ship")
     assert response.status_code == 200

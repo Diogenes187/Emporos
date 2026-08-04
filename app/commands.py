@@ -103,6 +103,7 @@ from engine.equipment_purchases import purchase_personal_equipment_command  # no
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
 from engine.character_rerolls import reroll_characteristics_command  # noqa: E402
+from engine.character_abandonment import abandon_unfinished_character_command  # noqa: E402
 from engine.health_runtime import apply_personal_fatigue_command, complete_personal_fatigue_rest_command, resolve_personal_unconscious_recovery_command  # noqa: E402
 from engine.mental_healing import resolve_personal_mental_healing_command  # noqa: E402
 from engine.injury_runtime import apply_determined_personal_natural_healing_command, determine_personal_natural_healing_command  # noqa: E402
@@ -155,6 +156,19 @@ def reroll_characteristics(*, actor_public_id: str, idempotency_key: str):
         return reroll_characteristics_command(
             connection,
             initiator_reference=authority,
+            idempotency_key=idempotency_key,
+            actor_public_id=actor_public_id,
+        )
+
+
+def abandon_unfinished_character(*, actor_public_id: str, idempotency_key: str):
+    url = database_url()
+    authority = os.environ.get(
+        "EMPOROS_AUTHORITY_REFERENCE", "emporos-local-player"
+    )
+    with psycopg.connect(url) as connection:
+        return abandon_unfinished_character_command(
+            connection, initiator_reference=authority,
             idempotency_key=idempotency_key,
             actor_public_id=actor_public_id,
         )
