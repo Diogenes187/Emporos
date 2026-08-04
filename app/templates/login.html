@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{{ 'Create account' if mode == 'register' else 'Sign in' }} · Emporos</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}?v=20260804">
-  <link rel="stylesheet" href="{{ url_for('static', path='css/theme-light.css') }}?v=20260804">
-  <link rel="stylesheet" href="{{ url_for('static', path='css/polish.css') }}?v=20260804b">
+  <link rel="stylesheet" href="/static/css/app.css?v=20260804">
+  <link rel="stylesheet" href="/static/css/theme-light.css?v=20260804">
+  <link rel="stylesheet" href="/static/css/polish.css?v=20260804b">
 </head>
 <body class="auth-body">
   <main class="auth-shell">
     <section class="auth-card">
-      <a class="auth-brand" href="/"><img src="{{ url_for('logos', path='emporos_thumbnail_256.jpg') }}" alt=""><span><strong>EMPOROS</strong><small>Free Trader Registry</small></span></a>
+      <a class="auth-brand" href="/"><img src="/logos/emporos_thumbnail_256.jpg" alt=""><span><strong>EMPOROS</strong><small>Free Trader Registry</small></span></a>
       <small>SECURE CAMPAIGN ACCESS</small>
       <h1>{{ 'Create your account' if mode == 'register' else 'Return to your campaigns' }}</h1>
       <p>Campaign records remain private to their owner and invited crew.</p>
