@@ -386,6 +386,10 @@ def activate_self_psionic_power(*,actor_public_id:str,power_rule_code:str,variab
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return activate_psionic_power_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,power_rule_code=power_rule_code,variable_points=variable_points)
 
+def send_psionic_thought(*,actor_public_id:str,target_actor_public_id:str,range_rule_code:str,sent_thought_content:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return activate_psionic_power_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,power_rule_code="psionics.power.send-thoughts",target_actor_public_id=target_actor_public_id,range_rule_code=range_rule_code,sent_thought_content=sent_thought_content)
+
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return recover_psionic_strength_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)

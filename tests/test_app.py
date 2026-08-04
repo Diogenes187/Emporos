@@ -448,6 +448,15 @@ def test_psionics_page_controls_dispatch(monkeypatch):
     assert shielded=={"actor_public_id":"actor","shield_raised":False,"idempotency_key":"shield"}
 
 
+def test_send_thought_dispatches_authored_content(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"send_psionic_thought",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/psionics/send-thought",data={"target_actor_public_id":"target","range_rule_code":"psionics.range.short","sent_thought_content":"Meet me at the airlock.","idempotency_key":"send"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured["sent_thought_content"]=="Meet me at the airlock."
+    assert captured["target_actor_public_id"]=="target"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
