@@ -78,6 +78,8 @@ from engine.survival import resolve_survival_task_command  # noqa: E402
 from engine.animal_skills import resolve_animal_skill_operation_command  # noqa: E402
 from engine.animals import set_animal_reaction_context_command,resolve_animal_reaction_command  # noqa: E402
 from engine.environment import advance_species_environmental_exposure_command  # noqa: E402
+from engine.competitive_gambling import resolve_competitive_gambling_command  # noqa: E402
+from engine.liaison import resolve_liaison_negotiation_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
 from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
@@ -452,6 +454,16 @@ def resolve_animal_reaction(*,encounter_public_id:str,animal_actor_public_id:str
 def advance_environmental_exposure(*,actor_public_id:str,environment_kind:str,elapsed_minutes:int,protective_equipment_active:bool,exposure_public_id:str|None,end_exposure:bool,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return advance_species_environmental_exposure_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,environment_kind=environment_kind,elapsed_minutes=elapsed_minutes,protective_equipment_active=protective_equipment_active,exposure_public_id=exposure_public_id or None,end_exposure=end_exposure)
+
+def resolve_competitive_gambling(*,venue_reference:str,game_reference:str,pot_reference:str,first_actor_public_id:str,first_characteristic_rule_code:str,first_cheating:bool,second_actor_public_id:str,second_characteristic_rule_code:str,second_cheating:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    participants=[{"actor_public_id":first_actor_public_id,"characteristic_rule_code":first_characteristic_rule_code,"cheating":first_cheating},{"actor_public_id":second_actor_public_id,"characteristic_rule_code":second_characteristic_rule_code,"cheating":second_cheating}]
+    with psycopg.connect(url) as connection:return resolve_competitive_gambling_command(connection,referee_reference=authority,idempotency_key=idempotency_key,venue_reference=venue_reference,game_reference=game_reference,pot_reference=pot_reference,participants=participants)
+
+def resolve_liaison_negotiation(*,scene_reference:str,subject_reference:str,first_actor_public_id:str,first_characteristic_rule_code:str,second_actor_public_id:str,second_characteristic_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    participants=[{"actor_public_id":first_actor_public_id,"characteristic_rule_code":first_characteristic_rule_code},{"actor_public_id":second_actor_public_id,"characteristic_rule_code":second_characteristic_rule_code}]
+    with psycopg.connect(url) as connection:return resolve_liaison_negotiation_command(connection,referee_reference=authority,idempotency_key=idempotency_key,scene_reference=scene_reference,subject_reference=subject_reference,participants=participants)
 
 def perform_ship_transport_operation(*,actor_public_id:str,ship_public_id:str,operation_kind:str,operation_reference:str,challenging_conditions:bool,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

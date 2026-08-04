@@ -611,6 +611,20 @@ def test_environmental_exposure_dispatch(monkeypatch):
     assert captured=={"actor_public_id":"actor","environment_kind":"extreme_cold","elapsed_minutes":30,"protective_equipment_active":True,"exposure_public_id":"exposure","end_exposure":True,"idempotency_key":"cold"}
 
 
+def test_competitive_gambling_and_liaison_dispatch(monkeypatch):
+    gambling={};liaison={}
+    monkeypatch.setattr(main_module,"resolve_competitive_gambling",lambda **kwargs:gambling.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_liaison_negotiation",lambda **kwargs:liaison.update(kwargs))
+    base="/campaigns/campaign/contacts"
+    common={"first_actor_public_id":"one","first_characteristic_rule_code":"characteristic.intelligence","second_actor_public_id":"two","second_characteristic_rule_code":"characteristic.social-standing"}
+    gambling_data={**common,"venue_reference":"club","game_reference":"cards","pot_reference":"Cr 100","first_cheating":"true","idempotency_key":"game"}
+    liaison_data={**common,"scene_reference":"embassy","subject_reference":"landing rights","idempotency_key":"talk"}
+    responses=[client.post(f"{base}/competitive-gambling",data=gambling_data,follow_redirects=False),client.post(f"{base}/liaison",data=liaison_data,follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert gambling["first_cheating"] is True and gambling["second_cheating"] is False
+    assert liaison["scene_reference"]=="embassy" and liaison["second_actor_public_id"]=="two"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

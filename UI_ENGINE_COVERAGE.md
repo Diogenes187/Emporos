@@ -5,14 +5,13 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 144
-- Engine-only review candidates: 26
+- Direct web-application wrappers: 146
+- Engine-only review candidates: 24
 
 ## Engine-only review candidates
 
 | Engine module | Command |
 |---|---|
-| `competitive_gambling.py` | `resolve_competitive_gambling_command` |
 | `conditions_runtime.py` | `set_personal_battlefield_conditions_command` |
 | `explosions_runtime.py` | `declare_personal_explosion_command` |
 | `explosions_runtime.py` | `declare_personal_explosion_reaction_command` |
@@ -22,7 +21,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
 | `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
-| `liaison.py` | `resolve_liaison_negotiation_command` |
 | `medical_runtime.py` | `apply_personal_first_aid_command` |
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
 | `medical_runtime.py` | `apply_personal_medical_care_command` |
@@ -109,6 +107,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `commerce_setup.py` | `prepare_trading_command` |
 | `comms_runtime.py` | `set_battlefield_communication_command` |
 | `comms_runtime.py` | `apply_personal_initiative_support_command` |
+| `competitive_gambling.py` | `resolve_competitive_gambling_command` |
 | `computer.py` | `perform_computer_basic_operation_command` |
 | `coup_de_grace_runtime.py` | `resolve_personal_coup_de_grace_command` |
 | `crew_assignments.py` | `assign_ship_crew_command` |
@@ -140,6 +139,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `jump_attempts.py` | `resolve_jump_attempt_command` |
 | `leadership.py` | `begin_leadership_coordination_command` |
 | `leadership.py` | `allocate_leadership_coordination_command` |
+| `liaison.py` | `resolve_liaison_negotiation_command` |
 | `linguistics.py` | `assign_actor_language_command` |
 | `linguistics.py` | `decipher_preserved_language_command` |
 | `low_passage_revival.py` | `revive_low_passenger_command` |
