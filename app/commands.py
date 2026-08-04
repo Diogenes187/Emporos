@@ -66,7 +66,7 @@ from engine.armor_runtime import equip_personal_armor_command,unequip_personal_a
 from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
-from engine.careers import apply_career_basic_training_command, apply_career_rank_zero_award_command, apply_career_term_training_command, attempt_career_entry_command, attempt_career_survival_command, complete_career_term_command, declare_career_anagathics_command, decide_career_reenlistment_command, determine_career_reenlistment_command, resolve_career_rank_attempt_command, resolve_failed_career_entry_command, resolve_survival_mishap_command  # noqa: E402
+from engine.careers import apply_career_basic_training_command, apply_career_injury_command, apply_career_rank_zero_award_command, apply_career_term_training_command, attempt_career_entry_command, attempt_career_survival_command, complete_career_term_command, declare_career_anagathics_command, decide_career_reenlistment_command, determine_career_injury_command, determine_career_reenlistment_command, resolve_career_rank_attempt_command, resolve_failed_career_entry_command, resolve_survival_mishap_command  # noqa: E402
 
 
 def create_campaign(
@@ -411,3 +411,11 @@ def decide_career_reenlistment(*,actor_public_id:str,decision:str,idempotency_ke
 def resolve_survival_mishap(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_survival_mishap_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)
+
+def determine_career_injury(*,actor_public_id:str,result_two_choice:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return determine_career_injury_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,result_two_choice=result_two_choice)
+
+def apply_career_injury(*,actor_public_id:str,primary_characteristic_code:str,other_reduction_mode:str|None,other_characteristic_code:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return apply_career_injury_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,primary_characteristic_code=primary_characteristic_code,other_reduction_mode=other_reduction_mode,other_characteristic_code=other_characteristic_code)

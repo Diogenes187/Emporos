@@ -302,3 +302,21 @@ def test_survival_mishap_dispatches_engine_command(monkeypatch):
     assert response.status_code==303
     assert response.headers["location"]=="/crew?campaign=campaign"
     assert captured=={"actor_public_id":"actor","idempotency_key":"mishap-test"}
+
+
+def test_career_injury_determination_dispatches_player_choice(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"determine_career_injury",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/career-injury",data={"result_two_choice":"roll_twice_lower","idempotency_key":"injury-roll-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured=={"actor_public_id":"actor","result_two_choice":"roll_twice_lower","idempotency_key":"injury-roll-test"}
+
+
+def test_career_injury_application_dispatches_allocation(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"apply_career_injury",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/career-injury-application",data={"primary_characteristic_code":"characteristic.endurance","other_reduction_mode":"one_other_four","other_characteristic_code":"characteristic.strength","idempotency_key":"injury-apply-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured["primary_characteristic_code"]=="characteristic.endurance"
+    assert captured["other_reduction_mode"]=="one_other_four"
+    assert captured["other_characteristic_code"]=="characteristic.strength"
