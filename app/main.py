@@ -472,12 +472,13 @@ def campaign_create(
 @app.post("/campaigns/{campaign_id}/characters")
 def character_initialize(
     campaign_id: str,
-    idempotency_key: str = Form(...),
+    idempotency_key: str = Form(""),
 ):
+    command_key = idempotency_key.strip() or str(uuid.uuid4())
     try:
         initialize_character(
             campaign_public_id=campaign_id,
-            idempotency_key=idempotency_key,
+            idempotency_key=command_key,
         )
     except PermissionError as exc:
         raise HTTPException(status_code=403,detail=str(exc)) from exc
