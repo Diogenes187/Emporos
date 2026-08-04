@@ -13,7 +13,7 @@ These labels measure provenance coverage, not whether every Cepheus procedure ha
 
 ## Snapshot
 
-- Latest schema migration: 0570
+- Latest schema migration: 0574
 - Normalized rules: 1087
 - Covered by paired sources: 1062
 - Partial — explicit source gap: 25
