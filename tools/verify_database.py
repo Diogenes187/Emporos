@@ -2442,7 +2442,7 @@ def main() -> int:
         expect(
             catalogue_counts
             == {
-                "rules": 1086,
+                "rules": 1087,
                 "characteristics": 7,
                 "modifier_bands": 12,
                 "skills": 74,
@@ -2680,7 +2680,7 @@ def main() -> int:
                 "spacecraft_journey_execution_runtime_tables": 3,
                 "range_bands": 7,
                 "attack_profiles": 9,
-                "items": 216,
+                "items": 217,
                 "ammunition_variants": 20,
                 "psionic_talents": 5,
                 "psionic_powers": 26,

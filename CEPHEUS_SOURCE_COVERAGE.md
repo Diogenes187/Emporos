@@ -13,9 +13,9 @@ These labels measure provenance coverage, not whether every Cepheus procedure ha
 
 ## Snapshot
 
-- Latest schema migration: 0559
-- Normalized rules: 1086
-- Covered by paired sources: 1061
+- Latest schema migration: 0561
+- Normalized rules: 1087
+- Covered by paired sources: 1062
 - Partial — explicit source gap: 25
 - Partial — not individually linked: 0
 - Open source questions: 0
@@ -36,7 +36,7 @@ The legacy local implementation is comparison-only and never governs a mechanica
 |---|---:|---:|---:|---:|---|
 | career | 25 | 25 | 0 | 0 | **covered** |
 | characteristic | 7 | 7 | 0 | 0 | **covered** |
-| combat | 126 | 126 | 0 | 0 | **covered** |
+| combat | 127 | 127 | 0 | 0 | **covered** |
 | difficulty | 7 | 7 | 0 | 0 | **covered** |
 | encounter | 50 | 50 | 0 | 0 | **covered** |
 | equipment | 197 | 197 | 0 | 0 | **covered** |
@@ -51,7 +51,7 @@ The legacy local implementation is comparison-only and never governs a mechanica
 | travel | 3 | 3 | 0 | 0 | **covered** |
 | vehicle | 320 | 320 | 0 | 0 | **covered** |
 | world | 26 | 26 | 0 | 0 | **covered** |
-| **Total** | **1086** | **1061** | **25** | **0** | **partial** |
+| **Total** | **1087** | **1062** | **25** | **0** | **partial** |
 
 ## Open source questions
 

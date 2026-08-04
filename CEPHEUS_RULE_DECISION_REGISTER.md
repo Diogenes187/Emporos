@@ -1331,3 +1331,6 @@ The eventual test suite must demonstrate at minimum:
   design carrying fifteen explicitly published TL11 probe drones. Those drones
   are separately procured payload and require TL11 availability; they do not
   raise the underlying spacecraft design tech level.
+- **2026-08-03 - CE-COMBAT-027:** When a target wears no armor, personal-combat
+  damage reduction is zero. `combat.armor.unarmored` is a computational AR 0
+  profile selected automatically by the engine, never purchasable equipment.
