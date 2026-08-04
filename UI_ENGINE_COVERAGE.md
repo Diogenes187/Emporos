@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 99
-- Engine-only review candidates: 71
+- Direct web-application wrappers: 101
+- Engine-only review candidates: 69
 
 ## Engine-only review candidates
 
@@ -49,8 +49,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
 | `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
-| `injury_runtime.py` | `determine_personal_natural_healing_command` |
-| `injury_runtime.py` | `apply_determined_personal_natural_healing_command` |
 | `leadership.py` | `begin_leadership_coordination_command` |
 | `leadership.py` | `allocate_leadership_coordination_command` |
 | `liaison.py` | `resolve_liaison_negotiation_command` |
@@ -151,6 +149,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `health_runtime.py` | `apply_personal_fatigue_command` |
 | `health_runtime.py` | `complete_personal_fatigue_rest_command` |
 | `health_runtime.py` | `resolve_personal_unconscious_recovery_command` |
+| `injury_runtime.py` | `determine_personal_natural_healing_command` |
+| `injury_runtime.py` | `apply_determined_personal_natural_healing_command` |
 | `journal.py` | `add_campaign_note_command` |
 | `journal.py` | `archive_play_session_command` |
 | `jump_attempts.py` | `resolve_jump_attempt_command` |

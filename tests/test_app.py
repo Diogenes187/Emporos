@@ -445,3 +445,15 @@ def test_daily_medical_care_plan_and_allocation_dispatch(monkeypatch):
     assert plan.status_code==303 and allocation.status_code==303
     assert planned=={"patient_actor_public_id":"actor","doctor_actor_public_id":"doctor","medical_facility_public_id":"hospital","idempotency_key":"care-plan"}
     assert applied=={"determination_command_public_id":"determination","strength_points":2,"dexterity_points":1,"endurance_points":0,"idempotency_key":"care-apply"}
+
+
+def test_natural_healing_result_and_allocation_dispatch(monkeypatch):
+    determined={};applied={}
+    monkeypatch.setattr(main_module,"determine_personal_natural_healing",lambda **kwargs:determined.update(kwargs))
+    monkeypatch.setattr(main_module,"apply_determined_personal_natural_healing",lambda **kwargs:applied.update(kwargs))
+    base="/campaigns/campaign/characters/actor/natural-healing"
+    result=client.post(f"{base}/determine",data={"lifestyle":"full_rest","idempotency_key":"heal-roll"},follow_redirects=False)
+    allocation=client.post(f"{base}/apply",data={"determination_command_public_id":"determination","strength_points":"0","dexterity_points":"2","endurance_points":"0","idempotency_key":"heal-apply"},follow_redirects=False)
+    assert result.status_code==303 and allocation.status_code==303
+    assert determined=={"actor_public_id":"actor","lifestyle":"full_rest","idempotency_key":"heal-roll"}
+    assert applied=={"determination_command_public_id":"determination","strength_points":0,"dexterity_points":2,"endurance_points":0,"idempotency_key":"heal-apply"}
