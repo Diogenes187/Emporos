@@ -13,7 +13,7 @@ from psycopg.rows import dict_row
 def database_url() -> str | None:
     return os.environ.get("EMPOROS_DATABASE_URL") or os.environ.get(
         "BASE_CEPHEUS_DATABASE_URL"
-    )
+    ) or os.environ.get("DATABASE_URL")
 
 
 @dataclass(frozen=True)

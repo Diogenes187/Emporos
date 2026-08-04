@@ -267,7 +267,8 @@ def pay_ship_mortgage(*,ship_public_id:str,actor_public_id:str,idempotency_key:s
     with psycopg.connect(url) as connection:return pay_ship_mortgage_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,ship_public_id=ship_public_id,actor_public_id=actor_public_id)
 def ingest_campaign_source(*,campaign_public_id:str,title:str,source_kind:str,original_filename:str,media_type:str,content:bytes,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
-    with psycopg.connect(url) as connection:return ingest_campaign_source_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,title=title,source_kind=source_kind,original_filename=original_filename,media_type=media_type,content=content,storage_root=foundation/"uploads"/"sources")
+    storage_root=Path(os.environ.get("EMPOROS_UPLOAD_ROOT",foundation/"uploads"))/"sources"
+    with psycopg.connect(url) as connection:return ingest_campaign_source_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,title=title,source_kind=source_kind,original_filename=original_filename,media_type=media_type,content=content,storage_root=storage_root)
 
 def review_campaign_source(*,document_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

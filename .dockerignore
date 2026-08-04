@@ -1,0 +1,14 @@
+.git
+.pytest_cache
+__pycache__
+*.pyc
+.env
+.env.*
+!.env.example
+.postgres-data
+work
+var
+uploads
+*.db
+*.sqlite*
+*.log

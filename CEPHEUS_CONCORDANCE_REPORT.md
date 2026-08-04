@@ -1,6 +1,6 @@
 # Cepheus Website/GitHub Concordance Report
 
-- Generated: 2026-07-27T16:28:41.992956+00:00
+- Generated: 2026-08-04T15:12:19.369457+00:00
 - Repository commit: `0839018902355215fb8148f0b4ce1b1f8e011080`
 - Exact tag: `v9.1`
 - Compared website pages: 25
@@ -57,11 +57,11 @@ every numeric replacement requires manual review before certification.
   superscript rendering, and concatenated display text), not detected rule
   value conflicts.
 - **Certification:** The two publications agree on content they share, but
-  neither is assumed to be the complete corpus. Treat GitHub tag `v9.1` and
-  the captured OGN pages as paired governing sources: use either to fill an
-  omission in the other, retain record-level provenance, and stop for review
-  if a genuine conflict is found. Preserve repository-only tools and the
-  updated vehicle table as separately classified source material.
+  neither is assumed to be the complete corpus. Treat GitHub tag `v9.1`
+  and the captured OGN pages as paired governing sources: use either to
+  fill an omission in the other, retain record-level provenance, and stop
+  for review if a genuine conflict is found. Preserve repository-only
+  tools and the updated vehicle table as separately classified material.
 
 ## Repository-Only Material
 
