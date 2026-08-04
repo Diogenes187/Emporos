@@ -5,16 +5,14 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 153
-- Engine-only review candidates: 17
+- Direct web-application wrappers: 158
+- Engine-only review candidates: 12
 
 ## Engine-only review candidates
 
 | Engine module | Command |
 |---|---|
 | `extreme_range_runtime.py` | `authorize_extreme_range_command` |
-| `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
-| `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
 | `medical_runtime.py` | `apply_personal_first_aid_command` |
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
@@ -26,9 +24,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `source_review.py` | `publish_campaign_source_intro_command` |
 | `source_review.py` | `reveal_campaign_source_excerpt_command` |
 | `tasks.py` | `resolve_actor_task_command` |
-| `tasks.py` | `resolve_species_hive_mentality_command` |
-| `tasks.py` | `resolve_species_naturally_curious_command` |
-| `tasks.py` | `evaluate_species_low_light_visibility_command` |
 
 ## Directly wrapped commands
 
@@ -127,6 +122,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `gambling.py` | `resolve_house_gambling_command` |
 | `grappling_runtime.py` | `resolve_personal_grapple_check_command` |
 | `grappling_runtime.py` | `apply_personal_grapple_option_command` |
+| `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
+| `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
 | `health_runtime.py` | `apply_personal_fatigue_command` |
 | `health_runtime.py` | `complete_personal_fatigue_rest_command` |
 | `health_runtime.py` | `resolve_personal_unconscious_recovery_command` |
@@ -181,6 +178,9 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `steward.py` | `resolve_steward_service_command` |
 | `streetwise.py` | `resolve_streetwise_command` |
 | `survival.py` | `resolve_survival_task_command` |
+| `tasks.py` | `resolve_species_hive_mentality_command` |
+| `tasks.py` | `resolve_species_naturally_curious_command` |
+| `tasks.py` | `evaluate_species_low_light_visibility_command` |
 | `trade_work.py` | `start_trade_work_week_command` |
 | `trade_work.py` | `complete_trade_work_week_command` |
 | `transport.py` | `resolve_transport_operation_command` |

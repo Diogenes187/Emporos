@@ -656,6 +656,16 @@ def test_scene_snapshot_dispatch(monkeypatch):
     assert captured["slot_codes"]==("authority","reason") and captured["fact_values"]==("Patrol","Inspection")
 
 
+def test_species_traits_and_ground_starship_dispatch(monkeypatch):
+    hive={};curious={};light={};volley={};final={}
+    monkeypatch.setattr(main_module,"resolve_species_hive_mentality",lambda **kwargs:hive.update(kwargs));monkeypatch.setattr(main_module,"resolve_species_naturally_curious",lambda **kwargs:curious.update(kwargs));monkeypatch.setattr(main_module,"evaluate_species_low_light",lambda **kwargs:light.update(kwargs));monkeypatch.setattr(main_module,"resolve_ground_starship_volley",lambda **kwargs:volley.update(kwargs));monkeypatch.setattr(main_module,"finalize_ground_starship_volley",lambda **kwargs:final.update(kwargs))
+    base="/campaigns/campaign"
+    responses=[client.post(f"{base}/operations/species/hive-mentality",data={"actor_public_id":"actor","family_group_reference":"clan","perceived_benefit":"safety","difficulty_rule_code":"difficulty.average","idempotency_key":"hive"},follow_redirects=False),client.post(f"{base}/operations/species/naturally-curious",data={"actor_public_id":"actor","mystery_reference":"signal","perceived_mystery":"unknown origin","difficulty_rule_code":"difficulty.average","idempotency_key":"curious"},follow_redirects=False),client.post(f"{base}/operations/species/low-light",data={"actor_public_id":"actor","illumination_context":"moonlit ruins","human_visibility_metres":"12.5","idempotency_key":"light"},follow_redirects=False),client.post(f"{base}/ground-starship-volleys",data={"target_ship_public_id":"ship","target_range_code":"medium","battery_public_id":"battery","battery_quantity":"4","idempotency_key":"volley"},follow_redirects=False),client.post(f"{base}/ground-starship-volleys/finalize",data={"volley_command_public_id":"command","primary_attack_order":"2","idempotency_key":"final"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert hive["family_group_reference"]=="clan" and curious["mystery_reference"]=="signal"
+    assert light["human_visibility_metres"]==12.5 and volley["battery_quantity"]==4 and final["primary_attack_order"]==2
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
