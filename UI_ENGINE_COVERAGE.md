@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 152
-- Engine-only review candidates: 18
+- Direct web-application wrappers: 153
+- Engine-only review candidates: 17
 
 ## Engine-only review candidates
 
@@ -20,7 +20,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
 | `medical_runtime.py` | `apply_personal_medical_care_command` |
 | `misc_actions_runtime.py` | `perform_personal_miscellaneous_action_command` |
-| `scenes.py` | `create_scene_snapshot_command` |
 | `social_content.py` | `select_social_content_command` |
 | `social_content.py` | `create_patron_brief_command` |
 | `source_review.py` | `review_campaign_source_page_command` |
@@ -165,6 +164,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `regulatory.py` | `resolve_regulatory_task_command` |
 | `route_revenue.py` | `open_route_revenue_command` |
 | `sales.py` | `sell_trade_goods_command` |
+| `scenes.py` | `create_scene_snapshot_command` |
 | `sectors.py` | `import_sector_command` |
 | `ship_expenses.py` | `pay_ship_operating_expense_command` |
 | `ship_mortgages.py` | `open_ship_mortgage_command` |

@@ -648,6 +648,14 @@ def test_battlefield_conditions_and_explosion_dispatch(monkeypatch):
     assert reaction["reaction_kind"]=="dive" and resolved["explosion_public_id"]=="explosion"
 
 
+def test_scene_snapshot_dispatch(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"create_scene_snapshot",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/scene-snapshots",data={"template_code":"law-stop","scene_reference":"checkpoint-1","slot_codes":["authority","reason"],"fact_values":["Patrol","Inspection"],"source_references":["law-7",""],"idempotency_key":"scene"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured["slot_codes"]==("authority","reason") and captured["fact_values"]==("Patrol","Inspection")
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

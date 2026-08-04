@@ -84,6 +84,7 @@ from engine.steward import resolve_steward_service_command  # noqa: E402
 from engine.conditions_runtime import set_personal_battlefield_conditions_command  # noqa: E402
 from engine.explosions_runtime import declare_personal_explosion_command,declare_personal_explosion_reaction_command,resolve_personal_explosion_command  # noqa: E402
 from engine.extended_actions_runtime import resolve_personal_extended_action_interruption_command  # noqa: E402
+from engine.scenes import SceneFact,create_scene_snapshot_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
 from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
@@ -493,6 +494,12 @@ def react_to_combat_explosion(*,explosion_public_id:str,actor_public_id:str,reac
 def resolve_combat_explosion(*,explosion_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_personal_explosion_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,explosion_public_id=explosion_public_id)
+
+def create_scene_snapshot(*,campaign_public_id:str,template_code:str,scene_reference:str,slot_codes:tuple[str,...],fact_values:tuple[str,...],source_references:tuple[str,...],idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    if not (len(slot_codes)==len(fact_values)==len(source_references)):raise ValueError("Scene fact fields do not align")
+    facts=tuple(SceneFact(code,value,source or None) for code,value,source in zip(slot_codes,fact_values,source_references) if value.strip())
+    with psycopg.connect(url) as connection:return create_scene_snapshot_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,template_code=template_code,scene_reference=scene_reference,facts=facts)
 
 def perform_ship_transport_operation(*,actor_public_id:str,ship_public_id:str,operation_kind:str,operation_reference:str,challenging_conditions:bool,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
