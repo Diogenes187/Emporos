@@ -199,9 +199,11 @@ class CampaignReader:
                 route["eligible_journeys"] = connection.execute(
                     """SELECT journey.public_id::text AS public_id,journey.name
                        FROM journey_revenue_availability_cycle cycle
+                       JOIN cmd_route_revenue_availability_receipt receipt
+                         USING (revenue_availability_cycle_id)
                        JOIN journey_journey journey
                          ON journey.campaign_id=cycle.campaign_id
-                        AND journey.ship_id=cycle.ship_id
+                        AND journey.ship_id=receipt.ship_id
                         AND journey.journey_status IN ('planning','ready')
                        JOIN journey_leg leg
                          ON leg.journey_id=journey.journey_id

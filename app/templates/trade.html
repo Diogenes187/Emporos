@@ -1,14 +1,197 @@
-{% extends "base.html" %}{% block title %}Trade · Emporos{% endblock %}{% block content %}
-<section class="page-heading compact"><div><small>TRADE & COMMERCE</small><h1>Exchange</h1><p>Audited markets, negotiation, accounts, purchases, and sales.</p></div></section>
-{% if not campaign %}<section class="empty-state"><h2>Select a campaign first.</h2></section>{% else %}<section class="trade-layout"><article class="panel">
-{% for market in campaign.markets %}<section class="market-card"><div class="market-title"><strong>{{ market.name }} · {{ market.world_name }}</strong><span>{{ market.stock|length }} GOODS</span></div><table>{% for item in market.stock %}<tr><td><strong>{{ item.name }}</strong><small>{{ item.code }}</small></td><td>{{ item.quantity }}t</td><td>Cr {{ '{:,}'.format(item.base_price) }}</td><td><form class="quote-form" method="post" action="/campaigns/{{ campaign.public_id }}/markets/{{ market.market_session_id }}/quotes"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-q-{{ item.stock_id }}"><input type="hidden" name="trade_good_code" value="{{ item.code }}"><select name="actor_public_id">{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select><button>Buy quote</button></form></td></tr>{% endfor %}</table></section>{% else %}<div class="empty-inline">No open markets.</div>{% endfor %}
-{% for quote in campaign.broker_quotes %}{% if quote.stock_id and campaign.trading_accounts %}<form class="quote-form trade-deal" method="post" action="/campaigns/{{ campaign.public_id }}/purchases"><strong>{{ quote.good_name }} · {{ quote.price_percent }}%</strong><input type="hidden" name="idempotency_key" value="{{ creation_key }}-buy-{{ loop.index }}"><input type="hidden" name="actor_public_id" value="{{ quote.actor_public_id }}"><input type="hidden" name="stock_id" value="{{ quote.stock_id }}"><input type="hidden" name="broker_command_public_id" value="{{ quote.command_public_id }}"><select name="ship_public_id">{% for ship in campaign.ships %}<option value="{{ ship.public_id }}">{{ ship.name }}</option>{% endfor %}</select><input type="number" name="quantity_tons" min="1" value="1"><button class="primary">Buy</button></form>{% endif %}{% endfor %}
-{% if campaign.cargo_lots %}<section class="quote-results"><small>SHIP CARGO</small>{% for lot in campaign.cargo_lots %}<div><strong>{{ lot.good_name }} · {{ lot.quantity }}t</strong><span>{{ lot.ship_name }}</span><form class="quote-form" method="post" action="/campaigns/{{ campaign.public_id }}/sale-quotes"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-sq-{{ lot.lot_id }}"><input type="hidden" name="actor_public_id" value="{{ lot.actor_public_id }}"><input type="hidden" name="trade_good_code" value="{{ lot.good_code }}"><select name="market_session_id">{% for market in campaign.markets %}<option value="{{ market.market_session_id }}">{{ market.world_name }}</option>{% endfor %}</select><button>Sale quote</button></form></div>{% endfor %}</section>{% endif %}
-{% for quote in campaign.sale_quotes %}{% for lot in campaign.cargo_lots if lot.good_code==quote.good_code and lot.actor_public_id==quote.actor_public_id %}<form class="quote-form trade-deal" method="post" action="/campaigns/{{ campaign.public_id }}/sales"><strong>Sell {{ lot.good_name }} · {{ quote.price_percent }}%</strong><input type="hidden" name="idempotency_key" value="{{ creation_key }}-sell-{{ lot.lot_id }}"><input type="hidden" name="actor_public_id" value="{{ lot.actor_public_id }}"><input type="hidden" name="ship_public_id" value="{{ lot.ship_public_id }}"><input type="hidden" name="lot_id" value="{{ lot.lot_id }}"><input type="hidden" name="market_session_id" value="{{ quote.market_session_id }}"><input type="hidden" name="broker_command_public_id" value="{{ quote.command_public_id }}"><input type="number" name="quantity_tons" min="1" max="{{ lot.quantity }}" value="{{ lot.quantity }}"><button class="primary">Sell</button></form>{% endfor %}{% endfor %}
+﻿{% extends "base.html" %}{% block title %}Trade · Emporos{% endblock %}{% block content %}
+<section class="page-heading compact">
+<div>
+<small>TRADE & COMMERCE</small>
+<h1>Exchange</h1>
+<p>Audited markets, negotiation, accounts, purchases, and sales.</p>
+</div>
+</section>
+{% if not campaign %}<section class="empty-state">
+<h2>Select a campaign first.</h2>
+</section>{% else %}<section class="trade-layout">
+<article class="panel">
+{% for market in campaign.markets %}<section class="market-card">
+<div class="market-title">
+<strong>{{ market.name }} · {{ market.world_name }}</strong>
+<span>{{ market.stock|length }} GOODS</span>
+</div>
+<table>{% for item in market.stock %}<tr>
+<td>
+<strong>{{ item.name }}</strong>
+<small>{{ item.code }}</small>
+</td>
+<td>{{ item.quantity }}t</td>
+<td>Cr {{ '{:,}'.format(item.base_price) }}</td>
+<td>
+<form class="quote-form" method="post" action="/campaigns/{{ campaign.public_id }}/markets/{{ market.market_session_id }}/quotes">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-q-{{ item.stock_id }}">
+<input type="hidden" name="trade_good_code" value="{{ item.code }}">
+<select name="actor_public_id">{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select>
+<button>Buy quote</button>
+</form>
+</td>
+</tr>{% endfor %}</table>
+</section>{% else %}<div class="empty-inline">No open markets.</div>{% endfor %}
+{% for quote in campaign.broker_quotes %}{% if quote.stock_id and campaign.trading_accounts %}<form class="quote-form trade-deal" method="post" action="/campaigns/{{ campaign.public_id }}/purchases">
+<strong>{{ quote.good_name }} · {{ quote.price_percent }}%</strong>
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-buy-{{ loop.index }}">
+<input type="hidden" name="actor_public_id" value="{{ quote.actor_public_id }}">
+<input type="hidden" name="stock_id" value="{{ quote.stock_id }}">
+<input type="hidden" name="broker_command_public_id" value="{{ quote.command_public_id }}">
+<select name="ship_public_id">{% for ship in campaign.ships %}<option value="{{ ship.public_id }}">{{ ship.name }}</option>{% endfor %}</select>
+<input type="number" name="quantity_tons" min="1" value="1">
+<button class="primary">Buy</button>
+</form>{% endif %}{% endfor %}
+{% if campaign.cargo_lots %}<section class="quote-results">
+<small>SHIP CARGO</small>{% for lot in campaign.cargo_lots %}<div>
+<strong>{{ lot.good_name }} · {{ lot.quantity }}t</strong>
+<span>{{ lot.ship_name }}</span>
+<form class="quote-form" method="post" action="/campaigns/{{ campaign.public_id }}/sale-quotes">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-sq-{{ lot.lot_id }}">
+<input type="hidden" name="actor_public_id" value="{{ lot.actor_public_id }}">
+<input type="hidden" name="trade_good_code" value="{{ lot.good_code }}">
+<select name="market_session_id">{% for market in campaign.markets %}<option value="{{ market.market_session_id }}">{{ market.world_name }}</option>{% endfor %}</select>
+<button>Sale quote</button>
+</form>
+</div>{% endfor %}</section>{% endif %}
+{% for quote in campaign.sale_quotes %}{% for lot in campaign.cargo_lots if lot.good_code==quote.good_code and lot.actor_public_id==quote.actor_public_id %}<form class="quote-form trade-deal" method="post" action="/campaigns/{{ campaign.public_id }}/sales">
+<strong>Sell {{ lot.good_name }} · {{ quote.price_percent }}%</strong>
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-sell-{{ lot.lot_id }}">
+<input type="hidden" name="actor_public_id" value="{{ lot.actor_public_id }}">
+<input type="hidden" name="ship_public_id" value="{{ lot.ship_public_id }}">
+<input type="hidden" name="lot_id" value="{{ lot.lot_id }}">
+<input type="hidden" name="market_session_id" value="{{ quote.market_session_id }}">
+<input type="hidden" name="broker_command_public_id" value="{{ quote.command_public_id }}">
+<input type="number" name="quantity_tons" min="1" max="{{ lot.quantity }}" value="{{ lot.quantity }}">
+<button class="primary">Sell</button>
+</form>{% endfor %}{% endfor %}
 {% for buy in campaign.purchases %}<p class="positive">Bought {{ buy.quantity_tons }}t {{ buy.good_name }} · Cr {{ '{:,}'.format(buy.total_price_minor) }}</p>{% endfor %}{% for sale in campaign.sales %}<p class="positive">Sold {{ sale.quantity_tons }}t {{ sale.good_name }} · Cr {{ '{:,}'.format(sale.total_price_minor) }}</p>{% endfor %}</article>
-<aside class="panel"><small>PASSENGER MANIFESTS</small>{% for booking in campaign.passenger_bookings %}<div class="revenue-card"><strong>{{ booking.passenger_count }} {{ booking.passage_class }} aboard {{ booking.ship_name }}</strong><span>Cr {{ '{:,}'.format(booking.total_fare_minor) }} · {% if booking.boarded %}boarded{% else %}booked{% endif %}</span>{% if booking.awaiting_boarding %}<form method="post" action="/campaigns/{{ campaign.public_id }}/passenger-boardings"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-boarding-{{ loop.index }}"><input type="hidden" name="journey_public_id" value="{{ booking.journey_public_id }}"><input type="hidden" name="actor_public_id" value="{{ booking.actor_public_id }}"><button>Board and collect fares</button></form>{% endif %}</div>{% else %}<p class="source-note">No passengers booked.</p>{% endfor %}</aside>
-<aside class="panel"><small>LOW BERTHS</small>{% for passenger in campaign.low_passengers %}<div class="revenue-card"><strong>{{ passenger.passenger_name }}</strong><span>{{ passenger.journey_name }} · {{ passenger.passage_status }}</span>{% if passenger.passage_status=='boarded' %}<form method="post" action="/campaigns/{{ campaign.public_id }}/low-passenger-revivals"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-revival-{{ passenger.journey_passage_id }}"><input type="hidden" name="journey_passage_id" value="{{ passenger.journey_passage_id }}"><button>Attempt revival</button></form>{% endif %}</div>{% else %}<p class="source-note">No low berths occupied.</p>{% endfor %}</aside>
-<aside class="panel"><small>DEPARTURE MANIFESTS</small>{% for journey in campaign.passenger_journeys %}<div class="revenue-card"><strong>{{ journey.journey_name }}</strong><span>{{ journey.passenger_count }} passengers · {% if journey.manifest_finalized %}finalized{% else %}draft{% endif %}</span>{% if not journey.manifest_finalized %}<form method="post" action="/campaigns/{{ campaign.public_id }}/passenger-manifests"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-manifest-{{ loop.index }}"><input type="hidden" name="journey_public_id" value="{{ journey.journey_public_id }}"><button>Finalize manifest</button></form>{% endif %}</div>{% else %}<p class="source-note">No passenger journeys awaiting departure.</p>{% endfor %}</aside>
-<aside class="panel"><small>WHOLE-SHIP CHARTERS</small><form method="post" action="/campaigns/{{ campaign.public_id }}/charter-quotes"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-charter-quote"><select name="ship_public_id">{% for ship in campaign.ships %}<option value="{{ ship.public_id }}">{{ ship.name }}</option>{% endfor %}</select><input type="number" name="billing_blocks" min="1" value="1"><button>Quote two-week blocks</button></form>{% for quote in campaign.charter_quotes %}<div class="revenue-card"><strong>{{ quote.ship_name }} · Cr {{ '{:,}'.format(quote.quoted_price_credits) }}</strong><span>{{ quote.billing_blocks }} billing blocks</span>{% if quote.available %}<form method="post" action="/campaigns/{{ campaign.public_id }}/charter-contracts"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-charter-accept-{{ loop.index }}"><input type="hidden" name="quote_public_id" value="{{ quote.public_id }}"><select name="journey_public_id">{% for journey in campaign.journeys %}<option value="{{ journey.public_id }}">{{ journey.name }}</option>{% endfor %}</select><button>Bind to journey</button></form>{% endif %}</div>{% endfor %}{% for contract in campaign.charter_contracts %}<div class="revenue-card"><strong>{{ contract.ship_name }} charter</strong><span>{{ contract.journey_name }} · Cr {{ '{:,}'.format(contract.promised_payment_credits) }} · {% if contract.completed %}paid{% else %}active{% endif %}</span>{% if not contract.completed %}<form method="post" action="/campaigns/{{ campaign.public_id }}/charter-completions"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-charter-complete-{{ loop.index }}"><input type="hidden" name="contract_public_id" value="{{ contract.public_id }}"><input type="hidden" name="actor_public_id" value="{{ contract.actor_public_id }}"><button>Settle completed charter</button></form>{% endif %}</div>{% endfor %}</aside>
-<aside class="panel"><small>POSTAL DUTY</small>{% for journey in campaign.journeys %}{% if journey.journey_status in ['planning','ready'] %}<form method="post" action="/campaigns/{{ campaign.public_id }}/postal-contracts"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-mail-{{ loop.index }}"><input type="hidden" name="journey_public_id" value="{{ journey.public_id }}"><button>Seek mail for {{ journey.name }}</button></form>{% endif %}{% endfor %}{% for contract in campaign.postal_contracts %}<div class="revenue-card"><strong>{{ contract.actual_mail_tons }}t mail aboard {{ contract.ship_name }}</strong><span>5t secured · Cr {{ '{:,}'.format(contract.promised_payment_credits) }} · {{ contract.status }}</span>{% if contract.status=='reserved' %}<form method="post" action="/campaigns/{{ campaign.public_id }}/postal-deliveries"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-mail-delivery-{{ loop.index }}"><input type="hidden" name="contract_public_id" value="{{ contract.public_id }}"><input type="hidden" name="actor_public_id" value="{{ contract.actor_public_id }}"><button>Deliver after arrival</button></form>{% endif %}</div>{% endfor %}</aside>
-<aside class="panel"><small>TRADING FOUNDATION</small><form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/trading-setup"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-setup"><label><span>Trader</span><select name="actor_public_id">{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select></label><label><span>Ship</span><select name="ship_public_id">{% for ship in campaign.ships %}<option value="{{ ship.public_id }}">{{ ship.name }}</option>{% endfor %}</select></label><label><span>Opening credits</span><input type="number" min="0" name="opening_balance" value="0"></label><button class="primary full">Create ledger and hold</button></form>{% for account in campaign.trading_accounts %}<p class="source-note"><strong>{{ account.actor_name }}</strong><br>{{ account.ship_name }} · Cr {{ '{:,}'.format(account.balance_minor) }}</p>{% endfor %}<hr><small>OPEN EXCHANGE</small><form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/markets"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-market"><select name="system_public_id">{% for system in campaign.systems %}<option value="{{ system.public_id }}">{{ system.name }}</option>{% endfor %}</select><input name="market_name" value="Starport Exchange"><button class="primary full">Open market</button></form><hr><small>ROUTE REVENUE</small><form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/route-revenue"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-revenue"><select name="ship_public_id">{% for ship in campaign.ships %}<option value="{{ ship.public_id }}">{{ ship.name }}</option>{% endfor %}</select><select name="destination_system_public_id">{% for system in campaign.systems %}<option value="{{ system.public_id }}">{{ system.name }}</option>{% endfor %}</select><button class="primary full">Find freight and passengers</button></form>{% for route in campaign.route_revenues %}<div class="revenue-card"><strong>{{ route.origin_name }} → {{ route.destination_name }}</strong><span>{{ route.freight_tons }}t freight</span><span>{{ route.high_passengers }} high · {{ route.middle_passengers }} middle · {{ route.low_passengers }} low</span>{% if route.freight_tons and campaign.journeys %}<form method="post" action="/campaigns/{{ campaign.public_id }}/freight-contracts"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-freight-{{ loop.index }}"><input type="hidden" name="cycle_public_id" value="{{ route.public_id }}"><select name="journey_public_id">{% for journey in campaign.journeys %}<option value="{{ journey.public_id }}">{{ journey.name }}</option>{% endfor %}</select><input type="number" name="accepted_tons" min="1" max="{{ route.freight_tons }}" value="1"><button>Accept freight</button></form>{% endif %}{% if campaign.journeys and (route.high_passengers or route.middle_passengers or route.low_passengers) %}<form method="post" action="/campaigns/{{ campaign.public_id }}/passenger-bookings"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-passage-{{ loop.index }}"><input type="hidden" name="cycle_public_id" value="{{ route.public_id }}"><select name="journey_public_id">{% for journey in campaign.journeys %}<option value="{{ journey.public_id }}">{{ journey.name }}</option>{% endfor %}</select><select name="passage_class"><option value="high">High</option><option value="middle">Middle</option><option value="low">Low</option></select><input type="number" name="passenger_count" min="1" value="1"><button>Book passengers</button></form>{% endif %}</div>{% endfor %}{% for contract in campaign.freight_contracts %}<div class="revenue-card"><strong>{{ contract.accepted_tons }}t aboard {{ contract.ship_name }}</strong><span>Cr {{ '{:,}'.format(contract.promised_payment_credits) }} · {{ contract.status }}</span>{% if contract.status=='reserved' %}<form method="post" action="/campaigns/{{ campaign.public_id }}/freight-deliveries"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-delivery-{{ loop.index }}"><input type="hidden" name="contract_public_id" value="{{ contract.public_id }}"><input type="hidden" name="actor_public_id" value="{{ contract.actor_public_id }}"><button>Deliver after arrival</button></form>{% endif %}</div>{% endfor %}{% for booking in campaign.passenger_bookings %}<div class="revenue-card"><strong>{{ booking.passenger_count }} {{ booking.passage_class }} aboard {{ booking.ship_name }}</strong><span>Cr {{ '{:,}'.format(booking.total_fare_minor) }} booked</span></div>{% endfor %}</aside></section>{% endif %}{% endblock %}
+<aside class="panel">
+<small>PASSENGER MANIFESTS</small>{% for booking in campaign.passenger_bookings %}<div class="revenue-card">
+<strong>{{ booking.passenger_count }} {{ booking.passage_class }} aboard {{ booking.ship_name }}</strong>
+<span>Cr {{ '{:,}'.format(booking.total_fare_minor) }} · {% if booking.boarded %}boarded{% else %}booked{% endif %}</span>{% if booking.awaiting_boarding %}<form method="post" action="/campaigns/{{ campaign.public_id }}/passenger-boardings">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-boarding-{{ loop.index }}">
+<input type="hidden" name="journey_public_id" value="{{ booking.journey_public_id }}">
+<input type="hidden" name="actor_public_id" value="{{ booking.actor_public_id }}">
+<button>Board and collect fares</button>
+</form>{% endif %}</div>{% else %}<p class="source-note">No passengers booked.</p>{% endfor %}</aside>
+<aside class="panel">
+<small>LOW BERTHS</small>{% for passenger in campaign.low_passengers %}<div class="revenue-card">
+<strong>{{ passenger.passenger_name }}</strong>
+<span>{{ passenger.journey_name }} · {{ passenger.passage_status }}</span>{% if passenger.passage_status=='boarded' %}<form method="post" action="/campaigns/{{ campaign.public_id }}/low-passenger-revivals">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-revival-{{ passenger.journey_passage_id }}">
+<input type="hidden" name="journey_passage_id" value="{{ passenger.journey_passage_id }}">
+<button>Attempt revival</button>
+</form>{% endif %}</div>{% else %}<p class="source-note">No low berths occupied.</p>{% endfor %}</aside>
+<aside class="panel">
+<small>DEPARTURE MANIFESTS</small>{% for journey in campaign.passenger_journeys %}<div class="revenue-card">
+<strong>{{ journey.journey_name }}</strong>
+<span>{{ journey.passenger_count }} passengers · {% if journey.manifest_finalized %}finalized{% else %}draft{% endif %}</span>{% if not journey.manifest_finalized %}<form method="post" action="/campaigns/{{ campaign.public_id }}/passenger-manifests">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-manifest-{{ loop.index }}">
+<input type="hidden" name="journey_public_id" value="{{ journey.journey_public_id }}">
+<button>Finalize manifest</button>
+</form>{% endif %}</div>{% else %}<p class="source-note">No passenger journeys awaiting departure.</p>{% endfor %}</aside>
+<aside class="panel">
+<small>WHOLE-SHIP CHARTERS</small>
+<form method="post" action="/campaigns/{{ campaign.public_id }}/charter-quotes">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-charter-quote">
+<select name="ship_public_id">{% for ship in campaign.ships %}<option value="{{ ship.public_id }}">{{ ship.name }}</option>{% endfor %}</select>
+<input type="number" name="billing_blocks" min="1" value="1">
+<button>Quote two-week blocks</button>
+</form>{% for quote in campaign.charter_quotes %}<div class="revenue-card">
+<strong>{{ quote.ship_name }} · Cr {{ '{:,}'.format(quote.quoted_price_credits) }}</strong>
+<span>{{ quote.billing_blocks }} billing blocks</span>{% if quote.available %}<form method="post" action="/campaigns/{{ campaign.public_id }}/charter-contracts">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-charter-accept-{{ loop.index }}">
+<input type="hidden" name="quote_public_id" value="{{ quote.public_id }}">
+<select name="journey_public_id">{% for journey in campaign.journeys %}<option value="{{ journey.public_id }}">{{ journey.name }}</option>{% endfor %}</select>
+<button>Bind to journey</button>
+</form>{% endif %}</div>{% endfor %}{% for contract in campaign.charter_contracts %}<div class="revenue-card">
+<strong>{{ contract.ship_name }} charter</strong>
+<span>{{ contract.journey_name }} · Cr {{ '{:,}'.format(contract.promised_payment_credits) }} · {% if contract.completed %}paid{% else %}active{% endif %}</span>{% if not contract.completed %}<form method="post" action="/campaigns/{{ campaign.public_id }}/charter-completions">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-charter-complete-{{ loop.index }}">
+<input type="hidden" name="contract_public_id" value="{{ contract.public_id }}">
+<input type="hidden" name="actor_public_id" value="{{ contract.actor_public_id }}">
+<button>Settle completed charter</button>
+</form>{% endif %}</div>{% endfor %}</aside>
+<aside class="panel">
+<small>POSTAL DUTY</small>{% for journey in campaign.journeys %}{% if journey.journey_status in ['planning','ready'] %}<form method="post" action="/campaigns/{{ campaign.public_id }}/postal-contracts">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-mail-{{ loop.index }}">
+<input type="hidden" name="journey_public_id" value="{{ journey.public_id }}">
+<button>Seek mail for {{ journey.name }}</button>
+</form>{% endif %}{% endfor %}{% for contract in campaign.postal_contracts %}<div class="revenue-card">
+<strong>{{ contract.actual_mail_tons }}t mail aboard {{ contract.ship_name }}</strong>
+<span>5t secured · Cr {{ '{:,}'.format(contract.promised_payment_credits) }} · {{ contract.status }}</span>{% if contract.status=='reserved' %}<form method="post" action="/campaigns/{{ campaign.public_id }}/postal-deliveries">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-mail-delivery-{{ loop.index }}">
+<input type="hidden" name="contract_public_id" value="{{ contract.public_id }}">
+<input type="hidden" name="actor_public_id" value="{{ contract.actor_public_id }}">
+<button>Deliver after arrival</button>
+</form>{% endif %}</div>{% endfor %}</aside>
+<aside class="panel">
+<small>TRADING FOUNDATION</small>
+{% if not campaign.trading_accounts %}
+<form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/trading-setup">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-setup">
+<label>
+<span>Trader</span>
+<select name="actor_public_id">{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select>
+</label>
+<label>
+<span>Ship</span>
+<select name="ship_public_id">{% for ship in campaign.ships %}<option value="{{ ship.public_id }}">{{ ship.name }}</option>{% endfor %}</select>
+</label>
+<label>
+<span>Opening credits</span>
+<input type="number" min="0" name="opening_balance" value="0">
+</label>
+<button class="primary full">Create ledger and hold</button>
+</form>
+{% endif %}
+{% for account in campaign.trading_accounts %}<p class="source-note">
+<strong>{{ account.actor_name }}</strong>
+<br>{{ account.ship_name }} · Cr {{ '{:,}'.format(account.balance_minor) }}</p>{% endfor %}<hr>
+<small>OPEN EXCHANGE</small>
+<form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/markets">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-market">
+<label><span>System</span><select name="system_public_id">{% for system in campaign.systems %}<option value="{{ system.public_id }}"{% if campaign.ships and system.public_id==campaign.ships[0].location_public_id %} selected{% endif %}>{{ system.name }}</option>{% endfor %}</select></label>
+<label><span>Exchange name</span><input name="market_name" value="Starport Exchange"></label>
+<button class="primary full">Open market</button>
+</form>
+<hr>
+<small>ROUTE REVENUE</small>
+<form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/route-revenue">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-revenue">
+<label><span>Ship</span><select name="ship_public_id">{% for ship in campaign.ships %}<option value="{{ ship.public_id }}">{{ ship.name }}</option>{% endfor %}</select></label>
+<label><span>Destination</span><select name="destination_system_public_id">{% for system in campaign.systems %}{% if not campaign.ships or system.public_id!=campaign.ships[0].location_public_id %}<option value="{{ system.public_id }}">{{ system.name }}</option>{% endif %}{% endfor %}</select></label>
+<button class="primary full">Find freight and passengers</button>
+</form>{% for route in campaign.route_revenues %}<div class="revenue-card">
+<strong>{{ route.origin_name }} → {{ route.destination_name }}</strong>
+<span>{{ route.freight_tons }}t freight</span>
+<span>{{ route.high_passengers }} high · {{ route.middle_passengers }} middle · {{ route.low_passengers }} low</span>{% if route.freight_tons and route.eligible_journeys %}<form method="post" action="/campaigns/{{ campaign.public_id }}/freight-contracts">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-freight-{{ loop.index }}">
+<input type="hidden" name="cycle_public_id" value="{{ route.public_id }}">
+<select name="journey_public_id">{% for journey in route.eligible_journeys %}<option value="{{ journey.public_id }}">{{ journey.name }}</option>{% endfor %}</select>
+<input type="number" name="accepted_tons" min="1" max="{{ route.freight_tons }}" value="1">
+<button>Accept freight</button>
+</form>{% endif %}{% if route.eligible_journeys and (route.high_passengers or route.middle_passengers or route.low_passengers) %}<form method="post" action="/campaigns/{{ campaign.public_id }}/passenger-bookings">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-passage-{{ loop.index }}">
+<input type="hidden" name="cycle_public_id" value="{{ route.public_id }}">
+<select name="journey_public_id">{% for journey in route.eligible_journeys %}<option value="{{ journey.public_id }}">{{ journey.name }}</option>{% endfor %}</select>
+<select name="passage_class">
+<option value="high">High</option>
+<option value="middle">Middle</option>
+<option value="low">Low</option>
+</select>
+<input type="number" name="passenger_count" min="1" value="1">
+<button>Book passengers</button>
+</form>{% endif %}</div>{% endfor %}{% for contract in campaign.freight_contracts %}<div class="revenue-card">
+<strong>{{ contract.accepted_tons }}t aboard {{ contract.ship_name }}</strong>
+<span>Cr {{ '{:,}'.format(contract.promised_payment_credits) }} · {{ contract.status }}</span>{% if contract.status=='reserved' %}<form method="post" action="/campaigns/{{ campaign.public_id }}/freight-deliveries">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-delivery-{{ loop.index }}">
+<input type="hidden" name="contract_public_id" value="{{ contract.public_id }}">
+<input type="hidden" name="actor_public_id" value="{{ contract.actor_public_id }}">
+<button>Deliver after arrival</button>
+</form>{% endif %}</div>{% endfor %}{% for booking in campaign.passenger_bookings %}<div class="revenue-card">
+<strong>{{ booking.passenger_count }} {{ booking.passage_class }} aboard {{ booking.ship_name }}</strong>
+<span>Cr {{ '{:,}'.format(booking.total_fare_minor) }} booked</span>
+</div>{% endfor %}</aside>
+</section>{% endif %}{% endblock %}
