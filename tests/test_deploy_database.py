@@ -60,7 +60,7 @@ class DeployDatabaseTests(unittest.TestCase):
                     "postgresql://test",
                     "--resume",
                     "--start-at",
-                    "269",
+                    "282",
                 )
             ],
         )

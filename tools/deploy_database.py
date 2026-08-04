@@ -54,11 +54,11 @@ def main() -> int:
             run("tools/verify_database.py")
         else:
             arguments = ["tools/bootstrap_database.py", "--dsn", dsn, "--resume"]
-            # The first hosted bootstrap timed out after catalogue phase 268,
+            # The first hosted bootstrap timed out after catalogue phase 281,
             # then a retry applied the remaining schema before content imports.
             # Old importers cannot all be replayed against that final schema.
             if migration_version >= 570:
-                arguments.extend(("--start-at", "269"))
+                arguments.extend(("--start-at", "282"))
             run(*arguments)
     else:
         run("tools/bootstrap_database.py", "--dsn", dsn)
