@@ -83,6 +83,7 @@ from engine.liaison import resolve_liaison_negotiation_command  # noqa: E402
 from engine.steward import resolve_steward_service_command  # noqa: E402
 from engine.conditions_runtime import set_personal_battlefield_conditions_command  # noqa: E402
 from engine.explosions_runtime import declare_personal_explosion_command,declare_personal_explosion_reaction_command,resolve_personal_explosion_command  # noqa: E402
+from engine.extended_actions_runtime import resolve_personal_extended_action_interruption_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
 from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
@@ -611,7 +612,11 @@ def resolve_combat_attack(*,personal_attack_public_id:str,item_rule_code:str,att
 def apply_combat_damage(*,damage_instance_public_id:str,strength_damage:int,dexterity_damage:int,endurance_damage:int,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     allocations=tuple((code,value) for code,value in (("characteristic.endurance",endurance_damage),("characteristic.strength",strength_damage),("characteristic.dexterity",dexterity_damage)) if value>0)
-    with psycopg.connect(url) as connection:return apply_personal_damage_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,damage_instance_public_id=damage_instance_public_id,allocations=allocations)
+    with psycopg.connect(url) as connection:
+        result=apply_personal_damage_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,damage_instance_public_id=damage_instance_public_id,allocations=allocations)
+        damage=connection.execute("""SELECT damage.damage_instance_id,EXISTS(SELECT 1 FROM enc_personal_extended_action action WHERE action.actor_id=damage.target_actor_id AND action.action_status='active') FROM health_damage_instance damage WHERE damage.public_id=%s""",(damage_instance_public_id,)).fetchone()
+        if damage and damage[1]:resolve_personal_extended_action_interruption_command(connection,initiator_reference=authority,idempotency_key=f"{idempotency_key}:extended-interruption",damage_instance_id=damage[0])
+        return result
 
 def react_to_combat_attack(*,encounter_public_id:str,actor_public_id:str,attack_trigger_reference:str,reaction_kind:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
