@@ -64,6 +64,7 @@ from engine.commands import resolve_personal_attack_command,apply_personal_damag
 from engine.combat_resolution_runtime import resolve_personal_combat_command  # noqa: E402
 from engine.armor_runtime import equip_personal_armor_command,unequip_personal_armor_command  # noqa: E402
 from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
+from engine.grappling_runtime import apply_personal_grapple_option_command, resolve_personal_grapple_check_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
@@ -348,6 +349,14 @@ def spend_combat_action(*,encounter_public_id:str,actor_public_id:str,operation:
 def aim_combatant_for_kill(*,encounter_public_id:str,actor_public_id:str,target_actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return aim_personal_attack_for_kill_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,target_actor_public_id=target_actor_public_id)
+
+def resolve_combat_grapple(*,encounter_public_id:str,challenger_actor_public_id:str,opponent_actor_public_id:str,challenger_characteristic_rule_code:str,opponent_characteristic_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_personal_grapple_check_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,challenger_actor_public_id=challenger_actor_public_id,opponent_actor_public_id=opponent_actor_public_id,challenger_characteristic_rule_code=challenger_characteristic_rule_code,opponent_characteristic_rule_code=opponent_characteristic_rule_code,personal_range_confirmed=True)
+
+def apply_combat_grapple_option(*,grapple_public_id:str,option_code:str,continue_grapple:bool,displacement_metres:float,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return apply_personal_grapple_option_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,grapple_public_id=grapple_public_id,option_code=option_code,continue_grapple=continue_grapple,displacement_metres=displacement_metres)
 
 def complete_combat_turn(*,encounter_public_id:str,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

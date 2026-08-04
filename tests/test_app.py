@@ -408,6 +408,19 @@ def test_advanced_action_conversion_and_kill_aim_dispatch(monkeypatch):
     assert aimed=={"encounter_public_id":"encounter","actor_public_id":"actor","target_actor_public_id":"target","idempotency_key":"kill-aim-test"}
 
 
+def test_grapple_check_and_option_dispatch(monkeypatch):
+    checked={};applied={}
+    monkeypatch.setattr(main_module,"resolve_combat_grapple",lambda **kwargs:checked.update(kwargs))
+    monkeypatch.setattr(main_module,"apply_combat_grapple_option",lambda **kwargs:applied.update(kwargs))
+    base="/campaigns/campaign/encounters/encounter/grapples"
+    check=client.post(base,data={"challenger_actor_public_id":"actor","opponent_actor_public_id":"target","challenger_characteristic_rule_code":"characteristic.dexterity","opponent_characteristic_rule_code":"characteristic.strength","idempotency_key":"grapple-check"},follow_redirects=False)
+    option=client.post(f"{base}/grapple/options",data={"option_code":"damage","continue_grapple":"true","displacement_metres":"0","idempotency_key":"grapple-option"},follow_redirects=False)
+    assert check.status_code==303 and option.status_code==303
+    assert checked["challenger_characteristic_rule_code"]=="characteristic.dexterity"
+    assert checked["opponent_actor_public_id"]=="target"
+    assert applied=={"grapple_public_id":"grapple","option_code":"damage","continue_grapple":True,"displacement_metres":0.0,"idempotency_key":"grapple-option"}
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
