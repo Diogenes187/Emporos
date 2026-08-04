@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 117
-- Engine-only review candidates: 53
+- Direct web-application wrappers: 118
+- Engine-only review candidates: 52
 
 ## Engine-only review candidates
 
@@ -33,7 +33,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `explosions_runtime.py` | `resolve_personal_explosion_command` |
 | `extended_actions_runtime.py` | `resolve_personal_extended_action_interruption_command` |
 | `extreme_range_runtime.py` | `authorize_extreme_range_command` |
-| `gambling.py` | `resolve_house_gambling_command` |
 | `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
 | `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
@@ -140,6 +139,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `free_actions_runtime.py` | `perform_personal_free_action_command` |
 | `freight_contracts.py` | `accept_freight_contract_command` |
 | `freight_delivery.py` | `deliver_freight_contract_command` |
+| `gambling.py` | `resolve_house_gambling_command` |
 | `grappling_runtime.py` | `resolve_personal_grapple_check_command` |
 | `grappling_runtime.py` | `apply_personal_grapple_option_command` |
 | `health_runtime.py` | `apply_personal_fatigue_command` |

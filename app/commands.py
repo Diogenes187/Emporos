@@ -71,6 +71,7 @@ from engine.extended_actions_runtime import abandon_personal_extended_action_com
 from engine.psionics import activate_psionic_power_command, recover_psionic_strength_command, set_telepathic_shield_command  # noqa: E402
 from engine.streetwise import resolve_streetwise_command  # noqa: E402
 from engine.bribery import attempt_bribery_command, resolve_bribery_consequence_command  # noqa: E402
+from engine.gambling import resolve_house_gambling_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
@@ -407,6 +408,10 @@ def resolve_bribe_consequence(*,actor_public_id:str,target_reference:str,inciden
 def perform_carousing_influence(*,encounter_public_id:str,acting_actor_public_id:str,target_actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_carousing_influence_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,acting_actor_public_id=acting_actor_public_id,target_actor_public_id=target_actor_public_id)
+
+def gamble_against_house(*,actor_public_id:str,characteristic_rule_code:str,odds_code:str,venue_reference:str,game_reference:str,bet_credits:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_house_gambling_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,characteristic_rule_code=characteristic_rule_code,odds_code=odds_code,venue_reference=venue_reference,game_reference=game_reference,bet_credits=bet_credits)
 
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

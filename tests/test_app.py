@@ -479,6 +479,14 @@ def test_carousing_dispatches_from_encounter(monkeypatch):
     assert captured=={"encounter_public_id":"encounter","acting_actor_public_id":"carouser","target_actor_public_id":"local","idempotency_key":"carousing"}
 
 
+def test_house_gambling_dispatches_published_terms(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"gamble_against_house",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/contacts/gambling",data={"actor_public_id":"gambler","characteristic_rule_code":"characteristic.intelligence","odds_code":"high","venue_reference":"starport casino","game_reference":"cards","bet_credits":"30","idempotency_key":"gamble"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured["bet_credits"]==30 and captured["odds_code"]=="high"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
