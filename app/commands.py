@@ -58,7 +58,7 @@ from ai.source_reviewer import review_document_text_queue  # noqa: E402
 from ai.referee import submit_referee_turn  # noqa: E402
 from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
 from engine.encounters import create_encounter_command,add_encounter_participant_command,transition_encounter_mode_command  # noqa: E402
-from engine.combat_runtime import initialize_personal_combat_command,begin_personal_turn_command,move_personal_combatant_command,aim_personal_attack_command,complete_personal_turn_command,advance_personal_combat_round_command  # noqa: E402
+from engine.combat_runtime import initialize_personal_combat_command,begin_personal_turn_command,move_personal_combatant_command,aim_personal_attack_command,complete_personal_turn_command,advance_personal_combat_round_command,advance_weapon_reload_command  # noqa: E402
 from engine.combat_runtime import declare_personal_attack_command,declare_personal_reaction_command  # noqa: E402
 from engine.commands import resolve_personal_attack_command  # noqa: E402
 from engine.combat_resolution_runtime import resolve_personal_combat_command  # noqa: E402
@@ -317,6 +317,10 @@ def advance_combat_round(*,encounter_public_id:str,idempotency_key:str):
 def ready_combat_weapon(*,encounter_public_id:str,actor_public_id:str,weapon_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return advance_personal_weapon_ready_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,weapon_rule_code=weapon_rule_code)
+
+def reload_combat_weapon(*,encounter_public_id:str,actor_public_id:str,weapon_rule_code:str,ammunition_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return advance_weapon_reload_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,weapon_rule_code=weapon_rule_code,ammunition_rule_code=ammunition_rule_code,require_actor_holding=True)
 
 def declare_combat_attack(*,encounter_public_id:str,attacker_actor_public_id:str,target_actor_public_id:str,item_rule_code:str,attack_profile_code:str,range_rule_code:str,target_has_cover:bool,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

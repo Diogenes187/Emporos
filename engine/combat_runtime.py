@@ -721,6 +721,7 @@ def advance_weapon_reload_command(
     connection: psycopg.Connection, *, initiator_reference: str,
     idempotency_key: str, encounter_public_id: str, actor_public_id: str,
     weapon_rule_code: str, ammunition_rule_code: str,
+    require_actor_holding: bool = False,
 ) -> WeaponReloadResult:
     """Advance one source-defined combat reload unit."""
     with connection.transaction():
@@ -774,6 +775,13 @@ def advance_weapon_reload_command(
         ).fetchone()
         if state is None:
             raise ValueError("Reload is not legal in this combat state")
+        if require_actor_holding:
+            held=connection.execute(
+                """SELECT quantity FROM actor_item_holding
+                   WHERE actor_id=%s AND item_rule_id=%s""",
+                (state[1],state[6])).fetchone()
+            if held is None or held[0]<1:
+                raise ValueError("Actor does not hold the weapon being reloaded")
         procedure, required = state[9], state[10]
         if procedure == "recharge_hours":
             raise ValueError("This weapon must be recharged outside combat")

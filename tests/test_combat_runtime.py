@@ -580,6 +580,12 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                     (actor_id,),
                 )
                 connection.execute(
+                    """INSERT INTO actor_item_holding(actor_id,item_rule_id,quantity)
+                       SELECT %s,rule_id,1 FROM rule_rule
+                       WHERE rule_code='equipment.weapon.auto-pistol'""",
+                    (actor_id,),
+                )
+                connection.execute(
                     """INSERT INTO actor_ammunition_supply
                        (actor_id,ammunition_rule_id,reload_units_available)
                        SELECT %s,rule_id,2 FROM rule_rule
@@ -601,6 +607,7 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                     weapon_rule_code="equipment.weapon.auto-pistol",
                     ammunition_rule_code=(
                         "equipment.ammunition.auto-pistol.standard"),
+                    require_actor_holding=True,
                 )
                 self.assertTrue(reloaded.completed)
                 self.assertEqual(

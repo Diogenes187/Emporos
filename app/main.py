@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, declare_combat_attack, resolve_combat_attack, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -389,6 +389,12 @@ def combat_attack_resolve(campaign_id:str,encounter_id:str,attack_id:str,item_ru
 @app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/weapons/ready")
 def combat_weapon_ready(campaign_id:str,encounter_id:str,actor_id:str,weapon_rule_code:str=Form(...),idempotency_key:str=Form(...)):
     try:ready_combat_weapon(encounter_public_id=encounter_id,actor_public_id=actor_id,weapon_rule_code=weapon_rule_code,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/weapons/reload")
+def combat_weapon_reload(campaign_id:str,encounter_id:str,actor_id:str,weapon_rule_code:str=Form(...),ammunition_rule_code:str=Form(...),idempotency_key:str=Form(...)):
+    try:reload_combat_weapon(encounter_public_id=encounter_id,actor_public_id=actor_id,weapon_rule_code=weapon_rule_code,ammunition_rule_code=ammunition_rule_code,idempotency_key=idempotency_key)
     except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
 
