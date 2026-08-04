@@ -174,10 +174,24 @@ class CampaignReader:
                                         option["cascades"]=cascades;term_step["training_tables"].append(option)
                     else:
                         term_step["term_number"]=term_step["terms_completed"]+1
-                        declaration=connection.execute("""SELECT uses_anagathics,continuous_course_terms,cost_credits,declaration_status FROM actor_career_anagathic_term WHERE career_stint_id=%s AND term_number=%s""",(term_step["career_stint_id"],term_step["term_number"])).fetchone()
-                        if declaration:
-                            term_step.update(declaration);term_step["stage"]="survival_ready" if declaration["declaration_status"]=="ready" else declaration["declaration_status"]
-                        else:term_step["stage"]="anagathics_choice"
+                        continuation_ready=term_step["terms_completed"]==0
+                        if term_step["terms_completed"]>0:
+                            latest_term=connection.execute("""SELECT career_term_id,term_number FROM actor_career_term WHERE career_stint_id=%s AND term_status='completed' ORDER BY term_number DESC LIMIT 1""",(term_step["career_stint_id"],)).fetchone()
+                            reenlistment=connection.execute("""SELECT target_number,natural_total,outcome,decision_status,continuation,retirement_required FROM actor_career_reenlistment WHERE career_term_id=%s""",(latest_term["career_term_id"],)).fetchone()
+                            if reenlistment is None:
+                                term_step["stage"]="reenlistment_roll"
+                                term_step["completed_term_number"]=latest_term["term_number"]
+                            elif reenlistment["decision_status"]=="awaiting_choice":
+                                term_step.update(reenlistment);term_step["stage"]="reenlistment_choice"
+                            elif reenlistment["continuation"]:
+                                term_step.update(reenlistment);continuation_ready=True
+                            else:
+                                term_step.update(reenlistment);term_step["stage"]="career_departure"
+                        if continuation_ready:
+                            declaration=connection.execute("""SELECT uses_anagathics,continuous_course_terms,cost_credits,declaration_status FROM actor_career_anagathic_term WHERE career_stint_id=%s AND term_number=%s""",(term_step["career_stint_id"],term_step["term_number"])).fetchone()
+                            if declaration:
+                                term_step.update(declaration);term_step["stage"]="survival_ready" if declaration["declaration_status"]=="ready" else declaration["declaration_status"]
+                            else:term_step["stage"]="anagathics_choice"
                     term_step.pop("career_stint_id");term_step.pop("career_rule_id");term_step.pop("assignment_rule_id")
                 actor["career_term_step"]=term_step
                 actor["injury"]=connection.execute("SELECT COALESCE(injury_status,'uninjured') AS injury_status,COALESCE(damaged_physical_count,0) AS damaged_physical_count,COALESCE(zero_physical_count,0) AS zero_physical_count FROM actor_actor actor LEFT JOIN health_actor_injury_status injury USING(actor_id) WHERE actor.actor_id=%s",(actor_id,)).fetchone()

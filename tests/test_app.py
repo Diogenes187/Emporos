@@ -274,3 +274,22 @@ def test_career_term_training_dispatches_keyed_specializations(monkeypatch):
     assert response.status_code==303
     assert captured["training_table_code"]=="service"
     assert captured["cascade_specializations"]=={"skill.gun-combat":"skill.slug-pistol","skill.melee-combat":"skill.slashing-weapons","skill.vehicle":"skill.wheeled-vehicle"}
+
+
+def test_career_term_completion_dispatches_engine_command(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"complete_career_term",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/career-term-completion",data={"idempotency_key":"term-complete-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured=={"actor_public_id":"actor","idempotency_key":"term-complete-test"}
+
+
+def test_reenlistment_roll_and_choice_dispatch_engine_commands(monkeypatch):
+    rolled={};decided={}
+    monkeypatch.setattr(main_module,"determine_career_reenlistment",lambda **kwargs:rolled.update(kwargs))
+    monkeypatch.setattr(main_module,"decide_career_reenlistment",lambda **kwargs:decided.update(kwargs))
+    roll=client.post("/campaigns/campaign/characters/actor/career-reenlistment",data={"idempotency_key":"reenlist-roll-test"},follow_redirects=False)
+    choice=client.post("/campaigns/campaign/characters/actor/career-reenlistment-decision",data={"decision":"continue","idempotency_key":"reenlist-choice-test"},follow_redirects=False)
+    assert roll.status_code==303 and choice.status_code==303
+    assert rolled=={"actor_public_id":"actor","idempotency_key":"reenlist-roll-test"}
+    assert decided=={"actor_public_id":"actor","decision":"continue","idempotency_key":"reenlist-choice-test"}
