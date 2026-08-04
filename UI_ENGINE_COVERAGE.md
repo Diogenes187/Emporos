@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 116
-- Engine-only review candidates: 54
+- Direct web-application wrappers: 117
+- Engine-only review candidates: 53
 
 ## Engine-only review candidates
 
@@ -16,7 +16,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `animals.py` | `set_animal_reaction_context_command` |
 | `animals.py` | `resolve_animal_reaction_command` |
 | `armor_runtime.py` | `apply_personal_armor_usage_command` |
-| `broker_carousing.py` | `resolve_carousing_influence_command` |
 | `characters.py` | `assign_actor_species_command` |
 | `combat_runtime.py` | `move_species_flyer_command` |
 | `combat_runtime.py` | `resolve_species_great_leap_command` |
@@ -77,6 +76,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `bribery.py` | `attempt_bribery_command` |
 | `bribery.py` | `resolve_bribery_consequence_command` |
 | `broker_carousing.py` | `resolve_broker_operation_command` |
+| `broker_carousing.py` | `resolve_carousing_influence_command` |
 | `campaigns.py` | `create_campaign_command` |
 | `careers.py` | `attempt_career_entry_command` |
 | `careers.py` | `resolve_failed_career_entry_command` |

@@ -34,7 +34,7 @@ from engine.navigation import resolve_navigation_command  # noqa: E402
 from engine.jump_attempts import resolve_jump_attempt_command  # noqa: E402
 from engine.spacecraft_journeys import start_spacecraft_journey_leg_command, complete_spacecraft_journey_leg_command  # noqa: E402
 from engine.markets import open_trade_market_command  # noqa: E402
-from engine.broker_carousing import resolve_broker_operation_command  # noqa: E402
+from engine.broker_carousing import resolve_broker_operation_command, resolve_carousing_influence_command  # noqa: E402
 from engine.commerce_setup import prepare_trading_command  # noqa: E402
 from engine.purchases import purchase_trade_goods_command  # noqa: E402
 from engine.sales import sell_trade_goods_command  # noqa: E402
@@ -403,6 +403,10 @@ def attempt_bribe(*,actor_public_id:str,target_reference:str,incident_reference:
 def resolve_bribe_consequence(*,actor_public_id:str,target_reference:str,incident_reference:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_bribery_consequence_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,target_reference=target_reference,incident_reference=incident_reference)
+
+def perform_carousing_influence(*,encounter_public_id:str,acting_actor_public_id:str,target_actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_carousing_influence_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,acting_actor_public_id=acting_actor_public_id,target_actor_public_id=target_actor_public_id)
 
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

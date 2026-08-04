@@ -470,6 +470,15 @@ def test_contact_operations_dispatch_structured_inputs(monkeypatch):
     assert consequence["incident_reference"]=="cargo"
 
 
+def test_carousing_dispatches_from_encounter(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"perform_carousing_influence",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/encounters/encounter/carousing",data={"acting_actor_public_id":"carouser","target_actor_public_id":"local","idempotency_key":"carousing"},follow_redirects=False)
+    assert response.status_code==303
+    assert response.headers["location"]=="/encounters?campaign=campaign"
+    assert captured=={"encounter_public_id":"encounter","acting_actor_public_id":"carouser","target_actor_public_id":"local","idempotency_key":"carousing"}
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
