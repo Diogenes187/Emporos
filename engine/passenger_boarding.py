@@ -5,7 +5,7 @@ import psycopg
 class PassengerBoardingResult:
  command_public_id:str;journey_public_id:str;ship_public_id:str;passenger_count:int;total_fare:int;balance_after:int;replayed:bool
 def _load(c,cid,pub,replayed):
- r=c.execute("SELECT journey.public_id,ship.public_id,receipt.passenger_count,receipt.total_fare_minor,receipt.balance_after_minor FROM cmd_passenger_boarding_receipt receipt JOIN journey_journey journey USING(journey_id) JOIN ship_ship ship USING(ship_id) WHERE receipt.command_id=%s",(cid,)).fetchone();return PassengerBoardingResult(str(pub),str(r[0]),str(r[1]),r[2],r[3],r[4],replayed)
+ r=c.execute("SELECT journey.public_id,ship.public_id,receipt.passenger_count,receipt.total_fare_minor,receipt.balance_after_minor FROM cmd_passenger_boarding_receipt receipt JOIN journey_journey journey ON journey.journey_id=receipt.journey_id JOIN ship_ship ship ON ship.ship_id=receipt.ship_id WHERE receipt.command_id=%s",(cid,)).fetchone();return PassengerBoardingResult(str(pub),str(r[0]),str(r[1]),r[2],r[3],r[4],replayed)
 def board_route_passengers_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,journey_public_id:str,actor_public_id:str)->PassengerBoardingResult:
  with c.transaction():
   old=c.execute("SELECT command_id,public_id,command_type,command_status FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s FOR UPDATE",(initiator_reference,idempotency_key)).fetchone()
