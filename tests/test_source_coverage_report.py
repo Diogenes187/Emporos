@@ -29,7 +29,7 @@ class SourceCoverageReportTests(unittest.TestCase):
         self.assertIn("- Covered by paired sources: 1062", report)
         self.assertIn("- Partial — explicit source gap: 25", report)
         self.assertIn("- Partial — not individually linked: 0", report)
-        self.assertIn("- Latest schema migration: 0570", report)
+        self.assertIn("- Latest schema migration: 0576", report)
         self.assertIn("- Open source questions: 0", report)
         self.assertNotIn("```json", report)
 
