@@ -9,9 +9,18 @@ from engine.armor_runtime import (
     equip_personal_armor_command,
     unequip_personal_armor_command,
 )
+from engine.commands import resolve_personal_attack_command
 
 
 DSN = os.environ.get("BASE_CEPHEUS_DATABASE_URL")
+
+
+class FixedRandom:
+    def __init__(self, values):
+        self.values = iter(values)
+
+    def randint(self, minimum, maximum):
+        return next(self.values)
 
 
 @unittest.skipUnless(DSN, "BASE_CEPHEUS_DATABASE_URL is required")
@@ -93,6 +102,39 @@ class PersonalArmorRuntimeTests(unittest.TestCase):
             actor_public_id=str(self.actor_public),
             item_public_id=self.items["reflec"][1])
         self.assertEqual(removed.layers, ((self.items["ablat"][1], 1),))
+
+    def test_laser_attack_resolves_layers_outside_in_and_degrades_ablat(self):
+        equip_personal_armor_command(
+            self.connection, initiator_reference="player",
+            idempotency_key="equip-ablat-for-attack",
+            actor_public_id=str(self.actor_public),
+            item_public_id=self.items["ablat"][1], layer_order=1)
+        equip_personal_armor_command(
+            self.connection, initiator_reference="player",
+            idempotency_key="equip-reflec-for-attack",
+            actor_public_id=str(self.actor_public),
+            item_public_id=self.items["reflec"][1], layer_order=1)
+        result = resolve_personal_attack_command(
+            self.connection,initiator_reference="player",
+            idempotency_key="layered-laser-attack",
+            item_rule_code="equipment.weapon.laser-pistol",
+            attack_profile_code="pistol",range_rule_code="combat.range.short",
+            armor_rule_code="combat.armor.unarmored",skill_modifier=0,
+            characteristic_modifier=0,target_actor_public_id=str(self.actor_public),
+            use_equipped_armor=True,random_source=FixedRandom((6,6,3,3,3,3)))
+        self.assertEqual(result.receipt.armor_rating,22)
+        self.assertEqual(result.receipt.penetrating_damage,0)
+        layers=self.connection.execute(
+            """SELECT layer_order,applicable_armor_rating,damage_before,damage_after
+               FROM cmd_attack_armor_layer_receipt layer
+               JOIN cmd_command command USING(command_id)
+               WHERE command.public_id=%s ORDER BY layer_order""",
+            (result.command_public_id,)).fetchall()
+        self.assertEqual(layers,[(1,14,16,2),(2,8,2,0)])
+        ablat_rating=self.connection.execute(
+            """SELECT current_laser_armor_rating FROM inv_armor_instance_state
+               WHERE item_instance_id=%s""",(self.items["ablat"][0],)).fetchone()[0]
+        self.assertEqual(ablat_rating,7)
 
     def test_life_support_and_battle_dress_effective_values(self):
         equip_personal_armor_command(

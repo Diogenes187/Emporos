@@ -114,6 +114,7 @@ def resolve_personal_attack_command(
     shotgun_spread_armor_rule_codes: tuple[tuple[str, str], ...] = (),
     blind_fire_armor_rule_codes: tuple[tuple[str, str], ...] = (),
     firing_into_combat_armor_rule_codes: tuple[tuple[str, str], ...] = (),
+    use_equipped_armor: bool = False,
     random_source: RandomSource | None = None,
 ) -> CommittedAttack:
     """Commit one attack or replay its prior committed result."""
@@ -504,6 +505,45 @@ def resolve_personal_attack_command(
                    ) THEN 1 ELSE 0 END""",
                 (target_actor_public_id,),
             ).fetchone()[0]
+        armor_layers = ()
+        laser_attack = False
+        if use_equipped_armor and target_actor_public_id is not None:
+            laser_attack = connection.execute(
+                """SELECT EXISTS(SELECT 1 FROM rule_personal_laser_weapon laser
+                       JOIN rule_rule weapon ON weapon.rule_id=laser.weapon_rule_id
+                       WHERE weapon.rule_code=%s)""", (item_rule_code,)
+            ).fetchone()[0]
+            armor_layers = tuple(connection.execute(
+                """SELECT item.item_instance_id,item.public_id,rule.rule_id,
+                          rule.rule_code,layer.layer_order,
+                          CASE WHEN %s THEN state.current_laser_armor_rating
+                               ELSE armor.general_armor_rating END
+                   FROM actor_actor actor
+                   JOIN inv_actor_armor_layer layer USING(actor_id,campaign_id)
+                   JOIN inv_item_instance item USING(item_instance_id,campaign_id)
+                   JOIN rule_rule rule ON rule.rule_id=item.item_rule_id
+                   JOIN inv_armor_definition armor ON armor.item_rule_id=rule.rule_id
+                   JOIN inv_armor_instance_state state USING(item_instance_id,campaign_id)
+                   WHERE actor.public_id=%s ORDER BY layer.layer_order
+                   FOR UPDATE OF state""", (laser_attack,target_actor_public_id)
+            ).fetchall())
+            if armor_layers:
+                armor_rule_code = armor_layers[0][3]
+                specification = load_attack_specification(
+                    connection,item_rule_code=item_rule_code,
+                    attack_profile_code=attack_profile_code,
+                    range_rule_code=range_rule_code,
+                    armor_rule_code=armor_rule_code)
+                specification = replace(
+                    specification,
+                    armor_rating=sum(layer[5] for layer in armor_layers))
+            else:
+                armor_rule_code = "combat.armor.unarmored"
+                specification = load_attack_specification(
+                    connection,item_rule_code=item_rule_code,
+                    attack_profile_code=attack_profile_code,
+                    range_rule_code=range_rule_code,
+                    armor_rule_code=armor_rule_code)
         inflicts_direct_damage = (
             not suppression_fire and thrown_delivery_type != "payload")
         damage_dice = (
@@ -647,6 +687,40 @@ def resolve_personal_attack_command(
              receipt.panic_extra_damage_flat,shotgun_spread,
              shotgun_spread_attack_modifier,shotgun_spread_damage_dice,
              extreme_energy_reduction))
+        remaining_layer_damage = receipt.raw_damage
+        for item_id, _, layer_rule_id, _, layer_order, layer_rating in armor_layers:
+            after_layer = max(0, remaining_layer_damage-layer_rating)
+            connection.execute(
+                """INSERT INTO cmd_attack_armor_layer_receipt
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                (command_id,item_id,layer_order,layer_rule_id,layer_rating,
+                 remaining_layer_damage,after_layer,laser_attack))
+            remaining_layer_damage = after_layer
+        if receipt.hit and inflicts_direct_damage and laser_attack:
+            degrading = next((layer for layer in armor_layers if connection.execute(
+                """SELECT 1 FROM rule_armor_degradation
+                   WHERE armor_rule_id=%s AND damage_type='laser'""",
+                (layer[2],)).fetchone()), None)
+            if degrading is not None:
+                item_id = degrading[0]
+                state = connection.execute(
+                    """SELECT current_laser_armor_rating,
+                              life_support_seconds_remaining,concurrency_version
+                       FROM inv_armor_instance_state WHERE item_instance_id=%s""",
+                    (item_id,)).fetchone()
+                laser_after=max(state[0]-1,0)
+                connection.execute(
+                    """UPDATE inv_armor_instance_state
+                       SET current_laser_armor_rating=%s,
+                           concurrency_version=concurrency_version+1
+                       WHERE item_instance_id=%s""",(laser_after,item_id))
+                connection.execute(
+                    """INSERT INTO cmd_personal_armor_usage_receipt
+                       VALUES (%s,(SELECT campaign_id FROM inv_item_instance WHERE item_instance_id=%s),
+                               (SELECT actor_id FROM inv_actor_armor_layer WHERE item_instance_id=%s),
+                               %s,1,0,%s,%s,%s,%s,%s,%s)""",
+                    (command_id,item_id,item_id,item_id,state[0],laser_after,
+                     state[1],state[1],state[2],state[2]+1))
         if thrown_delivery_type is not None:
             connection.execute(
                 """INSERT INTO cmd_personal_thrown_weapon_receipt

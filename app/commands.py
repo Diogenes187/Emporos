@@ -319,7 +319,7 @@ def declare_combat_attack(*,encounter_public_id:str,attacker_actor_public_id:str
 
 def resolve_combat_attack(*,personal_attack_public_id:str,item_rule_code:str,attack_profile_code:str,range_rule_code:str,target_actor_public_id:str,armor_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
-    with psycopg.connect(url) as connection:return resolve_personal_attack_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,personal_attack_public_id=personal_attack_public_id,item_rule_code=item_rule_code,attack_profile_code=attack_profile_code,range_rule_code=range_rule_code,target_actor_public_id=target_actor_public_id,armor_rule_code=armor_rule_code)
+    with psycopg.connect(url) as connection:return resolve_personal_attack_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,personal_attack_public_id=personal_attack_public_id,item_rule_code=item_rule_code,attack_profile_code=attack_profile_code,range_rule_code=range_rule_code,target_actor_public_id=target_actor_public_id,armor_rule_code=armor_rule_code,use_equipped_armor=True)
 
 def react_to_combat_attack(*,encounter_public_id:str,actor_public_id:str,attack_trigger_reference:str,reaction_kind:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
