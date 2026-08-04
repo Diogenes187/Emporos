@@ -58,7 +58,8 @@ from ai.source_reviewer import review_document_text_queue  # noqa: E402
 from ai.referee import submit_referee_turn  # noqa: E402
 from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
 from engine.encounters import create_encounter_command,add_encounter_participant_command,transition_encounter_mode_command  # noqa: E402
-from engine.combat_runtime import initialize_personal_combat_command,begin_personal_turn_command,move_personal_combatant_command,aim_personal_attack_command,complete_personal_turn_command,advance_personal_combat_round_command,advance_weapon_reload_command,hasten_personal_combatant_command,delay_personal_turn_command,resume_delayed_personal_turn_command,forfeit_delayed_personal_turn_command,change_personal_stance_command,set_personal_cover_command,spend_personal_action_command,aim_personal_attack_for_kill_command  # noqa: E402
+from engine.combat_runtime import initialize_personal_combat_command,begin_personal_turn_command,move_personal_combatant_command,aim_personal_attack_command,complete_personal_turn_command,advance_personal_combat_round_command,advance_weapon_reload_command,hasten_personal_combatant_command,delay_personal_turn_command,resume_delayed_personal_turn_command,forfeit_delayed_personal_turn_command,change_personal_stance_command,set_personal_cover_command,spend_personal_action_command,aim_personal_attack_for_kill_command,move_species_flyer_command,resolve_species_great_leap_command  # noqa: E402
+from engine.comms_runtime import set_battlefield_communication_command,apply_personal_initiative_support_command  # noqa: E402
 from engine.combat_runtime import declare_personal_attack_command,declare_personal_reaction_command  # noqa: E402
 from engine.commands import resolve_personal_attack_command,apply_personal_damage_command  # noqa: E402
 from engine.combat_resolution_runtime import resolve_personal_combat_command  # noqa: E402
@@ -488,6 +489,22 @@ def complete_trade_work_week(*,work_week_public_id:str,idempotency_key:str):
 def consume_actor_armor_resources(*,actor_public_id:str,item_public_id:str,laser_hits:int,life_support_seconds_used:int,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return apply_personal_armor_usage_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,item_public_id=item_public_id,laser_hits=laser_hits,life_support_seconds_used=life_support_seconds_used)
+
+def set_battlefield_communication(*,encounter_public_id:str,commander_actor_public_id:str,member_actor_public_id:str,method_code:str,jammed:bool,blocked:bool,line_of_sight:bool,smoke_or_aerosols:bool,member_moving:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return set_battlefield_communication_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,commander_actor_public_id=commander_actor_public_id,member_actor_public_id=member_actor_public_id,method_code=method_code,jammed=jammed,blocked=blocked,line_of_sight=line_of_sight,smoke_or_aerosols=smoke_or_aerosols,member_moving=member_moving)
+
+def apply_combat_initiative_support(*,encounter_public_id:str,commander_actor_public_id:str,support_code:str,characteristic_rule_code:str,target_actor_public_id:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return apply_personal_initiative_support_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,commander_actor_public_id=commander_actor_public_id,support_code=support_code,characteristic_rule_code=characteristic_rule_code,target_actor_public_id=target_actor_public_id or None)
+
+def move_combatant_in_flight(*,encounter_public_id:str,actor_public_id:str,metres:float,altitude_change_metres:float,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return move_species_flyer_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,metres=metres,altitude_change_metres=altitude_change_metres)
+
+def resolve_combatant_great_leap(*,encounter_public_id:str,actor_public_id:str,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_species_great_leap_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code)
 
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 134
-- Engine-only review candidates: 36
+- Direct web-application wrappers: 138
+- Engine-only review candidates: 32
 
 ## Engine-only review candidates
 
@@ -15,10 +15,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `animal_skills.py` | `resolve_animal_skill_operation_command` |
 | `animals.py` | `set_animal_reaction_context_command` |
 | `animals.py` | `resolve_animal_reaction_command` |
-| `combat_runtime.py` | `move_species_flyer_command` |
-| `combat_runtime.py` | `resolve_species_great_leap_command` |
-| `comms_runtime.py` | `set_battlefield_communication_command` |
-| `comms_runtime.py` | `apply_personal_initiative_support_command` |
 | `competitive_gambling.py` | `resolve_competitive_gambling_command` |
 | `conditions_runtime.py` | `set_personal_battlefield_conditions_command` |
 | `encounters.py` | `set_encounter_attitude_command` |
@@ -107,11 +103,15 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `combat_runtime.py` | `aim_personal_attack_command` |
 | `combat_runtime.py` | `change_personal_stance_command` |
 | `combat_runtime.py` | `set_personal_cover_command` |
+| `combat_runtime.py` | `move_species_flyer_command` |
+| `combat_runtime.py` | `resolve_species_great_leap_command` |
 | `combat_runtime.py` | `move_personal_combatant_command` |
 | `combat_runtime.py` | `aim_personal_attack_for_kill_command` |
 | `commands.py` | `resolve_personal_attack_command` |
 | `commands.py` | `apply_personal_damage_command` |
 | `commerce_setup.py` | `prepare_trading_command` |
+| `comms_runtime.py` | `set_battlefield_communication_command` |
+| `comms_runtime.py` | `apply_personal_initiative_support_command` |
 | `computer.py` | `perform_computer_basic_operation_command` |
 | `coup_de_grace_runtime.py` | `resolve_personal_coup_de_grace_command` |
 | `crew_assignments.py` | `assign_ship_crew_command` |

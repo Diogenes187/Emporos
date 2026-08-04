@@ -564,6 +564,21 @@ def test_armor_resource_usage_dispatches_from_crew(monkeypatch):
     assert captured=={"actor_public_id":"actor","item_public_id":"armor","laser_hits":2,"life_support_seconds_used":60,"idempotency_key":"armor-use"}
 
 
+def test_encounter_communication_support_and_species_movement_dispatch(monkeypatch):
+    communication={};support={};flight={};leap={}
+    monkeypatch.setattr(main_module,"set_battlefield_communication",lambda **kwargs:communication.update(kwargs))
+    monkeypatch.setattr(main_module,"apply_combat_initiative_support",lambda **kwargs:support.update(kwargs))
+    monkeypatch.setattr(main_module,"move_combatant_in_flight",lambda **kwargs:flight.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_combatant_great_leap",lambda **kwargs:leap.update(kwargs))
+    base="/campaigns/campaign/encounters/encounter"
+    responses=[client.post(f"{base}/communications",data={"commander_actor_public_id":"commander","member_actor_public_id":"ally","method_code":"voice","line_of_sight":"true","member_moving":"true","idempotency_key":"comms"},follow_redirects=False),client.post(f"{base}/turns/commander/initiative-support",data={"support_code":"leadership","characteristic_rule_code":"characteristic.social_standing","target_actor_public_id":"ally","idempotency_key":"support"},follow_redirects=False),client.post(f"{base}/turns/commander/flight",data={"metres":"4.5","altitude_change_metres":"1.5","idempotency_key":"flight"},follow_redirects=False),client.post(f"{base}/turns/commander/great-leap",data={"characteristic_rule_code":"characteristic.dexterity","difficulty_rule_code":"difficulty.average","idempotency_key":"leap"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert communication["member_moving"] is True and communication["jammed"] is False
+    assert support["target_actor_public_id"]=="ally" and support["support_code"]=="leadership"
+    assert flight["metres"]==4.5 and flight["altitude_change_metres"]==1.5
+    assert leap["difficulty_rule_code"]=="difficulty.average"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
