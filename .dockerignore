@@ -2,6 +2,10 @@
 .pytest_cache
 __pycache__
 *.pyc
+books
+tests
+audit
+docs
 .env
 .env.*
 !.env.example
