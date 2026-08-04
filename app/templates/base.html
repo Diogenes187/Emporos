@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="{{ url_for('static', path='css/quotes.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', path='css/trade-deals.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', path='css/journal.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/theme-light.css') }}">
 </head>
 <body>
   <aside class="rail">
@@ -68,7 +69,7 @@
       </article>
       {% if campaign %}{% for action in campaign.referee_tool_requests %}<article class="receipt"><small>ENGINE ACTION — CONFIRM REQUIRED</small><strong>{{ action.request_summary }}</strong><span>{{ action.tool_name|replace('_',' ')|title }}</span><form method="post" action="/campaigns/{{ campaign.public_id }}/referee-actions/{{ action.public_id }}/confirm"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-confirm-{{ loop.index }}"><button type="submit">Confirm mechanical action</button></form></article>{% endfor %}{% endif %}
     </section>
-    <form class="composer" method="post" {% if campaign %}action="/campaigns/{{ campaign.public_id }}/referee-turns"{% endif %}>
+    <form id="referee-composer" class="composer" method="post" {% if campaign %}action="/campaigns/{{ campaign.public_id }}/referee-turns"{% endif %}>
       {% if campaign %}<input type="hidden" name="idempotency_key" value="{{ creation_key }}-referee">{% endif %}
       <textarea name="player_text" aria-label="Tell the referee what you do" placeholder="What do you do?" required {% if not campaign %}disabled{% endif %}></textarea>
       <div><button type="button" class="quiet">× Reject narration</button><button type="submit" {% if not campaign %}disabled{% endif %}>Send</button></div>

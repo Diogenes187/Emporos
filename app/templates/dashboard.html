@@ -2,8 +2,8 @@
 {% block title %}Command · Emporos{% endblock %}
 {% block content %}
 <section class="page-heading">
-  <div><small>SHIPBOARD COMMAND</small><h1>{{ campaign.name if campaign else 'Begin a campaign.' }}</h1><p>{% if campaign %}Authoritative state loaded from Base Cepheus.{% else %}No active campaign is available in the connected database.{% endif %}</p></div>
-  <button class="primary">Resume scene</button>
+  <div><small>SHIPBOARD COMMAND</small><h1>{{ campaign.name if campaign else 'Begin a campaign.' }}</h1><p>{% if campaign %}Authoritative state loaded from the Emporos relational database.{% else %}No active campaign is available in the connected database.{% endif %}</p></div>
+  <a class="primary primary-action" href="{{ '#referee-composer' if campaign else '#campaign-registry' }}">{{ 'Resume scene' if campaign else 'Create campaign' }}</a>
 </section>
 
 <section class="stat-grid">
@@ -17,7 +17,7 @@
   <article class="panel wide">
     <header><div><small>CURRENT OPERATION</small><h2>{% if campaign and campaign.ships %}{{ campaign.ships[0].name }}{% else %}No active vessel{% endif %}</h2></div><span class="tag">{{ campaign.status|upper if campaign else 'IDLE' }}</span></header>
     <div class="route-line"><span class="world current"></span><i></i><span class="world"></span><div><strong>{% if campaign and campaign.systems %}{{ campaign.systems[0].name }}{% else %}Sector awaiting import{% endif %}</strong><small>{% if campaign and campaign.ships %}{{ campaign.ships[0].class_code|replace('_',' ')|title }}{% else %}Create a ship or import campaign content{% endif %}</small></div></div>
-    <div class="actions"><a href="/trade">Review market</a><a href="/sector">Plot journey</a><a href="/ship">Inspect ship</a></div>
+    <div class="actions"><a href="/trade{{ campaign_query }}">Review market</a><a href="/sector{{ campaign_query }}">Plot journey</a><a href="/ship{{ campaign_query }}">Inspect ship</a></div>
   </article>
   <article class="panel">
     <header><div><small>WATCH LIST</small><h2>Needs attention</h2></div></header>
@@ -32,7 +32,7 @@
     <table>{% if campaign and campaign.actors %}{% for actor in campaign.actors[:3] %}<tr><td>ACTOR</td><td>{{ actor.character_name }}</td><td>{{ actor.skill_count }} trained skills</td><td class="positive">Loaded</td></tr>{% endfor %}{% else %}<tr><td>—</td><td>No campaign events to display</td><td>State is not fabricated</td><td>Empty</td></tr>{% endif %}</table>
   </article>
 </section>
-<section class="campaign-picker panel">
+<section id="campaign-registry" class="campaign-picker panel">
   <header><div><small>CAMPAIGN REGISTRY</small><h2>Select or create campaign</h2></div></header>
   <form class="campaign-create" method="post" action="/campaigns">
     <input type="hidden" name="idempotency_key" value="{{ creation_key }}">
