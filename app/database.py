@@ -73,6 +73,14 @@ class CampaignReader:
             ).fetchall()
         return [CampaignSummary(**row) for row in rows]
 
+    def social_rules(self) -> dict[str, list[dict[str, Any]]]:
+        if not self.url:
+            return {"streetwise_operations": [], "bribery_offenses": []}
+        with self._connect() as connection:
+            operations = connection.execute("""SELECT operation_code,replace(initcap(replace(operation_code,'-',' ')),'Urban Environment','urban environment') AS name FROM rule_streetwise_operation ORDER BY display_order""").fetchall()
+            offenses = connection.execute("""SELECT offense_code,rule.name,check_modifier,credits_per_die FROM rule_bribery_offense offense JOIN rule_rule rule USING(rule_id) ORDER BY display_order""").fetchall()
+        return {"streetwise_operations": operations, "bribery_offenses": offenses}
+
     def campaign(self, public_id: str) -> dict[str, Any] | None:
         if not self.url:
             return None

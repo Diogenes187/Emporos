@@ -69,6 +69,8 @@ from engine.coup_de_grace_runtime import resolve_personal_coup_de_grace_command 
 from engine.free_actions_runtime import perform_personal_free_action_command  # noqa: E402
 from engine.extended_actions_runtime import abandon_personal_extended_action_command, advance_personal_extended_action_command, start_personal_extended_action_command  # noqa: E402
 from engine.psionics import activate_psionic_power_command, recover_psionic_strength_command, set_telepathic_shield_command  # noqa: E402
+from engine.streetwise import resolve_streetwise_command  # noqa: E402
+from engine.bribery import attempt_bribery_command, resolve_bribery_consequence_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
@@ -389,6 +391,18 @@ def activate_self_psionic_power(*,actor_public_id:str,power_rule_code:str,variab
 def send_psionic_thought(*,actor_public_id:str,target_actor_public_id:str,range_rule_code:str,sent_thought_content:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return activate_psionic_power_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,power_rule_code="psionics.power.send-thoughts",target_actor_public_id=target_actor_public_id,range_rule_code=range_rule_code,sent_thought_content=sent_thought_content)
+
+def perform_streetwise_operation(*,actor_public_id:str,operation_code:str,objective_reference:str,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_streetwise_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,operation_code=operation_code,objective_reference=objective_reference,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code)
+
+def attempt_bribe(*,actor_public_id:str,target_reference:str,incident_reference:str,offense_code:str,law_level:int,characteristic_rule_code:str,offer_credits:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return attempt_bribery_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,target_reference=target_reference,incident_reference=incident_reference,offense_code=offense_code,law_level=law_level,characteristic_rule_code=characteristic_rule_code,offer_credits=offer_credits)
+
+def resolve_bribe_consequence(*,actor_public_id:str,target_reference:str,incident_reference:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_bribery_consequence_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,target_reference=target_reference,incident_reference=incident_reference)
 
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

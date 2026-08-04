@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 113
-- Engine-only review candidates: 57
+- Direct web-application wrappers: 116
+- Engine-only review candidates: 54
 
 ## Engine-only review candidates
 
@@ -16,8 +16,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `animals.py` | `set_animal_reaction_context_command` |
 | `animals.py` | `resolve_animal_reaction_command` |
 | `armor_runtime.py` | `apply_personal_armor_usage_command` |
-| `bribery.py` | `attempt_bribery_command` |
-| `bribery.py` | `resolve_bribery_consequence_command` |
 | `broker_carousing.py` | `resolve_carousing_influence_command` |
 | `characters.py` | `assign_actor_species_command` |
 | `combat_runtime.py` | `move_species_flyer_command` |
@@ -60,7 +58,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `source_review.py` | `reveal_campaign_source_excerpt_command` |
 | `starships.py` | `check_starship_encounter_command` |
 | `steward.py` | `resolve_steward_service_command` |
-| `streetwise.py` | `resolve_streetwise_command` |
 | `survival.py` | `resolve_survival_task_command` |
 | `tasks.py` | `resolve_actor_task_command` |
 | `tasks.py` | `resolve_species_hive_mentality_command` |
@@ -77,6 +74,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ammunition_purchases.py` | `purchase_personal_ammunition_command` |
 | `armor_runtime.py` | `equip_personal_armor_command` |
 | `armor_runtime.py` | `unequip_personal_armor_command` |
+| `bribery.py` | `attempt_bribery_command` |
+| `bribery.py` | `resolve_bribery_consequence_command` |
 | `broker_carousing.py` | `resolve_broker_operation_command` |
 | `campaigns.py` | `create_campaign_command` |
 | `careers.py` | `attempt_career_entry_command` |
@@ -184,6 +183,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `starship_charters.py` | `quote_starship_charter_command` |
 | `starship_charters.py` | `accept_starship_charter_command` |
 | `starship_charters.py` | `complete_starship_charter_command` |
+| `streetwise.py` | `resolve_streetwise_command` |
 | `travel_planning.py` | `place_ship_command` |
 | `travel_planning.py` | `plan_jump_journey_command` |
 | `weapon_ready_runtime.py` | `advance_personal_weapon_ready_command` |

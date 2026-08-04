@@ -21,7 +21,7 @@ def test_campaign_api_returns_a_list():
 
 
 def test_primary_pages_render():
-    for path in ("/", "/crew", "/ship", "/sector", "/trade", "/journal", "/encounters", "/library"):
+    for path in ("/", "/crew", "/psionics", "/contacts", "/ship", "/sector", "/trade", "/journal", "/encounters", "/library"):
         response = client.get(path)
         assert response.status_code == 200
         assert "Emporos" in response.text
@@ -455,6 +455,19 @@ def test_send_thought_dispatches_authored_content(monkeypatch):
     assert response.status_code==303
     assert captured["sent_thought_content"]=="Meet me at the airlock."
     assert captured["target_actor_public_id"]=="target"
+
+
+def test_contact_operations_dispatch_structured_inputs(monkeypatch):
+    streetwise={};bribery={};consequence={}
+    monkeypatch.setattr(main_module,"perform_streetwise_operation",lambda **kwargs:streetwise.update(kwargs))
+    monkeypatch.setattr(main_module,"attempt_bribe",lambda **kwargs:bribery.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_bribe_consequence",lambda **kwargs:consequence.update(kwargs))
+    base="/campaigns/campaign/contacts"
+    responses=[client.post(f"{base}/streetwise",data={"actor_public_id":"actor","operation_code":"find-information","objective_reference":"Dockside routes","characteristic_rule_code":"characteristic.social-standing","difficulty_rule_code":"difficulty.average","idempotency_key":"street"},follow_redirects=False),client.post(f"{base}/bribery",data={"actor_public_id":"actor","target_reference":"customs","incident_reference":"cargo","offense_code":"minor","law_level":"8","characteristic_rule_code":"characteristic.education","offer_credits":"200","idempotency_key":"bribe"},follow_redirects=False),client.post(f"{base}/bribery/consequence",data={"actor_public_id":"actor","target_reference":"customs","incident_reference":"cargo","idempotency_key":"consequence"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert streetwise["operation_code"]=="find-information"
+    assert bribery["law_level"]==8 and bribery["offer_credits"]==200
+    assert consequence["incident_reference"]=="cargo"
 
 
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
