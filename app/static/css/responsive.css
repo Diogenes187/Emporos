@@ -158,6 +158,19 @@
 .create-character label { display: flex; flex-direction: column; gap: 7px; }
 .create-character label span { color: var(--muted); font-size: 9px; letter-spacing: .12em; }
 .create-character input { background: #0b1115; border: 1px solid var(--line); color: var(--ink); padding: 10px; }
+.character-builder{border:2px solid var(--gold);box-shadow:0 12px 30px rgba(30,48,56,.12)}
+.character-builder>details:not(.creation-step){display:none}
+.chargen-step{margin:16px 0;padding:18px;border:1px solid var(--line);background:rgba(185,133,47,.08)}
+.chargen-step h3{margin:5px 0 7px;font:22px Georgia,serif}
+.chargen-step p{margin:0 0 14px;color:var(--muted);line-height:1.5}
+.chargen-step .button-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.chargen-step form{margin:0}
+.chargen-overlay{position:fixed;z-index:1000;inset:28px max(28px,calc((100vw - 980px)/2));overflow:auto;background:var(--panel);padding:24px;border:2px solid var(--gold);box-shadow:0 0 0 100vmax rgba(16,28,34,.72),0 24px 70px rgba(0,0,0,.35)}
+.chargen-overlay .chargen-header{display:flex;justify-content:space-between;align-items:flex-start;margin:-4px 0 20px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.chargen-overlay .chargen-header h2{margin:3px 0 0;font:30px Georgia,serif}
+.chargen-overlay .chargen-header a{color:var(--muted)}
+.chargen-overlay>details.creation-step{display:block;margin-top:16px;padding:14px;border:1px solid var(--line)}
+@media(max-width:700px){.chargen-overlay{inset:8px;padding:16px}.chargen-overlay .chargen-header{gap:12px}.chargen-overlay .chargen-header h2{font-size:24px}}
 
 @media (max-width: 1450px) {
   .crew-layout { grid-template-columns: 1fr; }

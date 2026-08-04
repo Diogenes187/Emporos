@@ -9,6 +9,7 @@
 </div>
 </section>
 {% if campaign %}
+{% set unfinished_actors=campaign.actors|rejectattr('lifepath_status','equalto','completed')|list %}
 <section class="crew-layout"><article class="panel"><header><div><small>DEVELOPMENT</small><h2>Identity, languages, and training</h2></div></header><div class="station-list">{% for actor in campaign.actors %}<article><div><strong>{{ actor.character_name }}</strong><small>{{ actor.species.name if actor.species else 'Species unassigned' }} · weekly development</small></div><div><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/species"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-species-{{ actor.public_id }}"><select name="species_code">{% for species in campaign.species_options %}<option value="{{ species.species_code }}">{{ species.name }}</option>{% endfor %}</select><button type="submit">Assign species</button></form><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/skill-training"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-training-{{ actor.public_id }}"><select name="skill_rule_code">{% for skill in campaign.skill_training_options %}<option value="{{ skill.rule_code }}">{{ skill.name }}</option>{% endfor %}</select><button type="submit">Train one week</button></form>{% if campaign.campaign_languages %}<form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/languages"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-language-{{ actor.public_id }}"><select name="language_code">{% for language in campaign.campaign_languages %}<option value="{{ language.language_code }}">{{ language.language_name }}</option>{% endfor %}</select><select name="proficiency_kind"><option value="native">Native</option><option value="additional">Additional</option></select><button type="submit">Assign language</button></form>{% endif %}</div></article>{% endfor %}</div></article></section>
 <section class="crew-layout"><article class="panel"><header><div><small>LEADERSHIP</small><h2>Coordinate the crew</h2></div></header><form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/leadership"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-leadership"><select name="leader_actor_public_id">{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select><input name="goal_reference" placeholder="Shared operational goal" required><select name="characteristic_rule_code"><option value="characteristic.social-standing">Social Standing</option><option value="characteristic.intelligence">Intelligence</option><option value="characteristic.education">Education</option></select><button type="submit">Create coordination pool</button></form>{% for coordination in campaign.leadership_coordinations %}<article class="receipt"><strong>{{ coordination.leader_name }} · {{ coordination.goal_reference }}</strong><span>{{ coordination.pool_points_remaining }}/{{ coordination.pool_points_total }} points remain</span><form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/leadership/{{ coordination.public_id }}/allocations"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-leadership-allocation-{{ coordination.public_id }}"><select name="recipient_actor_public_id">{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select><input type="number" name="points" min="1" max="{{ coordination.pool_points_remaining }}" value="1"><button type="submit">Allocate support</button></form></article>{% endfor %}</article></section>
 <section class="crew-layout">
@@ -22,7 +23,8 @@
     <div class="crew-list">
       {% for actor in campaign.actors %}
       {% set actor_index=loop.index %}
-      <article class="crew-card">
+      <article id="builder-{{ actor.public_id }}" class="crew-card{% if actor.lifepath_status != 'completed' %} character-builder{% endif %}{% if unfinished_actors and actor.public_id == unfinished_actors[0].public_id and request.query_params.get('chargen') != 'closed' %} chargen-overlay{% endif %}">
+{% if unfinished_actors and actor.public_id == unfinished_actors[0].public_id and request.query_params.get('chargen') != 'closed' %}<header class="chargen-header"><div><small>INTERACTIVE LIFEPATH</small><h2>Create a Traveller</h2></div><a href="/crew?campaign={{ campaign.public_id }}&chargen=closed">Save and return later</a></header>{% endif %}
         <div class="crew-identity">
 <span>{{ actor.character_name[:1]|upper }}</span>
 <div>
@@ -34,6 +36,14 @@
 <small>{{ stat.abbreviation }}</small>
 <strong>{{ stat.current }}</strong>
 </div>{% else %}<span>No characteristics recorded</span>{% endfor %}</div>
+{% if not actor.careers and actor.lifepath_status != 'completed' %}
+<section class="chargen-step">
+<small>STEP 1 · CHARACTERISTICS</small>
+<h3>Keep these rolls or try another set</h3>
+<p>Total {{ actor.characteristics|sum(attribute='current') }}. As in the original creator, you may reroll all six as often as you like before entering a career. Every set remains audited.</p>
+<div class="button-row"><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/reroll-characteristics"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-reroll-{{ actor.public_id }}"><button type="submit">Reroll all six</button></form><a class="primary-link" href="#career-{{ actor.public_id }}">Keep rolls and choose career</a></div>
+</section>
+{% endif %}
         <div class="crew-meta">
 <span>{{ actor.skill_count }} trained skills</span>
 <span>{% if actor.age_years %}Age {{ actor.age_years }}{% else %}Career entry available{% endif %}</span>
@@ -64,7 +74,7 @@
 <summary>Name and final details</summary>
 <form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/final-details"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-details-{{ actor_index }}"><label><span>Character name</span><input name="character_name" value="{{ '' if actor.character_name == 'Unnamed Traveller' else actor.character_name }}" required maxlength="120" autofocus></label><label><span>Gender identity (optional)</span><input name="gender_identity" value="{{ actor.gender_identity or '' }}"></label><label><span>Appearance (optional)</span><textarea name="appearance">{{ actor.appearance or '' }}</textarea></label>{% for goal_number in range(3) %}<label><span>Personal goal {{ goal_number+1 }} (optional)</span><input name="personal_goals" value="{{ actor.personal_goals[goal_number] if goal_number < actor.personal_goals|length else '' }}"></label>{% endfor %}<button type="submit">Name character and save details</button></form>
 </details>{% endif %}
-<details>
+<details class="creation-step" id="career-{{ actor.public_id }}"{% if actor.lifepath_status != 'completed' %} open{% endif %}>
 <summary>Career history</summary>
 <div class="station-list">{% for career in actor.careers %}<article>
 <div>
@@ -226,6 +236,7 @@
     </div>
   </article>
   <aside class="panel create-character">
+{% if not unfinished_actors %}
     <small>NEW CHARACTER</small>
 <h2>Begin lifepath</h2>
 <p>Roll the six normal Cepheus characteristics, then complete the resumable career lifepath. You will name the finished character afterward.</p>
@@ -233,6 +244,12 @@
       <input type="hidden" name="idempotency_key" value="{{ creation_key }}">
       <button class="primary full" type="submit">Roll characteristics</button>
     </form>
+{% else %}
+    <small>CREATION IN PROGRESS</small>
+    <h2>{{ unfinished_actors[0].character_name }}</h2>
+    <p>Your lifepath is saved after every choice.</p>
+    <a class="primary-link" href="/crew?campaign={{ campaign.public_id }}#builder-{{ unfinished_actors[0].public_id }}">Resume character creation</a>
+{% endif %}
   </aside>
   <aside class="panel create-character">
     <small>PERSONAL OUTFITTER</small>

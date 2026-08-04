@@ -106,6 +106,25 @@ def test_character_initialization_recovers_from_empty_form_submission(monkeypatc
     assert len(captured["idempotency_key"]) == 36
 
 
+def test_characteristic_reroll_dispatches(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "reroll_characteristics",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/characters/actor/reroll-characteristics",
+        data={"idempotency_key": "reroll-test"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert captured == {
+        "actor_public_id": "actor",
+        "idempotency_key": "reroll-test",
+    }
+
+
 def test_ship_requires_campaign_and_has_no_decorative_vessel():
     response=client.get("/ship")
     assert response.status_code == 200

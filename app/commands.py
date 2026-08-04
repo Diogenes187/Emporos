@@ -102,6 +102,7 @@ from engine.trade_work import start_trade_work_week_command, complete_trade_work
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
+from engine.character_rerolls import reroll_characteristics_command  # noqa: E402
 from engine.health_runtime import apply_personal_fatigue_command, complete_personal_fatigue_rest_command, resolve_personal_unconscious_recovery_command  # noqa: E402
 from engine.mental_healing import resolve_personal_mental_healing_command  # noqa: E402
 from engine.injury_runtime import apply_determined_personal_natural_healing_command, determine_personal_natural_healing_command  # noqa: E402
@@ -142,6 +143,20 @@ def initialize_character(*, campaign_public_id: str, idempotency_key: str):
             idempotency_key=idempotency_key,
             campaign_public_id=campaign_public_id,
             character_name="Unnamed Traveller",
+        )
+
+
+def reroll_characteristics(*, actor_public_id: str, idempotency_key: str):
+    url = database_url()
+    authority = os.environ.get(
+        "EMPOROS_AUTHORITY_REFERENCE", "emporos-local-player"
+    )
+    with psycopg.connect(url) as connection:
+        return reroll_characteristics_command(
+            connection,
+            initiator_reference=authority,
+            idempotency_key=idempotency_key,
+            actor_public_id=actor_public_id,
         )
 
 
