@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -119,6 +119,20 @@ def character_initialize(
     return RedirectResponse(
         url=f"/crew?campaign={campaign_id}", status_code=303
     )
+
+@app.post("/campaigns/{campaign_id}/characters/{actor_id}/career-entry")
+def character_career_entry(campaign_id:str,actor_id:str,career_selection:str=Form(...),idempotency_key:str=Form(...)):
+    try:
+        career_code,assignment_code=career_selection.split("||",1)
+        attempt_career_entry(actor_public_id=actor_id,career_code=career_code,assignment_code=assignment_code or None,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/crew?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/career-entry-fallbacks")
+def character_career_fallback(campaign_id:str,attempt_command_public_id:str=Form(...),fallback_kind:str=Form(...),idempotency_key:str=Form(...)):
+    try:resolve_career_entry_failure(attempt_command_public_id=attempt_command_public_id,fallback_kind=fallback_kind,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/crew?campaign={campaign_id}",status_code=303)
 
 @app.post("/campaigns/{campaign_id}/crew-assignments")
 def crew_assign(campaign_id:str,actor_public_id:str=Form(...),ship_public_id:str=Form(...),ship_crew_position_id:int=Form(...),idempotency_key:str=Form(...)):

@@ -43,7 +43,7 @@
 <span>{{ skill.skill_level }}</span>
 </article>{% else %}<p>No trained skills.</p>{% endfor %}</div>
 </details>
-        <details>
+<details>
 <summary>Career history</summary>
 <div class="station-list">{% for career in actor.careers %}<article>
 <div>
@@ -52,6 +52,29 @@
 </div>
 <span>{{ career.terms_completed }} terms · Rank {{ career.rank_number }}</span>
 </article>{% else %}<p>No career stint recorded yet.</p>{% endfor %}</div>
+{% if actor.career_entry_pending %}
+<div class="career-step">
+<strong>{{ actor.career_entry_pending.career_name }} qualification failed</strong>
+<p>The result was {{ actor.career_entry_pending.check_total }} against {{ actor.career_entry_pending.target_number }}. Resolve the failed entry using the Cepheus fallback rules.</p>
+<form method="post" action="/campaigns/{{ campaign.public_id }}/career-entry-fallbacks">
+<input type="hidden" name="attempt_command_public_id" value="{{ actor.career_entry_pending.command_public_id }}">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-career-fallback-{{ actor.public_id }}">
+<button type="submit" name="fallback_kind" value="draft">Submit to the draft</button>
+<button type="submit" name="fallback_kind" value="drifter">Enter the Drifter career</button>
+</form>
+</div>
+{% else %}
+{% set active_careers=actor.careers|selectattr('stint_status','equalto','active')|list %}
+{% if not active_careers and actor.lifepath_status != 'complete' %}
+<form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/career-entry">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-career-entry-{{ actor.public_id }}">
+<label><span>Career and assignment</span><select name="career_selection" required>{% for option in campaign.career_options %}<option value="{{ option.career_code }}||{{ option.assignment_code }}">{{ option.career_name }}{% if option.assignment_name %} · {{ option.assignment_name }}{% endif %}</option>{% endfor %}</select></label>
+<button type="submit">Attempt qualification</button>
+</form>
+{% elif active_careers %}
+<small>Career entered. Basic training is the next lifepath stage.</small>
+{% endif %}
+{% endif %}
 </details>
         <details>
 <summary>Equipment custody</summary>

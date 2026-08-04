@@ -115,3 +115,53 @@ def test_ammunition_purchase_dispatches_and_returns_to_crew(monkeypatch):
     assert response.status_code == 303
     assert response.headers["location"] == "/crew?campaign=campaign"
     assert captured["reload_units"] == 3
+
+
+def test_career_entry_dispatches_selected_career_and_assignment(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "attempt_career_entry",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/characters/actor/career-entry",
+        data={
+            "career_selection": "navy||flight",
+            "idempotency_key": "career-entry-test",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/crew?campaign=campaign"
+    assert captured == {
+        "actor_public_id": "actor",
+        "career_code": "navy",
+        "assignment_code": "flight",
+        "idempotency_key": "career-entry-test",
+    }
+
+
+def test_failed_career_entry_fallback_dispatches_and_returns_to_crew(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "resolve_career_entry_failure",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/career-entry-fallbacks",
+        data={
+            "attempt_command_public_id": "attempt-command",
+            "fallback_kind": "draft",
+            "idempotency_key": "career-fallback-test",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/crew?campaign=campaign"
+    assert captured == {
+        "attempt_command_public_id": "attempt-command",
+        "fallback_kind": "draft",
+        "idempotency_key": "career-fallback-test",
+    }
