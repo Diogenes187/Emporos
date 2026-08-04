@@ -53,6 +53,11 @@ def main() -> int:
             run("tools/migrate.py")
             run("tools/verify_database.py")
         else:
+            if migration_version >= 571:
+                run("tools/migrate.py")
+                run("tools/verify_database.py")
+                run("tools/complete_database_bootstrap.py")
+                return 0
             arguments = ["tools/bootstrap_database.py", "--dsn", dsn, "--resume"]
             # The first hosted bootstrap timed out after catalogue phase 281,
             # then a retry applied the remaining schema before content imports.

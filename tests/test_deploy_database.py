@@ -54,14 +54,9 @@ class DeployDatabaseTests(unittest.TestCase):
         self.assertEqual(
             self.run_main(True, False),
             [
-                (
-                    "tools/bootstrap_database.py",
-                    "--dsn",
-                    "postgresql://test",
-                    "--resume",
-                    "--start-at",
-                    "282",
-                )
+                ("tools/migrate.py",),
+                ("tools/verify_database.py",),
+                ("tools/complete_database_bootstrap.py",),
             ],
         )
 
