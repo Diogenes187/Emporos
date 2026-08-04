@@ -67,6 +67,8 @@ from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  #
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
+from engine.health_runtime import apply_personal_fatigue_command, complete_personal_fatigue_rest_command, resolve_personal_unconscious_recovery_command  # noqa: E402
+from engine.mental_healing import resolve_personal_mental_healing_command  # noqa: E402
 from engine.careers import apply_career_aging_command, apply_career_basic_training_command, apply_career_injury_command, apply_career_rank_zero_award_command, apply_career_term_training_command, attempt_career_entry_command, attempt_career_survival_command, complete_career_term_command, declare_career_anagathics_command, decide_career_reenlistment_command, determine_aging_crisis_cost_command, determine_anagathic_stopping_shock_command, determine_career_aging_command, determine_career_injury_command, determine_career_reenlistment_command, determine_injury_crisis_cost_command, finish_character_creation_command, initialize_career_muster_command, resolve_aging_crisis_command, resolve_career_medical_care_command, resolve_career_rank_attempt_command, resolve_career_weapon_benefit_command, resolve_failed_career_entry_command, resolve_injury_crisis_command, resolve_survival_mishap_command, roll_career_benefit_command  # noqa: E402
 
 
@@ -486,6 +488,22 @@ def update_character_final_details(*,actor_public_id:str,character_name:str,gend
 def finish_character_creation(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return finish_character_creation_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)
+
+def apply_personal_fatigue(*,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return apply_personal_fatigue_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)
+
+def complete_personal_fatigue_rest(*,actor_public_id:str,completed_hours:float,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return complete_personal_fatigue_rest_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,completed_hours=completed_hours)
+
+def resolve_personal_unconscious_recovery(*,actor_public_id:str,minutes_elapsed:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_personal_unconscious_recovery_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,minutes_elapsed=minutes_elapsed)
+
+def resolve_personal_mental_healing(*,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_personal_mental_healing_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)
 
 def determine_injury_crisis_cost(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

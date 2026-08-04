@@ -394,3 +394,18 @@ def test_tactical_combat_controls_dispatch(monkeypatch):
         assert captured[action]=={"encounter_public_id":"encounter","actor_public_id":"actor","idempotency_key":f"{action}-test"}
     assert captured["stance"]["stance_code"]=="prone"
     assert captured["cover"]["cover_code"]=="one_half"
+
+
+def test_condition_and_recovery_controls_dispatch(monkeypatch):
+    fatigue={};rest={};recovery={};mental={}
+    monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
+    monkeypatch.setattr(main_module,"complete_personal_fatigue_rest",lambda **kwargs:rest.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_personal_unconscious_recovery",lambda **kwargs:recovery.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_personal_mental_healing",lambda **kwargs:mental.update(kwargs))
+    base="/campaigns/campaign/characters/actor"
+    responses=[client.post(f"{base}/fatigue",data={"idempotency_key":"fatigue-test"},follow_redirects=False),client.post(f"{base}/fatigue-rest",data={"completed_hours":"3.5","idempotency_key":"rest-test"},follow_redirects=False),client.post(f"{base}/consciousness-recovery",data={"minutes_elapsed":"2","idempotency_key":"wake-test"},follow_redirects=False),client.post(f"{base}/mental-healing",data={"idempotency_key":"mental-test"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert fatigue=={"actor_public_id":"actor","idempotency_key":"fatigue-test"}
+    assert rest=={"actor_public_id":"actor","completed_hours":3.5,"idempotency_key":"rest-test"}
+    assert recovery=={"actor_public_id":"actor","minutes_elapsed":2,"idempotency_key":"wake-test"}
+    assert mental=={"actor_public_id":"actor","idempotency_key":"mental-test"}

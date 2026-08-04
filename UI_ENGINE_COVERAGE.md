@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 162
-- Direct web-application wrappers: 89
-- Engine-only review candidates: 73
+- Direct web-application wrappers: 93
+- Engine-only review candidates: 69
 
 ## Engine-only review candidates
 
@@ -48,9 +48,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `grappling_runtime.py` | `apply_personal_grapple_option_command` |
 | `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
 | `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
-| `health_runtime.py` | `apply_personal_fatigue_command` |
-| `health_runtime.py` | `complete_personal_fatigue_rest_command` |
-| `health_runtime.py` | `resolve_personal_unconscious_recovery_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
 | `leadership.py` | `begin_leadership_coordination_command` |
 | `leadership.py` | `allocate_leadership_coordination_command` |
@@ -60,7 +57,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `medical_runtime.py` | `apply_personal_first_aid_command` |
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
 | `medical_runtime.py` | `apply_personal_medical_care_command` |
-| `mental_healing.py` | `resolve_personal_mental_healing_command` |
 | `misc_actions_runtime.py` | `perform_personal_miscellaneous_action_command` |
 | `psionics.py` | `activate_psionic_power_command` |
 | `psionics.py` | `recover_psionic_strength_command` |
@@ -150,11 +146,15 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `equipment_purchases.py` | `purchase_personal_equipment_command` |
 | `freight_contracts.py` | `accept_freight_contract_command` |
 | `freight_delivery.py` | `deliver_freight_contract_command` |
+| `health_runtime.py` | `apply_personal_fatigue_command` |
+| `health_runtime.py` | `complete_personal_fatigue_rest_command` |
+| `health_runtime.py` | `resolve_personal_unconscious_recovery_command` |
 | `journal.py` | `add_campaign_note_command` |
 | `journal.py` | `archive_play_session_command` |
 | `jump_attempts.py` | `resolve_jump_attempt_command` |
 | `low_passage_revival.py` | `revive_low_passenger_command` |
 | `markets.py` | `open_trade_market_command` |
+| `mental_healing.py` | `resolve_personal_mental_healing_command` |
 | `navigation.py` | `resolve_navigation_command` |
 | `passenger_boarding.py` | `board_route_passengers_command` |
 | `passenger_booking.py` | `book_route_passengers_command` |
