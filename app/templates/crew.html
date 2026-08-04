@@ -31,6 +31,16 @@
       <button class="primary full" type="submit">Roll characteristics</button>
     </form>
   </aside>
+  <aside class="panel create-character">
+    <small>PERSONAL OUTFITTER</small><h2>Purchase equipment</h2>
+    <p>Catalog prices, ownership, custody, and payment are committed together. Weapons begin unready.</p>
+    <form method="post" action="/campaigns/{{ campaign.public_id }}/equipment-purchases">
+      <input type="hidden" name="idempotency_key" value="{{ creation_key }}-equipment">
+      <label><span>Buyer</span><select name="actor_public_id" required>{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select></label>
+      <label><span>Catalog item</span><select name="item_rule_code" required>{% for kind,items in campaign.personal_equipment_catalog|groupby('item_kind') %}<optgroup label="{{ kind|title }}">{% for item in items %}<option value="{{ item.rule_code }}">{{ item.name }} · Cr {{ '{:,}'.format(item.cost_credits) }}{% if item.minimum_tech_level is not none %} · TL{{ item.minimum_tech_level }}{% endif %}</option>{% endfor %}</optgroup>{% endfor %}</select></label>
+      <button class="primary full" type="submit">Purchase and take custody</button>
+    </form>
+  </aside>
 </section>
 {% if campaign.ships %}<section class="panel crew-stations"><header><div><small>SHIP STATIONS</small><h2>Crew assignments</h2></div></header><div class="station-list">{% for position in campaign.crew_positions %}<article><div><strong>{{ position.position_name }}</strong><small>{{ position.ship_name }}{% if position.standard_monthly_salary_minor %} · Cr{{ position.standard_monthly_salary_minor }}/month{% endif %}</small></div>{% if position.assigned_actor_name %}<span>{{ position.assigned_actor_name }}</span>{% else %}<form method="post" action="/campaigns/{{ campaign.public_id }}/crew-assignments"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-station-{{ loop.index }}"><input type="hidden" name="ship_public_id" value="{{ position.ship_public_id }}"><input type="hidden" name="ship_crew_position_id" value="{{ position.ship_crew_position_id }}"><select name="actor_public_id" required>{% for actor in campaign.actors %}<option value="{{ actor.public_id }}">{{ actor.character_name }}</option>{% endfor %}</select><button type="submit">Assign</button></form>{% endif %}</article>{% endfor %}</div></section>{% endif %}
 {% else %}

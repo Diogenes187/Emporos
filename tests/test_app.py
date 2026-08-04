@@ -71,3 +71,25 @@ def test_arrival_redirect_selects_committed_destination(monkeypatch):
     response=client.post("/campaigns/campaign/journeys/journey/arrive",data={"idempotency_key":"arrival-test"},follow_redirects=False)
     assert response.status_code==303
     assert response.headers["location"]=="/sector?campaign=campaign&system=destination-system"
+
+
+def test_equipment_purchase_dispatches_and_returns_to_crew(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "purchase_personal_equipment",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/equipment-purchases",
+        data={
+            "actor_public_id": "actor",
+            "item_rule_code": "equipment.weapon.blade",
+            "idempotency_key": "equipment-test",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/crew?campaign=campaign"
+    assert captured["campaign_public_id"] == "campaign"
+    assert captured["item_rule_code"] == "equipment.weapon.blade"
