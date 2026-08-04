@@ -155,7 +155,9 @@ def run_jump(*,journey_public_id:str,idempotency_key:str,complete:bool):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:
         command=complete_spacecraft_journey_leg_command if complete else start_spacecraft_journey_leg_command
-        return command(connection,referee_reference=authority,idempotency_key=idempotency_key,journey_public_id=journey_public_id,leg_order=1)
+        result=command(connection,referee_reference=authority,idempotency_key=idempotency_key,journey_public_id=journey_public_id,leg_order=1)
+        destination=connection.execute("SELECT location.public_id::text FROM journey_journey journey JOIN journey_leg leg USING(journey_id) JOIN loc_location location ON location.location_id=leg.destination_location_id WHERE journey.public_id=%s AND leg.leg_order=1",(journey_public_id,)).fetchone()[0] if complete and result.journey_completed else None
+        return result,destination
 
 def open_market(*,campaign_public_id:str,system_public_id:str,market_name:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

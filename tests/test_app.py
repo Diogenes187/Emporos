@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+import app.main as main_module
 
 
 client = TestClient(app)
@@ -63,3 +64,10 @@ def test_sector_requires_campaign_without_a_decorative_chart():
     assert response.status_code == 200
     assert "Select a campaign first" in response.text
     assert "Regina" not in response.text
+
+
+def test_arrival_redirect_selects_committed_destination(monkeypatch):
+    monkeypatch.setattr(main_module,"run_jump",lambda **kwargs:(object(),"destination-system"))
+    response=client.post("/campaigns/campaign/journeys/journey/arrive",data={"idempotency_key":"arrival-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert response.headers["location"]=="/sector?campaign=campaign&system=destination-system"

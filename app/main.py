@@ -201,9 +201,10 @@ def journey_attempt(campaign_id:str,journey_id:str,actor_public_id:str=Form(...)
 @app.post("/campaigns/{campaign_id}/journeys/{journey_id}/{transition}")
 def journey_transition(campaign_id:str,journey_id:str,transition:str,idempotency_key:str=Form(...)):
     if transition not in ('depart','arrive'):raise HTTPException(status_code=404)
-    try:run_jump(journey_public_id=journey_id,idempotency_key=idempotency_key,complete=transition=='arrive')
+    try:result,destination=run_jump(journey_public_id=journey_id,idempotency_key=idempotency_key,complete=transition=='arrive')
     except (ValueError,PermissionError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
-    return RedirectResponse(url=f"/sector?campaign={campaign_id}",status_code=303)
+    suffix=f"&system={destination}" if destination else ""
+    return RedirectResponse(url=f"/sector?campaign={campaign_id}{suffix}",status_code=303)
 
 @app.post("/campaigns/{campaign_id}/markets")
 def market_open(campaign_id:str,system_public_id:str=Form(...),market_name:str=Form(...),idempotency_key:str=Form(...)):
