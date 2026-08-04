@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 120
-- Engine-only review candidates: 50
+- Direct web-application wrappers: 121
+- Engine-only review candidates: 49
 
 ## Engine-only review candidates
 
@@ -61,7 +61,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `tasks.py` | `evaluate_species_low_light_visibility_command` |
 | `trade_work.py` | `start_trade_work_week_command` |
 | `trade_work.py` | `complete_trade_work_week_command` |
-| `transport.py` | `resolve_transport_operation_command` |
 
 ## Directly wrapped commands
 
@@ -184,6 +183,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `starship_charters.py` | `complete_starship_charter_command` |
 | `streetwise.py` | `resolve_streetwise_command` |
 | `survival.py` | `resolve_survival_task_command` |
+| `transport.py` | `resolve_transport_operation_command` |
 | `travel_planning.py` | `place_ship_command` |
 | `travel_planning.py` | `plan_jump_journey_command` |
 | `weapon_ready_runtime.py` | `advance_personal_weapon_ready_command` |

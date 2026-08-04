@@ -509,6 +509,15 @@ def test_field_operations_dispatch_player_context(monkeypatch):
     assert survival["opportunity_available"] is False
 
 
+def test_ship_transport_operation_dispatches_to_ship_page(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"perform_ship_transport_operation",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/ships/ship/transport-operations",data={"actor_public_id":"pilot","operation_kind":"operate-spacecraft","operation_reference":"rough atmospheric approach","challenging_conditions":"true","characteristic_rule_code":"characteristic.dexterity","difficulty_rule_code":"difficulty.difficult","idempotency_key":"transport"},follow_redirects=False)
+    assert response.status_code==303
+    assert response.headers["location"]=="/ship?campaign=campaign"
+    assert captured["ship_public_id"]=="ship" and captured["challenging_conditions"] is True
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
