@@ -165,3 +165,54 @@ def test_failed_career_entry_fallback_dispatches_and_returns_to_crew(monkeypatch
         "fallback_kind": "draft",
         "idempotency_key": "career-fallback-test",
     }
+
+
+def test_basic_training_dispatches_specializations_and_returns_to_crew(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "apply_career_basic_training",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/characters/actor/basic-training",
+        data={
+            "specialization": [
+                "skill.gun-combat||skill.slug-pistol",
+                "skill.vehicle||skill.wheeled-vehicle",
+            ],
+            "idempotency_key": "basic-training-test",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/crew?campaign=campaign"
+    assert captured == {
+        "actor_public_id": "actor",
+        "selected_roll_value": None,
+        "cascade_specializations": {
+            "skill.gun-combat": "skill.slug-pistol",
+            "skill.vehicle": "skill.wheeled-vehicle",
+        },
+        "idempotency_key": "basic-training-test",
+    }
+
+
+def test_later_career_basic_training_dispatches_selected_service_result(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "apply_career_basic_training",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/characters/actor/basic-training",
+        data={
+            "selected_roll_value": "4",
+            "idempotency_key": "later-basic-training-test",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert captured["selected_roll_value"] == 4
+    assert captured["cascade_specializations"] == {}

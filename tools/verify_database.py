@@ -73,6 +73,7 @@ def mechanical_long_text_columns(
             sql.SQL(
                 """SELECT count(*) FILTER (
                               WHERE length({column})>{limit}
+                                AND {column} ~ '[[:space:]]'
                           ),
                           coalesce(max(length({column})),0)
                    FROM {table}"""

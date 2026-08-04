@@ -19,6 +19,7 @@
 </header>
     <div class="crew-list">
       {% for actor in campaign.actors %}
+      {% set actor_index=loop.index %}
       <article class="crew-card">
         <div class="crew-identity">
 <span>{{ actor.character_name[:1]|upper }}</span>
@@ -58,7 +59,7 @@
 <p>The result was {{ actor.career_entry_pending.check_total }} against {{ actor.career_entry_pending.target_number }}. Resolve the failed entry using the Cepheus fallback rules.</p>
 <form method="post" action="/campaigns/{{ campaign.public_id }}/career-entry-fallbacks">
 <input type="hidden" name="attempt_command_public_id" value="{{ actor.career_entry_pending.command_public_id }}">
-<input type="hidden" name="idempotency_key" value="{{ creation_key }}-career-fallback-{{ actor.public_id }}">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-cf-{{ actor_index }}">
 <button type="submit" name="fallback_kind" value="draft">Submit to the draft</button>
 <button type="submit" name="fallback_kind" value="drifter">Enter the Drifter career</button>
 </form>
@@ -67,12 +68,32 @@
 {% set active_careers=actor.careers|selectattr('stint_status','equalto','active')|list %}
 {% if not active_careers and actor.lifepath_status != 'complete' %}
 <form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/career-entry">
-<input type="hidden" name="idempotency_key" value="{{ creation_key }}-career-entry-{{ actor.public_id }}">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-ce-{{ actor_index }}">
 <label><span>Career and assignment</span><select name="career_selection" required>{% for option in campaign.career_options %}<option value="{{ option.career_code }}||{{ option.assignment_code }}">{{ option.career_name }}{% if option.assignment_name %} · {{ option.assignment_name }}{% endif %}</option>{% endfor %}</select></label>
 <button type="submit">Attempt qualification</button>
 </form>
-{% elif active_careers %}
-<small>Career entered. Basic training is the next lifepath stage.</small>
+{% elif actor.basic_training %}
+<div class="career-step">
+<strong>{{ actor.basic_training.career_name }} basic training</strong>
+{% if actor.basic_training.first_career %}
+<p>Your first career grants every skill on its Service table at level 0. Choose the required specialties before committing the training.</p>
+<form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/basic-training">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-bt-{{ actor_index }}">
+{% for entry in actor.basic_training.entries %}
+{% if entry.cascade_skill %}<label><span>{{ entry.roll_value }} · {{ entry.skill_name }} specialty</span><select name="specialization" required>{% for specialty in entry.specializations %}<option value="{{ entry.skill_rule_code }}||{{ specialty.rule_code }}">{{ specialty.name }}</option>{% endfor %}</select></label>{% else %}<small>{{ entry.roll_value }} · {{ entry.source_outcome_text }}</small>{% endif %}
+{% endfor %}
+<button type="submit">Apply all Service skills</button>
+</form>
+{% else %}
+<p>A later career grants one selected result from its Service table.</p>
+<div class="station-list">{% for entry in actor.basic_training.entries %}<article><div><strong>{{ entry.roll_value }} · {{ entry.source_outcome_text }}</strong>{% if entry.cascade_skill %}<small>Specialty required</small>{% endif %}</div><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/basic-training">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-bt-{{ actor_index }}-{{ entry.roll_value }}">
+<input type="hidden" name="selected_roll_value" value="{{ entry.roll_value }}">
+{% if entry.cascade_skill %}<select name="specialization" required>{% for specialty in entry.specializations %}<option value="{{ entry.skill_rule_code }}||{{ specialty.rule_code }}">{{ specialty.name }}</option>{% endfor %}</select>{% endif %}
+<button type="submit">Choose result</button>
+</form></article>{% endfor %}</div>
+{% endif %}
+</div>
 {% endif %}
 {% endif %}
 </details>
@@ -83,10 +104,10 @@
 <strong>{{ item.item_name }}</strong>
 <small>{{ item.item_kind|upper }} · {{ item.container_name }}{% if item.layer_order %} · WORN LAYER {{ item.layer_order }}{% endif %}</small>
 </div>{% if item.item_kind=='armor' and item.actor_owned %}{% if item.layer_order %}<form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/armor/{{ item.public_id }}/unequip">
-<input type="hidden" name="idempotency_key" value="{{ creation_key }}-unequip-{{ actor.public_id }}-{{ loop.index }}">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-uq-{{ actor_index }}-{{ loop.index }}">
 <button type="submit">Unequip</button>
 </form>{% else %}<form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/armor/{{ item.public_id }}/equip">
-<input type="hidden" name="idempotency_key" value="{{ creation_key }}-equip-{{ actor.public_id }}-{{ loop.index }}">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-eq-{{ actor_index }}-{{ loop.index }}">
 <select name="layer_order">
 <option value="1">Layer 1</option>
 <option value="2">Layer 2</option>
@@ -95,7 +116,7 @@
 </form>{% endif %}{% else %}<span>{{ item.item_status }}</span>{% endif %}</article>{% else %}<p>No personal equipment in actor-owned containers.</p>{% endfor %}</div>
 {% set ammunition_options=campaign.ammunition_catalog|selectattr('holder_actor_public_id','equalto',actor.public_id)|list %}
 {% if ammunition_options %}<form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/ammunition-purchases">
-<input type="hidden" name="idempotency_key" value="{{ creation_key }}-ammunition-{{ actor.public_id }}">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-ammo-{{ actor_index }}">
 <input type="hidden" name="actor_public_id" value="{{ actor.public_id }}">
 <label><span>Ammunition</span><select name="ammunition_rule_code">{% for ammunition in ammunition_options %}<option value="{{ ammunition.rule_code }}">{{ ammunition.name }} · {{ ammunition.weapon_name }} · Cr {{ ammunition.cost_credits }} · {{ ammunition.reload_units_available }} held</option>{% endfor %}</select></label>
 <label><span>Reload units</span><input type="number" name="reload_units" min="1" max="100" value="1"></label>
