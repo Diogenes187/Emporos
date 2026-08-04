@@ -320,3 +320,22 @@ def test_career_injury_application_dispatches_allocation(monkeypatch):
     assert captured["primary_characteristic_code"]=="characteristic.endurance"
     assert captured["other_reduction_mode"]=="one_other_four"
     assert captured["other_characteristic_code"]=="characteristic.strength"
+
+
+def test_medical_care_dispatches_positive_restoration_points(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"resolve_career_medical_care",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/career-medical-care",data={"decision":"purchase","strength_points":"0","dexterity_points":"2","endurance_points":"1","idempotency_key":"medical-care-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured["restoration_points"]=={"characteristic.dexterity":2,"characteristic.endurance":1}
+
+
+def test_injury_crisis_cost_and_resolution_dispatch(monkeypatch):
+    priced={};resolved={}
+    monkeypatch.setattr(main_module,"determine_injury_crisis_cost",lambda **kwargs:priced.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_injury_crisis",lambda **kwargs:resolved.update(kwargs))
+    price=client.post("/campaigns/campaign/characters/actor/injury-crisis-cost",data={"idempotency_key":"crisis-cost-test"},follow_redirects=False)
+    resolution=client.post("/campaigns/campaign/characters/actor/injury-crisis-resolution",data={"resolution_kind":"pay","idempotency_key":"crisis-pay-test"},follow_redirects=False)
+    assert price.status_code==303 and resolution.status_code==303
+    assert priced=={"actor_public_id":"actor","idempotency_key":"crisis-cost-test"}
+    assert resolved=={"actor_public_id":"actor","resolution_kind":"pay","idempotency_key":"crisis-pay-test"}
