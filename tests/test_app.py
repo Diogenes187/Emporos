@@ -93,3 +93,25 @@ def test_equipment_purchase_dispatches_and_returns_to_crew(monkeypatch):
     assert response.headers["location"] == "/crew?campaign=campaign"
     assert captured["campaign_public_id"] == "campaign"
     assert captured["item_rule_code"] == "equipment.weapon.blade"
+
+
+def test_ammunition_purchase_dispatches_and_returns_to_crew(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "purchase_personal_ammunition",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/ammunition-purchases",
+        data={
+            "actor_public_id": "actor",
+            "ammunition_rule_code": "equipment.ammunition.auto-pistol.standard",
+            "reload_units": "3",
+            "idempotency_key": "ammunition-test",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/crew?campaign=campaign"
+    assert captured["reload_units"] == 3

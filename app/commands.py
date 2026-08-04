@@ -65,6 +65,7 @@ from engine.combat_resolution_runtime import resolve_personal_combat_command  # 
 from engine.armor_runtime import equip_personal_armor_command,unequip_personal_armor_command  # noqa: E402
 from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
+from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 
 
 def create_campaign(
@@ -357,3 +358,7 @@ def unequip_actor_armor(*,actor_public_id:str,item_public_id:str,idempotency_key
 def purchase_personal_equipment(*,campaign_public_id:str,actor_public_id:str,item_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return purchase_personal_equipment_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,actor_public_id=actor_public_id,item_rule_code=item_rule_code)
+
+def purchase_personal_ammunition(*,campaign_public_id:str,actor_public_id:str,ammunition_rule_code:str,reload_units:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return purchase_personal_ammunition_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,actor_public_id=actor_public_id,ammunition_rule_code=ammunition_rule_code,reload_units=reload_units)
