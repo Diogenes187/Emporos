@@ -62,6 +62,7 @@ from engine.combat_runtime import initialize_personal_combat_command,begin_perso
 from engine.combat_runtime import declare_personal_attack_command,declare_personal_reaction_command  # noqa: E402
 from engine.commands import resolve_personal_attack_command  # noqa: E402
 from engine.combat_resolution_runtime import resolve_personal_combat_command  # noqa: E402
+from engine.armor_runtime import equip_personal_armor_command,unequip_personal_armor_command  # noqa: E402
 
 
 def create_campaign(
@@ -327,3 +328,11 @@ def react_to_combat_attack(*,encounter_public_id:str,actor_public_id:str,attack_
 def end_personal_combat(*,encounter_public_id:str,outcome_kind:str,resolution_summary:str,winning_side_code:str|None,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_personal_combat_command(connection,initiator_reference=authority,referee_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,outcome_kind=outcome_kind,resolution_summary=resolution_summary,winning_side_code=winning_side_code or None)
+
+def equip_actor_armor(*,actor_public_id:str,item_public_id:str,layer_order:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return equip_personal_armor_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,item_public_id=item_public_id,layer_order=layer_order)
+
+def unequip_actor_armor(*,actor_public_id:str,item_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return unequip_personal_armor_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,item_public_id=item_public_id)
