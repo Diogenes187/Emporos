@@ -396,6 +396,18 @@ def test_tactical_combat_controls_dispatch(monkeypatch):
     assert captured["cover"]["cover_code"]=="one_half"
 
 
+def test_advanced_action_conversion_and_kill_aim_dispatch(monkeypatch):
+    spent={};aimed={}
+    monkeypatch.setattr(main_module,"spend_combat_action",lambda **kwargs:spent.update(kwargs))
+    monkeypatch.setattr(main_module,"aim_combatant_for_kill",lambda **kwargs:aimed.update(kwargs))
+    base="/campaigns/campaign/encounters/encounter/turns/actor"
+    converted=client.post(f"{base}/actions",data={"operation":"convert_significant","idempotency_key":"convert-test"},follow_redirects=False)
+    kill_aimed=client.post(f"{base}/kill-aim",data={"target_actor_public_id":"target","idempotency_key":"kill-aim-test"},follow_redirects=False)
+    assert converted.status_code==303 and kill_aimed.status_code==303
+    assert spent=={"encounter_public_id":"encounter","actor_public_id":"actor","operation":"convert_significant","idempotency_key":"convert-test"}
+    assert aimed=={"encounter_public_id":"encounter","actor_public_id":"actor","target_actor_public_id":"target","idempotency_key":"kill-aim-test"}
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

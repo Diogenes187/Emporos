@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 101
-- Engine-only review candidates: 69
+- Direct web-application wrappers: 103
+- Engine-only review candidates: 67
 
 ## Engine-only review candidates
 
@@ -20,10 +20,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `bribery.py` | `resolve_bribery_consequence_command` |
 | `broker_carousing.py` | `resolve_carousing_influence_command` |
 | `characters.py` | `assign_actor_species_command` |
-| `combat_runtime.py` | `spend_personal_action_command` |
 | `combat_runtime.py` | `move_species_flyer_command` |
 | `combat_runtime.py` | `resolve_species_great_leap_command` |
-| `combat_runtime.py` | `aim_personal_attack_for_kill_command` |
 | `comms_runtime.py` | `set_battlefield_communication_command` |
 | `comms_runtime.py` | `apply_personal_initiative_support_command` |
 | `competitive_gambling.py` | `resolve_competitive_gambling_command` |
@@ -121,6 +119,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `characters.py` | `update_character_final_details_command` |
 | `combat_resolution_runtime.py` | `resolve_personal_combat_command` |
 | `combat_runtime.py` | `initialize_personal_combat_command` |
+| `combat_runtime.py` | `spend_personal_action_command` |
 | `combat_runtime.py` | `advance_weapon_reload_command` |
 | `combat_runtime.py` | `declare_personal_reaction_command` |
 | `combat_runtime.py` | `complete_personal_turn_command` |
@@ -135,6 +134,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `combat_runtime.py` | `change_personal_stance_command` |
 | `combat_runtime.py` | `set_personal_cover_command` |
 | `combat_runtime.py` | `move_personal_combatant_command` |
+| `combat_runtime.py` | `aim_personal_attack_for_kill_command` |
 | `commands.py` | `resolve_personal_attack_command` |
 | `commands.py` | `apply_personal_damage_command` |
 | `commerce_setup.py` | `prepare_trading_command` |
