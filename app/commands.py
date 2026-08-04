@@ -66,7 +66,7 @@ from engine.armor_runtime import equip_personal_armor_command,unequip_personal_a
 from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
-from engine.careers import apply_career_basic_training_command, apply_career_rank_zero_award_command, attempt_career_entry_command, resolve_failed_career_entry_command  # noqa: E402
+from engine.careers import apply_career_basic_training_command, apply_career_rank_zero_award_command, attempt_career_entry_command, attempt_career_survival_command, declare_career_anagathics_command, resolve_failed_career_entry_command  # noqa: E402
 
 
 def create_campaign(
@@ -379,3 +379,11 @@ def apply_career_basic_training(*,actor_public_id:str,selected_roll_value:int|No
 def apply_career_rank_zero_award(*,actor_public_id:str,cascade_specialization:str|None,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return apply_career_rank_zero_award_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,cascade_specialization=cascade_specialization)
+
+def declare_career_anagathics(*,actor_public_id:str,uses_anagathics:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return declare_career_anagathics_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,uses_anagathics=uses_anagathics)
+
+def attempt_career_survival(*,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return attempt_career_survival_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)

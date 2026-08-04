@@ -240,3 +240,20 @@ def test_rank_zero_award_dispatches_specialization_and_returns_to_crew(monkeypat
         "cascade_specialization": "skill.slug-pistol",
         "idempotency_key": "rank-zero-test",
     }
+
+
+def test_anagathics_declaration_dispatches_player_choice(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(main_module,"declare_career_anagathics",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/anagathics",data={"uses_anagathics":"true","idempotency_key":"anagathics-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured=={"actor_public_id":"actor","uses_anagathics":True,"idempotency_key":"anagathics-test"}
+
+
+def test_career_survival_dispatches_engine_roll(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(main_module,"attempt_career_survival",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/career-survival",data={"idempotency_key":"survival-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert response.headers["location"]=="/crew?campaign=campaign"
+    assert captured=={"actor_public_id":"actor","idempotency_key":"survival-test"}
