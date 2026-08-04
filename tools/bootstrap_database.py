@@ -211,6 +211,11 @@ BOOTSTRAP_PHASES: tuple[tuple[int | None, tuple[str, ...]], ...] = (
 
 
 def public_relations(connection: psycopg.Connection) -> list[str]:
+    """Return relations that prove an Emporos schema already exists.
+
+    Managed databases can place service-owned objects in ``public``. Those
+    objects must not make a fresh, dedicated Emporos database look populated.
+    """
     return [
         row[0]
         for row in connection.execute(
@@ -219,6 +224,11 @@ def public_relations(connection: psycopg.Connection) -> list[str]:
                JOIN pg_namespace n ON n.oid=c.relnamespace
                WHERE n.nspname='public'
                  AND c.relkind IN ('r','p','v','m','S','f')
+                 AND c.relname IN (
+                     'sys_schema_migration',
+                     'sys_content_package',
+                     'rule_rule'
+                 )
                ORDER BY c.relname"""
         )
     ]
@@ -255,7 +265,7 @@ def main() -> int:
     if relations:
         sample = ", ".join(relations[:5])
         parser.error(
-            "bootstrap requires an empty database; found public relations: "
+            "bootstrap requires an empty Emporos schema; found relations: "
             f"{sample}"
         )
 

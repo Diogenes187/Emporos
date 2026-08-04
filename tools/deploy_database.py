@@ -28,12 +28,12 @@ def main() -> int:
     os.environ["EMPOROS_DATABASE_URL"] = dsn
     os.environ["BASE_CEPHEUS_DATABASE_URL"] = dsn
     with psycopg.connect(dsn) as connection:
-        populated = connection.execute(
-            "SELECT EXISTS(SELECT 1 FROM pg_class WHERE relnamespace="
-            "(SELECT oid FROM pg_namespace WHERE nspname='public') "
-            "AND relkind IN ('r','p','v','m','S','f'))"
+        # Managed PostgreSQL services may install their own relations in public.
+        # Only Emporos's migration ledger proves this is an existing game DB.
+        initialized = connection.execute(
+            "SELECT to_regclass('public.sys_schema_migration') IS NOT NULL"
         ).fetchone()[0]
-    if populated:
+    if initialized:
         run("tools/migrate.py")
         run("tools/verify_database.py")
     else:

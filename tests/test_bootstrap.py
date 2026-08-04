@@ -10,6 +10,22 @@ from tools import bootstrap_database
 
 
 class BootstrapStructureTests(unittest.TestCase):
+    def test_schema_probe_is_limited_to_emporos_markers(self) -> None:
+        class Connection:
+            sql = ""
+
+            def execute(self, sql: str):
+                self.sql = sql
+                return [("sys_content_package",)]
+
+        connection = Connection()
+        self.assertEqual(
+            bootstrap_database.public_relations(connection),
+            ["sys_content_package"],
+        )
+        self.assertIn("c.relname IN", connection.sql)
+        self.assertNotIn("flyway_schema_history", connection.sql)
+
     def test_importer_dependency_boundaries_are_ordered(self) -> None:
         targets = [
             target
@@ -66,7 +82,6 @@ class BootstrapDatabaseGuardTests(unittest.TestCase):
         ) as connection:
             relations = bootstrap_database.public_relations(connection)
         self.assertIn("sys_schema_migration", relations)
-        self.assertIn("src_issue", relations)
 
 
 if __name__ == "__main__":
