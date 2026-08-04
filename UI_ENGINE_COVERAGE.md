@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 162
-- Direct web-application wrappers: 83
-- Engine-only review candidates: 79
+- Direct web-application wrappers: 89
+- Engine-only review candidates: 73
 
 ## Engine-only review candidates
 
@@ -21,12 +21,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `broker_carousing.py` | `resolve_carousing_influence_command` |
 | `characters.py` | `assign_actor_species_command` |
 | `combat_runtime.py` | `spend_personal_action_command` |
-| `combat_runtime.py` | `hasten_personal_combatant_command` |
-| `combat_runtime.py` | `delay_personal_turn_command` |
-| `combat_runtime.py` | `resume_delayed_personal_turn_command` |
-| `combat_runtime.py` | `forfeit_delayed_personal_turn_command` |
-| `combat_runtime.py` | `change_personal_stance_command` |
-| `combat_runtime.py` | `set_personal_cover_command` |
 | `combat_runtime.py` | `move_species_flyer_command` |
 | `combat_runtime.py` | `resolve_species_great_leap_command` |
 | `combat_runtime.py` | `aim_personal_attack_for_kill_command` |
@@ -137,7 +131,13 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `combat_runtime.py` | `advance_personal_combat_round_command` |
 | `combat_runtime.py` | `declare_personal_attack_command` |
 | `combat_runtime.py` | `begin_personal_turn_command` |
+| `combat_runtime.py` | `hasten_personal_combatant_command` |
+| `combat_runtime.py` | `delay_personal_turn_command` |
+| `combat_runtime.py` | `resume_delayed_personal_turn_command` |
+| `combat_runtime.py` | `forfeit_delayed_personal_turn_command` |
 | `combat_runtime.py` | `aim_personal_attack_command` |
+| `combat_runtime.py` | `change_personal_stance_command` |
+| `combat_runtime.py` | `set_personal_cover_command` |
 | `combat_runtime.py` | `move_personal_combatant_command` |
 | `commands.py` | `resolve_personal_attack_command` |
 | `commands.py` | `apply_personal_damage_command` |

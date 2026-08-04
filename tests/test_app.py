@@ -381,3 +381,16 @@ def test_final_details_and_character_completion_dispatch(monkeypatch):
     assert saved.status_code==303 and completed.status_code==303
     assert details=={"actor_public_id":"actor","character_name":"Sera Venn","gender_identity":"woman","appearance":"Weathered flight coat","personal_goals":("Find the survey vessel","Earn command"),"idempotency_key":"details-test"}
     assert finished=={"actor_public_id":"actor","idempotency_key":"finish-test"}
+
+
+def test_tactical_combat_controls_dispatch(monkeypatch):
+    captured={name:{} for name in ("hasten","delay","resume","forfeit","stance","cover")}
+    for name,function in (("hasten","hasten_combatant"),("delay","delay_combat_turn"),("resume","resume_combat_turn"),("forfeit","forfeit_combat_turn"),("stance","change_combat_stance"),("cover","set_combat_cover")):
+        monkeypatch.setattr(main_module,function,lambda _name=name,**kwargs:captured[_name].update(kwargs))
+    base="/campaigns/campaign/encounters/encounter/turns/actor"
+    responses=[client.post(f"{base}/{action}",data={"idempotency_key":f"{action}-test",**({"stance_code":"prone"} if action=="stance" else {"cover_code":"one_half"} if action=="cover" else {})},follow_redirects=False) for action in captured]
+    assert all(response.status_code==303 for response in responses)
+    for action in ("hasten","delay","resume","forfeit"):
+        assert captured[action]=={"encounter_public_id":"encounter","actor_public_id":"actor","idempotency_key":f"{action}-test"}
+    assert captured["stance"]["stance_code"]=="prone"
+    assert captured["cover"]["cover_code"]=="one_half"

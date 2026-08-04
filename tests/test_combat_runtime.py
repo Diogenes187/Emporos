@@ -1821,7 +1821,10 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                 self.assertEqual(resolved.receipt.attack_dice, (6, 6))
                 self.assertEqual(connection.execute(
                     """SELECT count(*) FROM cmd_random_draw
-                       WHERE draw_group='attack'""").fetchone()[0], 3)
+                       WHERE draw_group='attack' AND command_id=(
+                           SELECT command_id FROM cmd_command
+                           WHERE public_id=%s
+                       )""", (resolved.command_public_id,)).fetchone()[0], 3)
                 blind = connection.execute(
                     """SELECT receipt.discarded_attack_die,
                               receipt.eligible_target_count,

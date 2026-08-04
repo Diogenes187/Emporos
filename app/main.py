@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure, apply_career_basic_training, apply_career_rank_zero_award, declare_career_anagathics, attempt_career_survival, resolve_career_rank_attempt, apply_career_term_training, complete_career_term, determine_career_reenlistment, decide_career_reenlistment, resolve_survival_mishap, determine_career_injury, apply_career_injury, resolve_career_medical_care, determine_injury_crisis_cost, resolve_injury_crisis, initialize_career_muster, roll_career_benefit, resolve_career_weapon_benefit, determine_career_aging, apply_career_aging, determine_aging_crisis_cost, resolve_aging_crisis, update_character_final_details, finish_character_creation
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure, apply_career_basic_training, apply_career_rank_zero_award, declare_career_anagathics, attempt_career_survival, resolve_career_rank_attempt, apply_career_term_training, complete_career_term, determine_career_reenlistment, decide_career_reenlistment, resolve_survival_mishap, determine_career_injury, apply_career_injury, resolve_career_medical_care, determine_injury_crisis_cost, resolve_injury_crisis, initialize_career_muster, roll_career_benefit, resolve_career_weapon_benefit, determine_career_aging, apply_career_aging, determine_aging_crisis_cost, resolve_aging_crisis, update_character_final_details, finish_character_creation, hasten_combatant, delay_combat_turn, resume_combat_turn, forfeit_combat_turn, change_combat_stance, set_combat_cover
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -510,6 +510,42 @@ def encounter_combat_initialize(campaign_id:str,encounter_id:str,aware_actor_pub
 @app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/begin")
 def combat_turn_begin(campaign_id:str,encounter_id:str,actor_id:str,idempotency_key:str=Form(...)):
     try:begin_combat_turn(encounter_public_id=encounter_id,actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/hasten")
+def combat_hasten(campaign_id:str,encounter_id:str,actor_id:str,idempotency_key:str=Form(...)):
+    try:hasten_combatant(encounter_public_id=encounter_id,actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/delay")
+def combat_delay(campaign_id:str,encounter_id:str,actor_id:str,idempotency_key:str=Form(...)):
+    try:delay_combat_turn(encounter_public_id=encounter_id,actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/resume")
+def combat_resume(campaign_id:str,encounter_id:str,actor_id:str,idempotency_key:str=Form(...)):
+    try:resume_combat_turn(encounter_public_id=encounter_id,actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/forfeit")
+def combat_forfeit(campaign_id:str,encounter_id:str,actor_id:str,idempotency_key:str=Form(...)):
+    try:forfeit_combat_turn(encounter_public_id=encounter_id,actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/stance")
+def combat_stance(campaign_id:str,encounter_id:str,actor_id:str,stance_code:str=Form(...),idempotency_key:str=Form(...)):
+    try:change_combat_stance(encounter_public_id=encounter_id,actor_public_id=actor_id,stance_code=stance_code,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/encounters/{encounter_id}/turns/{actor_id}/cover")
+def combat_cover(campaign_id:str,encounter_id:str,actor_id:str,cover_code:str=Form(""),idempotency_key:str=Form(...)):
+    try:set_combat_cover(encounter_public_id=encounter_id,actor_public_id=actor_id,cover_code=cover_code or None,idempotency_key=idempotency_key)
     except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/encounters?campaign={campaign_id}",status_code=303)
 
