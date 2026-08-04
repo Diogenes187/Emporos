@@ -10,8 +10,10 @@ from fastapi.templating import Jinja2Templates
 from app.database import CampaignReader, summary_dict
 from app.auth import (SESSION_COOKIE, accept_invitation, authenticate,
                       campaign_role, can_access_campaign, create_invitation,
-                      create_session, grant_campaign_owner, register,
-                      revoke_session, secure_cookie, user_for_session)
+                      create_session, grant_campaign_owner,
+                      numeric_resources_belong_to_campaign, register,
+                      resources_belong_to_campaign, revoke_session,
+                      secure_cookie, user_for_session)
 from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure, apply_career_basic_training, apply_career_rank_zero_award, declare_career_anagathics, attempt_career_survival, resolve_career_rank_attempt, apply_career_term_training, complete_career_term, determine_career_reenlistment, decide_career_reenlistment, resolve_survival_mishap, determine_career_injury, apply_career_injury, resolve_career_medical_care, determine_injury_crisis_cost, resolve_injury_crisis, initialize_career_muster, roll_career_benefit, resolve_career_weapon_benefit, determine_career_aging, apply_career_aging, determine_aging_crisis_cost, resolve_aging_crisis, update_character_final_details, finish_character_creation, hasten_combatant, delay_combat_turn, resume_combat_turn, forfeit_combat_turn, change_combat_stance, set_combat_cover, apply_personal_fatigue, complete_personal_fatigue_rest, resolve_personal_unconscious_recovery, resolve_personal_mental_healing, determine_personal_first_aid, apply_determined_personal_first_aid, determine_personal_surgery, apply_determined_personal_surgery, determine_personal_medical_care, apply_determined_personal_medical_care, determine_personal_natural_healing, apply_determined_personal_natural_healing, spend_combat_action, aim_combatant_for_kill, resolve_combat_grapple, apply_combat_grapple_option, perform_combat_free_action, resolve_combat_coup_de_grace, start_combat_extended_action, progress_combat_extended_action, activate_self_psionic_power, recover_actor_psionic_strength, set_actor_telepathic_shield, send_psionic_thought, perform_streetwise_operation, attempt_bribe, resolve_bribe_consequence, perform_carousing_influence, gamble_against_house, perform_recon_operation, perform_survival_operation, perform_ship_transport_operation, perform_regulatory_operation, perform_basic_computer_operation, perform_device_operation, begin_leadership_coordination, allocate_leadership_coordination, assign_actor_language, decipher_language_specimen, train_actor_skill_week, assign_actor_species, check_for_starship_encounter, start_trade_work_week, complete_trade_work_week, consume_actor_armor_resources, set_battlefield_communication, apply_combat_initiative_support, move_combatant_in_flight, resolve_combatant_great_leap, set_social_attitude, attempt_social_influence, perform_animal_skill_operation, set_animal_reaction_context, resolve_animal_reaction, advance_environmental_exposure, resolve_competitive_gambling, resolve_liaison_negotiation, resolve_steward_service, set_battlefield_conditions, declare_combat_explosion, react_to_combat_explosion, resolve_combat_explosion, create_scene_snapshot, resolve_species_hive_mentality, resolve_species_naturally_curious, evaluate_species_low_light, resolve_ground_starship_volley, finalize_ground_starship_volley
 from app.commands import select_social_content,create_patron_brief,authorize_extreme_range
 
@@ -29,6 +31,13 @@ app.mount(
 
 PUBLIC_PATHS = {"/health", "/login", "/register"}
 CAMPAIGN_PATH = re.compile(r"^/(?:api/)?campaigns/([^/]+)")
+PUBLIC_UUID = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-"
+    r"[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+)
+NUMERIC_PATH_RESOURCES = (
+    (re.compile(r"/markets/(\d+)(?:/|$)"), "market_session_id"),
+)
 
 
 @app.middleware("http")
@@ -47,6 +56,31 @@ async def require_account_and_campaign_access(request: Request, call_next):
     campaign_id = match.group(1) if match else request.query_params.get("campaign")
     if campaign_id and not can_access_campaign(user.user_id, campaign_id):
         return JSONResponse({"detail": "Campaign not found"}, status_code=404)
+    if campaign_id and PUBLIC_UUID.fullmatch(campaign_id):
+        submitted = set(segment for segment in path.split("/") if PUBLIC_UUID.fullmatch(segment))
+        numeric_submitted: dict[str, set[int]] = {}
+        submitted.update(value for _, value in request.query_params.multi_items()
+                         if PUBLIC_UUID.fullmatch(value))
+        for key, value in request.query_params.multi_items():
+            if value.isdecimal():
+                numeric_submitted.setdefault(key, set()).add(int(value))
+        if request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
+            form = await request.form()
+            submitted.update(str(value) for _, value in form.multi_items()
+                             if PUBLIC_UUID.fullmatch(str(value)))
+            for key, value in form.multi_items():
+                text = str(value)
+                if text.isdecimal():
+                    numeric_submitted.setdefault(key, set()).add(int(text))
+        for pattern, key in NUMERIC_PATH_RESOURCES:
+            path_match = pattern.search(path)
+            if path_match:
+                numeric_submitted.setdefault(key, set()).add(int(path_match.group(1)))
+        submitted.discard(campaign_id)
+        if not resources_belong_to_campaign(campaign_id, submitted):
+            return JSONResponse({"detail": "Campaign resource not found"}, status_code=404)
+        if not numeric_resources_belong_to_campaign(campaign_id, numeric_submitted):
+            return JSONResponse({"detail": "Campaign resource not found"}, status_code=404)
     return await call_next(request)
 
 

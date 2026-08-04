@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 import hashlib
 import hmac
 import os
@@ -11,12 +12,37 @@ import secrets
 
 import psycopg
 from psycopg.rows import dict_row
+from psycopg import sql
 
 from app.database import database_url
 
 
 SESSION_COOKIE = "emporos_session"
 SESSION_DAYS = 30
+
+CAMPAIGN_RESOURCE_TABLES = (
+    "actor_actor", "actor_faction", "actor_note", "actor_relationship",
+    "ai_model_invocation", "camp_competitive_gambling_game", "camp_journal_note",
+    "camp_language", "camp_leadership_coordination", "camp_liaison_negotiation",
+    "camp_patron_brief", "camp_player_visible_source", "camp_referee_tool_request",
+    "camp_referee_turn", "camp_scene_snapshot", "camp_session_archive",
+    "camp_source_document", "camp_trade_work_week", "enc_encounter",
+    "env_acid_exposure", "env_acid_fume_exposure", "env_antiradiation_dose_receipt",
+    "env_deprivation_episode", "env_disease_case", "env_fall_attempt",
+    "env_fire_episode", "env_poison_attempt", "env_radiation_exposure_attempt",
+    "env_radiation_sickness_case", "env_suffocation_episode",
+    "env_temperature_exposure", "env_vacuum_episode", "env_weather_observation",
+    "fin_account", "fin_obligation", "fin_transaction", "gf_ground_weapon_battery",
+    "health_medical_facility", "inv_container", "inv_item_instance", "inv_lot",
+    "inv_transfer", "journey_freight_contract", "journey_journey",
+    "journey_navigation_solution", "journey_postal_contract",
+    "journey_revenue_availability_cycle", "journey_starship_charter_contract",
+    "journey_starship_charter_quote_receipt", "loc_connection", "loc_feature",
+    "loc_location", "loc_star_route", "mkt_execution", "mkt_market", "mkt_order",
+    "mkt_quote", "senc_engagement", "ship_cargo_lot", "ship_cargo_reservation",
+    "ship_security_access_point", "ship_security_compartment",
+    "ship_security_cyber_attempt", "ship_ship", "vehicle_vehicle", "venc_engagement",
+)
 
 
 @dataclass(frozen=True)
@@ -147,6 +173,81 @@ def can_access_campaign(user_id: int, campaign_public_id: str) -> bool:
                WHERE membership.user_id=%s AND campaign.public_id=%s) AS allowed""",
             (user_id, campaign_public_id),
         ).fetchone()["allowed"]
+
+
+def resources_belong_to_campaign(campaign_public_id: str, public_ids: set[str]) -> bool:
+    """Reject any known relational resource that belongs to another campaign."""
+    if not public_ids:
+        return True
+    parts = [
+        sql.SQL("SELECT public_id::text AS public_id,campaign_id FROM {} WHERE public_id=ANY(%s::uuid[])").format(
+            sql.Identifier(table)
+        )
+        for table in CAMPAIGN_RESOURCE_TABLES
+    ]
+    query = sql.SQL("""
+        WITH requested(public_id,campaign_id) AS ({resources}),
+        selected AS (SELECT campaign_id FROM camp_campaign WHERE public_id=%s)
+        SELECT NOT EXISTS(
+            SELECT 1 FROM requested CROSS JOIN selected
+            WHERE requested.campaign_id<>selected.campaign_id) AS allowed
+    """).format(resources=sql.SQL(" UNION ALL ").join(parts))
+    values = list(public_ids)
+    parameters = [values] * len(CAMPAIGN_RESOURCE_TABLES) + [campaign_public_id]
+    with _connect() as connection:
+        row = connection.execute(query, parameters).fetchone()
+    return bool(row and row["allowed"])
+
+
+@lru_cache(maxsize=1)
+def _campaign_numeric_key_tables() -> dict[str, tuple[str, ...]]:
+    with _connect() as connection:
+        rows = connection.execute("""
+            SELECT cls.relname AS table_name,att.attname AS key_name
+            FROM pg_class cls
+            JOIN pg_namespace ns ON ns.oid=cls.relnamespace
+            JOIN pg_index idx ON idx.indrelid=cls.oid AND idx.indisprimary
+                             AND idx.indnkeyatts=1
+            JOIN pg_attribute att ON att.attrelid=cls.oid AND att.attnum=idx.indkey[0]
+            WHERE ns.nspname='public' AND EXISTS(
+                SELECT 1 FROM pg_attribute campaign
+                WHERE campaign.attrelid=cls.oid AND campaign.attname='campaign_id'
+                  AND NOT campaign.attisdropped)
+            ORDER BY att.attname,cls.relname
+        """).fetchall()
+    grouped: dict[str, list[str]] = {}
+    for row in rows:
+        grouped.setdefault(row["key_name"], []).append(row["table_name"])
+    return {key: tuple(tables) for key, tables in grouped.items()}
+
+
+def numeric_resources_belong_to_campaign(
+    campaign_public_id: str, submitted: dict[str, set[int]]
+) -> bool:
+    table_map = _campaign_numeric_key_tables()
+    checks: list[tuple[str, str, list[int]]] = []
+    for key, values in submitted.items():
+        if values and key in table_map:
+            checks.extend((table, key, list(values)) for table in table_map[key])
+    if not checks:
+        return True
+    parts = [
+        sql.SQL("SELECT campaign_id FROM {} WHERE {}=ANY(%s::bigint[])").format(
+            sql.Identifier(table), sql.Identifier(key)
+        )
+        for table, key, _ in checks
+    ]
+    query = sql.SQL("""
+        WITH requested(campaign_id) AS ({resources}),
+        selected AS (SELECT campaign_id FROM camp_campaign WHERE public_id=%s)
+        SELECT NOT EXISTS(
+            SELECT 1 FROM requested CROSS JOIN selected
+            WHERE requested.campaign_id<>selected.campaign_id) AS allowed
+    """).format(resources=sql.SQL(" UNION ALL ").join(parts))
+    parameters = [values for _, _, values in checks] + [campaign_public_id]
+    with _connect() as connection:
+        row = connection.execute(query, parameters).fetchone()
+    return bool(row and row["allowed"])
 
 
 def campaign_role(user_id: int, campaign_public_id: str) -> str | None:
