@@ -353,3 +353,20 @@ def test_career_muster_and_benefit_dispatch(monkeypatch):
     assert initialized=={"actor_public_id":"actor","idempotency_key":"muster-test"}
     assert rolled=={"actor_public_id":"actor","benefit_table_code":"material","idempotency_key":"benefit-test"}
     assert resolved=={"actor_public_id":"actor","weapon_rule_code":"equipment.weapon.auto-pistol","resolution_kind":"skill","skill_rule_code":"skill.slug-pistol","idempotency_key":"weapon-test"}
+
+
+def test_career_aging_workflow_dispatch(monkeypatch):
+    rolled={};applied={};priced={};resolved={}
+    monkeypatch.setattr(main_module,"determine_career_aging",lambda **kwargs:rolled.update(kwargs))
+    monkeypatch.setattr(main_module,"apply_career_aging",lambda **kwargs:applied.update(kwargs))
+    monkeypatch.setattr(main_module,"determine_aging_crisis_cost",lambda **kwargs:priced.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_aging_crisis",lambda **kwargs:resolved.update(kwargs))
+    aging=client.post("/campaigns/campaign/characters/actor/career-aging",data={"aging_kind":"anagathic_stopping_shock","idempotency_key":"aging-test"},follow_redirects=False)
+    allocation=client.post("/campaigns/campaign/characters/actor/career-aging-application",data={"physical_characteristic_codes":["characteristic.strength","characteristic.dexterity"],"mental_characteristic_code":"characteristic.education","idempotency_key":"aging-apply-test"},follow_redirects=False)
+    cost=client.post("/campaigns/campaign/characters/actor/aging-crisis-cost",data={"idempotency_key":"aging-cost-test"},follow_redirects=False)
+    resolution=client.post("/campaigns/campaign/characters/actor/aging-crisis-resolution",data={"resolution_kind":"pay","idempotency_key":"aging-pay-test"},follow_redirects=False)
+    assert all(response.status_code==303 for response in (aging,allocation,cost,resolution))
+    assert rolled=={"actor_public_id":"actor","aging_kind":"anagathic_stopping_shock","idempotency_key":"aging-test"}
+    assert applied=={"actor_public_id":"actor","physical_characteristic_codes":("characteristic.strength","characteristic.dexterity"),"mental_characteristic_code":"characteristic.education","idempotency_key":"aging-apply-test"}
+    assert priced=={"actor_public_id":"actor","idempotency_key":"aging-cost-test"}
+    assert resolved=={"actor_public_id":"actor","resolution_kind":"pay","idempotency_key":"aging-pay-test"}
