@@ -603,6 +603,14 @@ def test_animal_operations_and_reaction_dispatch(monkeypatch):
     assert reaction["provocation_number"]==2
 
 
+def test_environmental_exposure_dispatch(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"advance_environmental_exposure",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/environmental-exposure",data={"environment_kind":"extreme_cold","elapsed_minutes":"30","protective_equipment_active":"true","exposure_public_id":"exposure","end_exposure":"true","idempotency_key":"cold"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured=={"actor_public_id":"actor","environment_kind":"extreme_cold","elapsed_minutes":30,"protective_equipment_active":True,"exposure_public_id":"exposure","end_exposure":True,"idempotency_key":"cold"}
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

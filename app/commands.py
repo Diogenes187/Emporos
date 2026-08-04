@@ -77,6 +77,7 @@ from engine.recon import resolve_recon_command  # noqa: E402
 from engine.survival import resolve_survival_task_command  # noqa: E402
 from engine.animal_skills import resolve_animal_skill_operation_command  # noqa: E402
 from engine.animals import set_animal_reaction_context_command,resolve_animal_reaction_command  # noqa: E402
+from engine.environment import advance_species_environmental_exposure_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
 from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
@@ -447,6 +448,10 @@ def set_animal_reaction_context(*,encounter_public_id:str,animal_actor_public_id
 def resolve_animal_reaction(*,encounter_public_id:str,animal_actor_public_id:str,provocation_number:int,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_animal_reaction_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,animal_actor_public_id=animal_actor_public_id,provocation_number=provocation_number)
+
+def advance_environmental_exposure(*,actor_public_id:str,environment_kind:str,elapsed_minutes:int,protective_equipment_active:bool,exposure_public_id:str|None,end_exposure:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return advance_species_environmental_exposure_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,environment_kind=environment_kind,elapsed_minutes=elapsed_minutes,protective_equipment_active=protective_equipment_active,exposure_public_id=exposure_public_id or None,end_exposure=end_exposure)
 
 def perform_ship_transport_operation(*,actor_public_id:str,ship_public_id:str,operation_kind:str,operation_reference:str,challenging_conditions:bool,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
