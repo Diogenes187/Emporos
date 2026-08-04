@@ -52,9 +52,11 @@ from engine.tasks import resolve_actor_task_command
 from engine.injury_runtime import resolve_personal_natural_healing_command
 from engine.medical_runtime import (
     apply_determined_personal_first_aid_command,
+    apply_determined_personal_surgery_command,
     apply_personal_first_aid_command,
     apply_personal_medical_care_command,
     determine_personal_first_aid_command,
+    determine_personal_surgery_command,
     resolve_personal_surgery_command,
 )
 from engine.mental_healing import resolve_personal_mental_healing_command
@@ -2673,15 +2675,22 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                        SET seriously_wounded=true,
                            minor_actions_remaining=0
                        WHERE actor_id=%s""", (actor_ids[actors[1]],))
-                surgery = resolve_personal_surgery_command(
+                surgery_roll = determine_personal_surgery_command(
                     connection, initiator_reference="referee",
-                    idempotency_key="medical-surgery",
+                    idempotency_key="medical-surgery-determine",
                     patient_actor_public_id=actors[1],
                     doctor_actor_public_id=actors[2],
                     first_aid_command_public_id=first_aid.command_public_id,
                     medical_facility_public_id=str(facility_public),
-                    allocations=(("characteristic.strength", 4),),
                     random_source=FixedRandom((1, 1)),
+                )
+                self.assertEqual(surgery_roll.signed_points, -4)
+                surgery = apply_determined_personal_surgery_command(
+                    connection, initiator_reference="referee",
+                    idempotency_key="medical-surgery",
+                    determination_command_public_id=
+                        surgery_roll.command_public_id,
+                    allocations=(("characteristic.strength", 4),),
                 )
                 self.assertEqual(surgery.effect, -4)
                 self.assertEqual(surgery.signed_points, -4)

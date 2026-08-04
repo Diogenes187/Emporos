@@ -421,3 +421,15 @@ def test_first_aid_roll_and_allocation_dispatch(monkeypatch):
     assert rolled.status_code==303 and restored.status_code==303
     assert determined=={"patient_actor_public_id":"actor","doctor_actor_public_id":"doctor","damage_instance_public_id":"damage","idempotency_key":"aid-roll"}
     assert applied=={"determination_command_public_id":"determination","strength_points":2,"dexterity_points":0,"endurance_points":3,"idempotency_key":"aid-apply"}
+
+
+def test_surgery_roll_and_signed_allocation_dispatch(monkeypatch):
+    determined={};applied={}
+    monkeypatch.setattr(main_module,"determine_personal_surgery",lambda **kwargs:determined.update(kwargs))
+    monkeypatch.setattr(main_module,"apply_determined_personal_surgery",lambda **kwargs:applied.update(kwargs))
+    base="/campaigns/campaign/characters/actor/surgery"
+    rolled=client.post(f"{base}/determine",data={"doctor_actor_public_id":"doctor","first_aid_command_public_id":"first-aid","medical_facility_public_id":"sickbay","idempotency_key":"surgery-roll"},follow_redirects=False)
+    allocated=client.post(f"{base}/apply",data={"determination_command_public_id":"determination","strength_points":"4","dexterity_points":"0","endurance_points":"0","idempotency_key":"surgery-apply"},follow_redirects=False)
+    assert rolled.status_code==303 and allocated.status_code==303
+    assert determined=={"patient_actor_public_id":"actor","doctor_actor_public_id":"doctor","first_aid_command_public_id":"first-aid","medical_facility_public_id":"sickbay","idempotency_key":"surgery-roll"}
+    assert applied=={"determination_command_public_id":"determination","strength_points":4,"dexterity_points":0,"endurance_points":0,"idempotency_key":"surgery-apply"}
