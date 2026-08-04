@@ -75,6 +75,10 @@ from engine.gambling import resolve_house_gambling_command  # noqa: E402
 from engine.recon import resolve_recon_command  # noqa: E402
 from engine.survival import resolve_survival_task_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
+from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
+from engine.computer import perform_computer_basic_operation_command  # noqa: E402
+from engine.devices import resolve_device_operation_command  # noqa: E402
+from engine.leadership import begin_leadership_coordination_command, allocate_leadership_coordination_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
@@ -427,6 +431,26 @@ def perform_survival_operation(*,actor_public_id:str,operation_code:str,objectiv
 def perform_ship_transport_operation(*,actor_public_id:str,ship_public_id:str,operation_kind:str,operation_reference:str,challenging_conditions:bool,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_transport_operation_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,target_public_id=ship_public_id,target_kind="ship",operation_kind=operation_kind,operation_reference=operation_reference,challenging_conditions=challenging_conditions,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code)
+
+def perform_regulatory_operation(*,actor_public_id:str,operation_code:str,skill_rule_code:str,case_reference:str,authority_reference:str,law_level:int,characteristic_rule_code:str,illegal_material_present:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_regulatory_task_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,operation_code=operation_code,skill_rule_code=skill_rule_code,case_reference=case_reference,authority_reference=authority_reference,law_level=law_level,characteristic_rule_code=characteristic_rule_code,illegal_material_present=illegal_material_present)
+
+def perform_basic_computer_operation(*,actor_public_id:str,operation_code:str,target_reference:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return perform_computer_basic_operation_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,operation_code=operation_code,target_reference=target_reference)
+
+def perform_device_operation(*,actor_public_id:str,operation_code:str,device_reference:str,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_device_operation_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,operation_code=operation_code,device_reference=device_reference,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code)
+
+def begin_leadership_coordination(*,leader_actor_public_id:str,goal_reference:str,characteristic_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return begin_leadership_coordination_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,leader_actor_public_id=leader_actor_public_id,goal_reference=goal_reference,characteristic_rule_code=characteristic_rule_code)
+
+def allocate_leadership_coordination(*,coordination_public_id:str,recipient_actor_public_id:str,points:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return allocate_leadership_coordination_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,coordination_public_id=coordination_public_id,recipient_actor_public_id=recipient_actor_public_id,points=points)
 
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

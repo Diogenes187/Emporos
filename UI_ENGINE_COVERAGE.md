@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 121
-- Engine-only review candidates: 49
+- Direct web-application wrappers: 126
+- Engine-only review candidates: 44
 
 ## Engine-only review candidates
 
@@ -22,9 +22,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `comms_runtime.py` | `set_battlefield_communication_command` |
 | `comms_runtime.py` | `apply_personal_initiative_support_command` |
 | `competitive_gambling.py` | `resolve_competitive_gambling_command` |
-| `computer.py` | `perform_computer_basic_operation_command` |
 | `conditions_runtime.py` | `set_personal_battlefield_conditions_command` |
-| `devices.py` | `resolve_device_operation_command` |
 | `encounters.py` | `set_encounter_attitude_command` |
 | `encounters.py` | `attempt_attitude_influence_command` |
 | `environment.py` | `advance_species_environmental_exposure_command` |
@@ -36,8 +34,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ground_starship_runtime.py` | `resolve_ground_starship_volley_attacks_command` |
 | `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
-| `leadership.py` | `begin_leadership_coordination_command` |
-| `leadership.py` | `allocate_leadership_coordination_command` |
 | `liaison.py` | `resolve_liaison_negotiation_command` |
 | `linguistics.py` | `assign_actor_language_command` |
 | `linguistics.py` | `decipher_preserved_language_command` |
@@ -45,7 +41,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
 | `medical_runtime.py` | `apply_personal_medical_care_command` |
 | `misc_actions_runtime.py` | `perform_personal_miscellaneous_action_command` |
-| `regulatory.py` | `resolve_regulatory_task_command` |
 | `scenes.py` | `create_scene_snapshot_command` |
 | `skill_training.py` | `allocate_skill_training_week_command` |
 | `social_content.py` | `select_social_content_command` |
@@ -123,9 +118,11 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `commands.py` | `resolve_personal_attack_command` |
 | `commands.py` | `apply_personal_damage_command` |
 | `commerce_setup.py` | `prepare_trading_command` |
+| `computer.py` | `perform_computer_basic_operation_command` |
 | `coup_de_grace_runtime.py` | `resolve_personal_coup_de_grace_command` |
 | `crew_assignments.py` | `assign_ship_crew_command` |
 | `crew_payroll.py` | `pay_ship_crew_command` |
+| `devices.py` | `resolve_device_operation_command` |
 | `encounters.py` | `create_encounter_command` |
 | `encounters.py` | `transition_encounter_mode_command` |
 | `encounters.py` | `add_encounter_participant_command` |
@@ -147,6 +144,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `journal.py` | `add_campaign_note_command` |
 | `journal.py` | `archive_play_session_command` |
 | `jump_attempts.py` | `resolve_jump_attempt_command` |
+| `leadership.py` | `begin_leadership_coordination_command` |
+| `leadership.py` | `allocate_leadership_coordination_command` |
 | `low_passage_revival.py` | `revive_low_passenger_command` |
 | `markets.py` | `open_trade_market_command` |
 | `medical_runtime.py` | `determine_personal_first_aid_command` |
@@ -168,6 +167,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `purchases.py` | `purchase_trade_goods_command` |
 | `recon.py` | `resolve_recon_command` |
 | `refueling.py` | `refuel_ship_command` |
+| `regulatory.py` | `resolve_regulatory_task_command` |
 | `route_revenue.py` | `open_route_revenue_command` |
 | `sales.py` | `sell_trade_goods_command` |
 | `sectors.py` | `import_sector_command` |

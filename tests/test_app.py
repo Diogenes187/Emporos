@@ -518,6 +518,20 @@ def test_ship_transport_operation_dispatches_to_ship_page(monkeypatch):
     assert captured["ship_public_id"]=="ship" and captured["challenging_conditions"] is True
 
 
+def test_regulatory_technical_and_leadership_operations_dispatch(monkeypatch):
+    regulatory={};computer={};device={};leadership={};allocation={}
+    monkeypatch.setattr(main_module,"perform_regulatory_operation",lambda **kwargs:regulatory.update(kwargs))
+    monkeypatch.setattr(main_module,"perform_basic_computer_operation",lambda **kwargs:computer.update(kwargs))
+    monkeypatch.setattr(main_module,"perform_device_operation",lambda **kwargs:device.update(kwargs))
+    monkeypatch.setattr(main_module,"begin_leadership_coordination",lambda **kwargs:leadership.update(kwargs))
+    monkeypatch.setattr(main_module,"allocate_leadership_coordination",lambda **kwargs:allocation.update(kwargs))
+    responses=[client.post("/campaigns/campaign/contacts/regulatory",data={"actor_public_id":"agent","operation_selection":"pass-ship-inspection||skill.legal","case_reference":"cargo-7","authority_reference":"port customs","law_level":"8","characteristic_rule_code":"characteristic.education","illegal_material_present":"true","idempotency_key":"reg"},follow_redirects=False),client.post("/campaigns/campaign/operations/computer",data={"actor_public_id":"tech","operation_code":"access-public-data","target_reference":"port directory","idempotency_key":"computer"},follow_redirects=False),client.post("/campaigns/campaign/operations/devices",data={"actor_public_id":"tech","operation_code":"pick-electronic-lock","device_reference":"warehouse door","characteristic_rule_code":"characteristic.education","difficulty_rule_code":"difficulty.average","idempotency_key":"device"},follow_redirects=False),client.post("/campaigns/campaign/leadership",data={"leader_actor_public_id":"captain","goal_reference":"secure the ship","characteristic_rule_code":"characteristic.social-standing","idempotency_key":"lead"},follow_redirects=False),client.post("/campaigns/campaign/leadership/coord/allocations",data={"recipient_actor_public_id":"pilot","points":"2","idempotency_key":"allocate"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert regulatory["skill_rule_code"]=="skill.legal" and regulatory["illegal_material_present"] is True
+    assert computer["target_reference"]=="port directory" and device["operation_code"]=="pick-electronic-lock"
+    assert leadership["leader_actor_public_id"]=="captain" and allocation["points"]==2
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

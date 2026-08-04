@@ -80,7 +80,8 @@ class CampaignReader:
             operations = connection.execute("""SELECT operation_code,replace(initcap(replace(operation_code,'-',' ')),'Urban Environment','urban environment') AS name FROM rule_streetwise_operation ORDER BY display_order""").fetchall()
             offenses = connection.execute("""SELECT offense_code,rule.name,check_modifier,credits_per_die FROM rule_bribery_offense offense JOIN rule_rule rule USING(rule_id) ORDER BY display_order""").fetchall()
             gambling_odds = connection.execute("""SELECT odds_code,rule.name,check_modifier,payoff_numerator,payoff_denominator,maximum_bet_credits FROM rule_gambling_house_odds odds JOIN rule_rule rule USING(rule_id) WHERE payoff_numerator IS NOT NULL ORDER BY display_order""").fetchall()
-        return {"streetwise_operations": operations, "bribery_offenses": offenses, "gambling_odds": gambling_odds}
+            regulatory = connection.execute("""SELECT operation.operation_code,initcap(replace(operation.operation_code,'-',' ')) AS name,skill.rule_code AS skill_rule_code,skill.name AS skill_name FROM rule_regulatory_operation operation JOIN rule_regulatory_operation_skill allowed USING(rule_id,operation_code) JOIN rule_rule skill ON skill.rule_id=allowed.skill_rule_id ORDER BY operation.display_order,skill.name""").fetchall()
+        return {"streetwise_operations": operations, "bribery_offenses": offenses, "gambling_odds": gambling_odds, "regulatory_operations": regulatory}
 
     def field_rules(self) -> dict[str, list[dict[str, Any]]]:
         if not self.url:
@@ -88,7 +89,9 @@ class CampaignReader:
         with self._connect() as connection:
             recon = connection.execute("""SELECT operation_code,operation_group,initcap(replace(operation_code,'-',' ')) AS name FROM rule_recon_operation ORDER BY display_order""").fetchall()
             survival = connection.execute("""SELECT operation_code,availability_required,initcap(replace(operation_code,'-',' ')) AS name FROM rule_survival_operation ORDER BY display_order""").fetchall()
-        return {"recon_operations": recon, "survival_operations": survival}
+            computer = connection.execute("""SELECT operation_code,display_name AS name FROM rule_computer_basic_operation ORDER BY source_order""").fetchall()
+            devices = connection.execute("""SELECT operation.operation_code,operation.device_domain,skill.rule_code AS skill_rule_code,skill.name AS skill_name,initcap(replace(operation.operation_code,'-',' ')) AS name FROM rule_device_operation operation JOIN rule_rule skill ON skill.rule_id=operation.skill_rule_id ORDER BY operation.display_order""").fetchall()
+        return {"recon_operations": recon, "survival_operations": survival, "computer_operations": computer, "device_operations": devices}
 
     def campaign(self, public_id: str) -> dict[str, Any] | None:
         if not self.url:
@@ -406,6 +409,7 @@ class CampaignReader:
                             "layer_order":0,
                         }]
                 encounter["sides"]=connection.execute("SELECT side_code,side_name FROM enc_side side JOIN enc_encounter encounter USING(encounter_id) WHERE encounter.public_id=%s ORDER BY side.display_order",(encounter["public_id"],)).fetchall()
+            leadership_coordinations=connection.execute("""SELECT coordination.public_id::text AS public_id,leader.public_id::text AS leader_actor_public_id,COALESCE(profile.character_name,leader.name) AS leader_name,coordination.goal_reference,coordination.pool_points_total,coordination.pool_points_remaining,coordination.coordination_status FROM camp_leadership_coordination coordination JOIN actor_actor leader ON leader.actor_id=coordination.leader_actor_id LEFT JOIN actor_current_character_profile profile ON profile.actor_id=leader.actor_id WHERE coordination.campaign_id=%s AND coordination.coordination_status='active' ORDER BY coordination.coordination_id DESC""",(campaign_id,)).fetchall()
         return {
             **campaign,
             "actors": actors,
@@ -442,6 +446,7 @@ class CampaignReader:
             "referee_tool_requests": referee_tool_requests,
             "pending_damage": pending_damage,
             "encounters": encounters,
+            "leadership_coordinations": leadership_coordinations,
             "weapon_options": weapon_options,
             "armor_options": armor_options,
         }
