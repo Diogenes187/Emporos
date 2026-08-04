@@ -95,27 +95,13 @@ class CampaignReader:
             campaign_id = campaign.pop("campaign_id")
             actors = connection.execute(
                 """
-                SELECT actor.public_id::text AS public_id,actor.name,
+                SELECT actor.actor_id,actor.public_id::text AS public_id,actor.name,
                        actor.concurrency_version,
                        COALESCE(profile.character_name,actor.name) AS character_name,
                        position.name AS location_name,
                        lifepath.age_years,lifepath.lifepath_status,
                        (SELECT count(*) FROM actor_skill skill
-                        WHERE skill.actor_id=actor.actor_id) AS skill_count,
-                       COALESCE((
-                           SELECT jsonb_agg(jsonb_build_object(
-                               'code',rule.rule_code,
-                               'name',rule.name,
-                               'abbreviation',definition.abbreviation,
-                               'current',score.current_value,
-                               'maximum',score.maximum_value
-                           ) ORDER BY definition.display_order)
-                           FROM actor_characteristic score
-                           JOIN rule_characteristic definition
-                             ON definition.rule_id=score.characteristic_rule_id
-                           JOIN rule_rule rule ON rule.rule_id=definition.rule_id
-                           WHERE score.actor_id=actor.actor_id
-                       ),'[]'::jsonb) AS characteristics
+                        WHERE skill.actor_id=actor.actor_id) AS skill_count
                 FROM actor_actor actor
                 LEFT JOIN actor_current_character_profile profile
                   ON profile.actor_id=actor.actor_id
@@ -131,6 +117,15 @@ class CampaignReader:
                 """,
                 (campaign_id,),
             ).fetchall()
+            for actor in actors:
+                actor_id=actor.pop("actor_id")
+                actor["characteristics"]=connection.execute("SELECT rule.rule_code AS code,rule.name,definition.abbreviation,score.current_value AS current,score.maximum_value AS maximum FROM actor_characteristic score JOIN rule_characteristic definition ON definition.rule_id=score.characteristic_rule_id JOIN rule_rule rule ON rule.rule_id=definition.rule_id WHERE score.actor_id=%s ORDER BY definition.display_order",(actor_id,)).fetchall()
+                actor["skills"]=connection.execute("SELECT rule.rule_code AS code,rule.name,skill.skill_level FROM actor_skill skill JOIN rule_rule rule ON rule.rule_id=skill.skill_rule_id WHERE skill.actor_id=%s ORDER BY rule.name",(actor_id,)).fetchall()
+                actor["careers"]=connection.execute("""SELECT career_rule.name AS career_name,assignment_rule.name AS assignment_name,stint.entry_method,stint.stint_order,stint.terms_completed,stint.rank_number,stint.stint_status,count(term.career_term_id) AS recorded_terms FROM actor_career_stint stint JOIN rule_rule career_rule ON career_rule.rule_id=stint.career_rule_id LEFT JOIN rule_rule assignment_rule ON assignment_rule.rule_id=stint.assignment_rule_id LEFT JOIN actor_career_term term USING(career_stint_id) WHERE stint.actor_id=%s GROUP BY stint.career_stint_id,career_rule.name,assignment_rule.name ORDER BY stint.stint_order""",(actor_id,)).fetchall()
+                actor["injury"]=connection.execute("SELECT COALESCE(injury_status,'uninjured') AS injury_status,COALESCE(damaged_physical_count,0) AS damaged_physical_count,COALESCE(zero_physical_count,0) AS zero_physical_count FROM actor_actor actor LEFT JOIN health_actor_injury_status injury USING(actor_id) WHERE actor.actor_id=%s",(actor_id,)).fetchone()
+                actor["equipment"]=connection.execute("""SELECT item.public_id::text AS public_id,COALESCE(item.instance_name,rule.name) AS item_name,definition.item_kind,item.item_status,container.name AS container_name FROM inv_actor_container owner JOIN inv_container container USING(container_id,campaign_id) JOIN inv_container_item placement USING(container_id,campaign_id) JOIN inv_item_instance item USING(item_instance_id,campaign_id) JOIN inv_item_definition definition ON definition.rule_id=item.item_rule_id JOIN rule_rule rule ON rule.rule_id=item.item_rule_id WHERE owner.actor_id=%s ORDER BY definition.item_kind,rule.name""",(actor_id,)).fetchall()
+                actor["accounts"]=connection.execute("SELECT account.name,account.account_kind,account.account_status,balance.balance_minor,account.currency_code FROM fin_actor_account ownership JOIN fin_account account USING(account_id,campaign_id) JOIN fin_account_balance balance USING(account_id) WHERE ownership.actor_id=%s ORDER BY account.account_kind,account.name",(actor_id,)).fetchall()
+                actor["ship_assignments"]=connection.execute("SELECT ship.name AS ship_name,definition.position_name,assignment.duty_status FROM ship_crew_assignment assignment JOIN ship_ship ship USING(ship_id,campaign_id) JOIN ship_crew_position position USING(ship_crew_position_id,ship_id,campaign_id) JOIN ship_crew_position_definition definition ON definition.crew_position_rule_id=position.crew_position_rule_id WHERE assignment.actor_id=%s ORDER BY assignment.effective_at DESC",(actor_id,)).fetchall()
             ships = connection.execute(
                 """
                 SELECT ship.public_id::text AS public_id,ship.name,
