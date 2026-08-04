@@ -590,6 +590,19 @@ def test_social_attitude_and_influence_dispatch(monkeypatch):
     assert influence["skill_rule_code"]=="skill.liaison" and influence["target_actor_public_id"]=="npc"
 
 
+def test_animal_operations_and_reaction_dispatch(monkeypatch):
+    operation={};context={};reaction={}
+    monkeypatch.setattr(main_module,"perform_animal_skill_operation",lambda **kwargs:operation.update(kwargs))
+    monkeypatch.setattr(main_module,"set_animal_reaction_context",lambda **kwargs:context.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_animal_reaction",lambda **kwargs:reaction.update(kwargs))
+    base="/campaigns/campaign"
+    responses=[client.post(f"{base}/operations/animals",data={"actor_public_id":"rider","operation_code":"maneuver-riding-animal","objective_reference":"cross ravine","characteristic_rule_code":"characteristic.dexterity","difficulty_rule_code":"difficulty.average","subject_animal_public_id":"mount","idempotency_key":"ride"},follow_redirects=False),client.post(f"{base}/encounters/encounter/animal-context",data={"animal_actor_public_id":"beast","animals_outnumber_characters":"true","attack_possible":"true","idempotency_key":"context"},follow_redirects=False),client.post(f"{base}/encounters/encounter/animal-reaction",data={"animal_actor_public_id":"beast","provocation_number":"2","idempotency_key":"reaction"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert operation["subject_animal_public_id"]=="mount" and operation["operation_code"]=="maneuver-riding-animal"
+    assert context["animals_outnumber_characters"] is True and context["animal_has_surprise"] is False
+    assert reaction["provocation_number"]==2
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

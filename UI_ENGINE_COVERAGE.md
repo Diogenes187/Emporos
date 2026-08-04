@@ -5,16 +5,13 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 140
-- Engine-only review candidates: 30
+- Direct web-application wrappers: 143
+- Engine-only review candidates: 27
 
 ## Engine-only review candidates
 
 | Engine module | Command |
 |---|---|
-| `animal_skills.py` | `resolve_animal_skill_operation_command` |
-| `animals.py` | `set_animal_reaction_context_command` |
-| `animals.py` | `resolve_animal_reaction_command` |
 | `competitive_gambling.py` | `resolve_competitive_gambling_command` |
 | `conditions_runtime.py` | `set_personal_battlefield_conditions_command` |
 | `environment.py` | `advance_species_environmental_exposure_command` |
@@ -48,6 +45,9 @@ This generated inventory identifies authoritative engine commands with a direct 
 | Engine module | Command |
 |---|---|
 | `ammunition_purchases.py` | `purchase_personal_ammunition_command` |
+| `animal_skills.py` | `resolve_animal_skill_operation_command` |
+| `animals.py` | `set_animal_reaction_context_command` |
+| `animals.py` | `resolve_animal_reaction_command` |
 | `armor_runtime.py` | `equip_personal_armor_command` |
 | `armor_runtime.py` | `unequip_personal_armor_command` |
 | `armor_runtime.py` | `apply_personal_armor_usage_command` |

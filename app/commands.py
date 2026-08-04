@@ -75,6 +75,8 @@ from engine.bribery import attempt_bribery_command, resolve_bribery_consequence_
 from engine.gambling import resolve_house_gambling_command  # noqa: E402
 from engine.recon import resolve_recon_command  # noqa: E402
 from engine.survival import resolve_survival_task_command  # noqa: E402
+from engine.animal_skills import resolve_animal_skill_operation_command  # noqa: E402
+from engine.animals import set_animal_reaction_context_command,resolve_animal_reaction_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
 from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
@@ -433,6 +435,18 @@ def perform_recon_operation(*,actor_public_id:str,operation_code:str,subject_ref
 def perform_survival_operation(*,actor_public_id:str,operation_code:str,objective_reference:str,characteristic_rule_code:str,difficulty_rule_code:str,opportunity_available:bool,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_survival_task_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,operation_code=operation_code,objective_reference=objective_reference,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code,opportunity_available=opportunity_available)
+
+def perform_animal_skill_operation(*,actor_public_id:str,operation_code:str,objective_reference:str,characteristic_rule_code:str,difficulty_rule_code:str,subject_animal_public_id:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_animal_skill_operation_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,operation_code=operation_code,objective_reference=objective_reference,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code,subject_animal_public_id=subject_animal_public_id or None)
+
+def set_animal_reaction_context(*,encounter_public_id:str,animal_actor_public_id:str,animals_outnumber_characters:bool,animal_has_surprise:bool,animal_is_surprised:bool,animal_bigger_than_character:bool,attack_possible:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return set_animal_reaction_context_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,animal_actor_public_id=animal_actor_public_id,animals_outnumber_characters=animals_outnumber_characters,animal_has_surprise=animal_has_surprise,animal_is_surprised=animal_is_surprised,animal_bigger_than_character=animal_bigger_than_character,attack_possible=attack_possible)
+
+def resolve_animal_reaction(*,encounter_public_id:str,animal_actor_public_id:str,provocation_number:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_animal_reaction_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,animal_actor_public_id=animal_actor_public_id,provocation_number=provocation_number)
 
 def perform_ship_transport_operation(*,actor_public_id:str,ship_public_id:str,operation_kind:str,operation_reference:str,challenging_conditions:bool,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

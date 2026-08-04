@@ -91,7 +91,8 @@ class CampaignReader:
             survival = connection.execute("""SELECT operation_code,availability_required,initcap(replace(operation_code,'-',' ')) AS name FROM rule_survival_operation ORDER BY display_order""").fetchall()
             computer = connection.execute("""SELECT operation_code,display_name AS name FROM rule_computer_basic_operation ORDER BY source_order""").fetchall()
             devices = connection.execute("""SELECT operation.operation_code,operation.device_domain,skill.rule_code AS skill_rule_code,skill.name AS skill_name,initcap(replace(operation.operation_code,'-',' ')) AS name FROM rule_device_operation operation JOIN rule_rule skill ON skill.rule_id=operation.skill_rule_id ORDER BY operation.display_order""").fetchall()
-        return {"recon_operations": recon, "survival_operations": survival, "computer_operations": computer, "device_operations": devices}
+            animals = connection.execute("""SELECT operation_code,operation_domain,animal_subject_required,initcap(replace(operation_code,'-',' ')) AS name FROM rule_animal_skill_operation ORDER BY display_order""").fetchall()
+        return {"recon_operations": recon, "survival_operations": survival, "computer_operations": computer, "device_operations": devices, "animal_operations": animals}
 
     def campaign(self, public_id: str) -> dict[str, Any] | None:
         if not self.url:
@@ -423,6 +424,7 @@ class CampaignReader:
             campaign_languages=connection.execute("""SELECT language_code,name AS language_name FROM camp_language WHERE campaign_id=%s ORDER BY name""",(campaign_id,)).fetchall()
             skill_training_options=connection.execute("""SELECT rule.rule_code,rule.name FROM rule_skill skill JOIN rule_rule rule USING(rule_id) WHERE rule.rule_status='approved' AND rule.rule_code<>(SELECT forbidden.rule_code FROM rule_gameplay_skill_training training JOIN rule_rule forbidden ON forbidden.rule_id=training.forbidden_skill_rule_id) ORDER BY rule.name""").fetchall()
             species_options=connection.execute("""SELECT species.species_code,rule.name FROM rule_species species JOIN rule_rule rule ON rule.rule_id=species.species_rule_id ORDER BY rule.name""").fetchall()
+            campaign_animals=connection.execute("""SELECT actor.public_id::text AS actor_public_id,actor.name FROM actor_animal_profile profile JOIN actor_actor actor USING(actor_id) WHERE actor.campaign_id=%s ORDER BY actor.name""",(campaign_id,)).fetchall()
             trade_work_options=connection.execute("""SELECT actor.public_id::text AS actor_public_id,COALESCE(profile.character_name,actor.name) AS actor_name,skill_rule.rule_code AS skill_rule_code,skill_rule.name AS skill_name,employer.public_id::text AS employer_account_public_id,employer.name AS employer_name,worker.public_id::text AS worker_account_public_id,worker.name AS worker_account_name FROM actor_actor actor JOIN actor_skill skill ON skill.actor_id=actor.actor_id JOIN rule_trade_work_skill eligible ON eligible.skill_rule_id=skill.skill_rule_id JOIN rule_rule skill_rule ON skill_rule.rule_id=skill.skill_rule_id JOIN fin_actor_account ownership ON ownership.actor_id=actor.actor_id AND ownership.campaign_id=actor.campaign_id JOIN fin_account worker ON worker.account_id=ownership.account_id AND worker.account_status='open' CROSS JOIN fin_account employer LEFT JOIN actor_current_character_profile profile ON profile.actor_id=actor.actor_id WHERE actor.campaign_id=%s AND employer.campaign_id=actor.campaign_id AND employer.account_kind='external' AND employer.account_status='open' ORDER BY actor.name,skill_rule.name,employer.name,worker.name""",(campaign_id,)).fetchall()
             active_trade_work=connection.execute("""SELECT work.public_id::text AS public_id,COALESCE(profile.character_name,actor.name) AS actor_name,skill.name AS skill_name,work.started_day,work.work_status FROM camp_trade_work_week work JOIN actor_actor actor USING(actor_id,campaign_id) JOIN rule_rule skill ON skill.rule_id=work.skill_rule_id LEFT JOIN actor_current_character_profile profile ON profile.actor_id=actor.actor_id WHERE work.campaign_id=%s AND work.work_status='active' ORDER BY work.work_week_id DESC""",(campaign_id,)).fetchall()
         return {
@@ -465,6 +467,7 @@ class CampaignReader:
             "campaign_languages": campaign_languages,
             "skill_training_options": skill_training_options,
             "species_options": species_options,
+            "campaign_animals": campaign_animals,
             "trade_work_options": trade_work_options,
             "active_trade_work": active_trade_work,
             "weapon_options": weapon_options,
