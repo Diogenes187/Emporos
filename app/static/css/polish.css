@@ -1,0 +1,134 @@
+/* Final interface pass: shared rhythm, compact mechanics, and responsive clarity. */
+:root {
+  --shadow-soft: 0 8px 24px rgba(24, 45, 58, .08);
+  --shadow-button: 0 3px 8px rgba(24, 57, 75, .18);
+}
+
+body { line-height: 1.4; }
+main { background: rgba(255, 255, 255, .34); }
+
+.rail nav a,
+button,
+.primary,
+.actions a,
+.primary-link { transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease, transform .16s ease; }
+.rail nav a { min-height: 43px; }
+.rail nav a.active { box-shadow: inset 3px 0 0 #9b6d25; }
+.nav-mark { flex: 0 0 auto; }
+
+.page-heading { padding-top: 34px; }
+.page-heading h1 { letter-spacing: -.025em; line-height: 1.05; }
+.page-heading p { line-height: 1.55; }
+.panel,
+.map-panel,
+.detail-panel,
+.upload-card,
+.empty-state { border-radius: 7px; box-shadow: var(--shadow-soft); }
+main > .panel { margin: 0 34px 18px; }
+.panel header { gap: 16px; }
+
+button,
+.primary,
+.actions a,
+.primary-link {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 40px;
+  line-height: 1.15;
+  text-align: center;
+}
+button { box-shadow: var(--shadow-button); }
+button:active,
+.primary:active,
+.actions a:active,
+.primary-link:active { box-shadow: none; transform: translateY(0); }
+.quiet,
+.text-button { min-height: 32px; }
+
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  background: #fff;
+  border: 1px solid #aebdc4;
+  border-radius: 4px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 40px;
+  padding: 9px 10px;
+}
+input[type="checkbox"],
+input[type="radio"] { accent-color: #2b6079; height: 16px; width: 16px; }
+label > span { color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+
+/* Top-level mechanical forms should read as deliberate control bars. */
+main > .panel > form:not(.market-form),
+main > .panel > .receipt form {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+main > .panel > form:not(.market-form) label,
+main > .panel > .receipt form label { display: grid; gap: 5px; }
+.panel > form select,
+.panel > form input:not([type="hidden"]):not([type="checkbox"]) { min-width: 150px; }
+.market-form { padding: 14px; border: 1px solid #d8e0e3; border-radius: 5px; background: #f8faf9; }
+.market-form + .market-form { margin-top: 10px; }
+
+/* Crew development is dense data; one full-width actor row prevents collisions. */
+.crew-layout .station-list { grid-template-columns: 1fr; }
+.crew-layout .station-list article { align-items: start; }
+.crew-layout .station-list article > div:last-child {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.crew-layout .station-list form { display: grid; gap: 6px; grid-template-columns: minmax(130px, 1fr) auto; }
+.crew-layout .station-list form select { min-width: 0; width: 100%; }
+.crew-layout .station-list form button { white-space: normal; }
+
+/* Map labels remain legible when nearby systems share a small area. */
+.hex-map .system { z-index: 1; }
+.hex-map .system:hover,
+.hex-map .system:focus-visible,
+.hex-map .system.selected-system { z-index: 4; }
+.hex-map .system strong,
+.hex-map .system small {
+  background: rgba(248, 251, 251, .9);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.hex-map .system:nth-child(3n + 2) strong { top: -27px; }
+.hex-map .system:nth-child(3n + 2) small { top: -11px; }
+.hex-map .system:nth-child(3n) strong { left: auto; right: 19px; text-align: right; }
+.hex-map .system:nth-child(3n) small { left: auto; right: 19px; text-align: right; }
+.hex-map .selected-system i { outline: 3px solid rgba(174, 117, 31, .3); outline-offset: 3px; }
+
+.referee > header { background: rgba(255,255,255,.5); }
+.narration { border-radius: 0 5px 5px 0; }
+.composer textarea { line-height: 1.5; }
+
+@media (max-width: 1450px) {
+  .crew-layout .station-list article { flex-direction: column; }
+  .crew-layout .station-list article > div:last-child { width: 100%; }
+}
+
+@media (max-width: 900px) {
+  main > .panel { margin-inline: 16px; }
+  .page-heading { align-items: start; flex-direction: column; gap: 14px; }
+  .crew-layout .station-list article > div:last-child { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .rail { padding: 12px 14px; }
+  .brand { padding-bottom: 12px; }
+  .rail nav a { white-space: nowrap; }
+  .topbar { height: 62px; }
+  .page-heading { padding-top: 26px; }
+  .page-heading h1 { font-size: 29px; }
+  main { padding-bottom: 70px; }
+  main > .panel > form:not(.market-form) { align-items: stretch; flex-direction: column; }
+  main > .panel > form:not(.market-form) > * { width: 100%; }
+}
