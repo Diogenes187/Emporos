@@ -57,7 +57,7 @@ from engine.source_library import ingest_campaign_source_command  # noqa: E402
 from ai.source_reviewer import review_document_text_queue  # noqa: E402
 from ai.referee import submit_referee_turn  # noqa: E402
 from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
-from engine.encounters import create_encounter_command,add_encounter_participant_command,transition_encounter_mode_command  # noqa: E402
+from engine.encounters import create_encounter_command,add_encounter_participant_command,transition_encounter_mode_command,set_encounter_attitude_command,attempt_attitude_influence_command  # noqa: E402
 from engine.combat_runtime import initialize_personal_combat_command,begin_personal_turn_command,move_personal_combatant_command,aim_personal_attack_command,complete_personal_turn_command,advance_personal_combat_round_command,advance_weapon_reload_command,hasten_personal_combatant_command,delay_personal_turn_command,resume_delayed_personal_turn_command,forfeit_delayed_personal_turn_command,change_personal_stance_command,set_personal_cover_command,spend_personal_action_command,aim_personal_attack_for_kill_command,move_species_flyer_command,resolve_species_great_leap_command  # noqa: E402
 from engine.comms_runtime import set_battlefield_communication_command,apply_personal_initiative_support_command  # noqa: E402
 from engine.combat_runtime import declare_personal_attack_command,declare_personal_reaction_command  # noqa: E402
@@ -493,6 +493,17 @@ def consume_actor_armor_resources(*,actor_public_id:str,item_public_id:str,laser
 def set_battlefield_communication(*,encounter_public_id:str,commander_actor_public_id:str,member_actor_public_id:str,method_code:str,jammed:bool,blocked:bool,line_of_sight:bool,smoke_or_aerosols:bool,member_moving:bool,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return set_battlefield_communication_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,commander_actor_public_id=commander_actor_public_id,member_actor_public_id=member_actor_public_id,method_code=method_code,jammed=jammed,blocked=blocked,line_of_sight=line_of_sight,smoke_or_aerosols=smoke_or_aerosols,member_moving=member_moving)
+
+def set_social_attitude(*,encounter_public_id:str,actor_public_id:str,attitude_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return set_encounter_attitude_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,attitude_code=attitude_code)
+
+def attempt_social_influence(*,encounter_public_id:str,acting_actor_public_id:str,target_actor_public_id:str,skill_rule_code:str,characteristic_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:
+        values=connection.execute("""SELECT COALESCE(skill.skill_level,-3),band.modifier FROM actor_actor actor JOIN actor_characteristic characteristic ON characteristic.actor_id=actor.actor_id JOIN rule_rule characteristic_rule ON characteristic_rule.rule_id=characteristic.characteristic_rule_id AND characteristic_rule.rule_code=%s JOIN rule_characteristic_modifier_band band ON (band.characteristic_rule_id IS NULL OR band.characteristic_rule_id=characteristic.characteristic_rule_id) AND band.score_range @> characteristic.current_value LEFT JOIN rule_rule skill_rule ON skill_rule.rule_code=%s LEFT JOIN actor_skill skill ON skill.actor_id=actor.actor_id AND skill.skill_rule_id=skill_rule.rule_id WHERE actor.public_id=%s ORDER BY band.characteristic_rule_id NULLS LAST LIMIT 1""",(characteristic_rule_code,skill_rule_code,acting_actor_public_id)).fetchone()
+        if values is None:raise ValueError("Influence requires a valid actor characteristic")
+        return attempt_attitude_influence_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,acting_actor_public_id=acting_actor_public_id,target_actor_public_id=target_actor_public_id,skill_modifier=values[0],characteristic_modifier=values[1])
 
 def apply_combat_initiative_support(*,encounter_public_id:str,commander_actor_public_id:str,support_code:str,characteristic_rule_code:str,target_actor_public_id:str|None,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

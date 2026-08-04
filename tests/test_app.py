@@ -579,6 +579,17 @@ def test_encounter_communication_support_and_species_movement_dispatch(monkeypat
     assert leap["difficulty_rule_code"]=="difficulty.average"
 
 
+def test_social_attitude_and_influence_dispatch(monkeypatch):
+    attitude={};influence={}
+    monkeypatch.setattr(main_module,"set_social_attitude",lambda **kwargs:attitude.update(kwargs))
+    monkeypatch.setattr(main_module,"attempt_social_influence",lambda **kwargs:influence.update(kwargs))
+    base="/campaigns/campaign/encounters/encounter"
+    responses=[client.post(f"{base}/attitudes",data={"actor_public_id":"npc","attitude_code":"unfriendly","idempotency_key":"attitude"},follow_redirects=False),client.post(f"{base}/influence",data={"acting_actor_public_id":"hero","target_actor_public_id":"npc","skill_rule_code":"skill.liaison","characteristic_rule_code":"characteristic.social-standing","idempotency_key":"influence"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert attitude["attitude_code"]=="unfriendly"
+    assert influence["skill_rule_code"]=="skill.liaison" and influence["target_actor_public_id"]=="npc"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

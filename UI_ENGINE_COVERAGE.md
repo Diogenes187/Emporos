@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 138
-- Engine-only review candidates: 32
+- Direct web-application wrappers: 140
+- Engine-only review candidates: 30
 
 ## Engine-only review candidates
 
@@ -17,8 +17,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `animals.py` | `resolve_animal_reaction_command` |
 | `competitive_gambling.py` | `resolve_competitive_gambling_command` |
 | `conditions_runtime.py` | `set_personal_battlefield_conditions_command` |
-| `encounters.py` | `set_encounter_attitude_command` |
-| `encounters.py` | `attempt_attitude_influence_command` |
 | `environment.py` | `advance_species_environmental_exposure_command` |
 | `explosions_runtime.py` | `declare_personal_explosion_command` |
 | `explosions_runtime.py` | `declare_personal_explosion_reaction_command` |
@@ -120,6 +118,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `encounters.py` | `create_encounter_command` |
 | `encounters.py` | `transition_encounter_mode_command` |
 | `encounters.py` | `add_encounter_participant_command` |
+| `encounters.py` | `set_encounter_attitude_command` |
+| `encounters.py` | `attempt_attitude_influence_command` |
 | `equipment_purchases.py` | `purchase_personal_equipment_command` |
 | `extended_actions_runtime.py` | `start_personal_extended_action_command` |
 | `extended_actions_runtime.py` | `advance_personal_extended_action_command` |
