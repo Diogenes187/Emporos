@@ -339,3 +339,17 @@ def test_injury_crisis_cost_and_resolution_dispatch(monkeypatch):
     assert price.status_code==303 and resolution.status_code==303
     assert priced=={"actor_public_id":"actor","idempotency_key":"crisis-cost-test"}
     assert resolved=={"actor_public_id":"actor","resolution_kind":"pay","idempotency_key":"crisis-pay-test"}
+
+
+def test_career_muster_and_benefit_dispatch(monkeypatch):
+    initialized={};rolled={};resolved={}
+    monkeypatch.setattr(main_module,"initialize_career_muster",lambda **kwargs:initialized.update(kwargs))
+    monkeypatch.setattr(main_module,"roll_career_benefit",lambda **kwargs:rolled.update(kwargs))
+    monkeypatch.setattr(main_module,"resolve_career_weapon_benefit",lambda **kwargs:resolved.update(kwargs))
+    muster=client.post("/campaigns/campaign/characters/actor/career-muster",data={"idempotency_key":"muster-test"},follow_redirects=False)
+    benefit=client.post("/campaigns/campaign/characters/actor/career-benefit",data={"benefit_table_code":"material","idempotency_key":"benefit-test"},follow_redirects=False)
+    weapon=client.post("/campaigns/campaign/characters/actor/career-weapon-benefit",data={"weapon_rule_code":"equipment.weapon.auto-pistol","resolution_kind":"skill","skill_rule_code":"skill.slug-pistol","idempotency_key":"weapon-test"},follow_redirects=False)
+    assert muster.status_code==303 and benefit.status_code==303 and weapon.status_code==303
+    assert initialized=={"actor_public_id":"actor","idempotency_key":"muster-test"}
+    assert rolled=={"actor_public_id":"actor","benefit_table_code":"material","idempotency_key":"benefit-test"}
+    assert resolved=={"actor_public_id":"actor","weapon_rule_code":"equipment.weapon.auto-pistol","resolution_kind":"skill","skill_rule_code":"skill.slug-pistol","idempotency_key":"weapon-test"}

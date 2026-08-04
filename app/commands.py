@@ -66,7 +66,7 @@ from engine.armor_runtime import equip_personal_armor_command,unequip_personal_a
 from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
-from engine.careers import apply_career_basic_training_command, apply_career_injury_command, apply_career_rank_zero_award_command, apply_career_term_training_command, attempt_career_entry_command, attempt_career_survival_command, complete_career_term_command, declare_career_anagathics_command, decide_career_reenlistment_command, determine_career_injury_command, determine_career_reenlistment_command, determine_injury_crisis_cost_command, resolve_career_medical_care_command, resolve_career_rank_attempt_command, resolve_failed_career_entry_command, resolve_injury_crisis_command, resolve_survival_mishap_command  # noqa: E402
+from engine.careers import apply_career_basic_training_command, apply_career_injury_command, apply_career_rank_zero_award_command, apply_career_term_training_command, attempt_career_entry_command, attempt_career_survival_command, complete_career_term_command, declare_career_anagathics_command, decide_career_reenlistment_command, determine_career_injury_command, determine_career_reenlistment_command, determine_injury_crisis_cost_command, initialize_career_muster_command, resolve_career_medical_care_command, resolve_career_rank_attempt_command, resolve_career_weapon_benefit_command, resolve_failed_career_entry_command, resolve_injury_crisis_command, resolve_survival_mishap_command, roll_career_benefit_command  # noqa: E402
 
 
 def create_campaign(
@@ -423,6 +423,18 @@ def apply_career_injury(*,actor_public_id:str,primary_characteristic_code:str,ot
 def resolve_career_medical_care(*,actor_public_id:str,decision:str,restoration_points:dict[str,int],idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_career_medical_care_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,decision=decision,restoration_points=restoration_points)
+
+def initialize_career_muster(*,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return initialize_career_muster_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)
+
+def roll_career_benefit(*,actor_public_id:str,benefit_table_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return roll_career_benefit_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,benefit_table_code=benefit_table_code)
+
+def resolve_career_weapon_benefit(*,actor_public_id:str,weapon_rule_code:str,resolution_kind:str,skill_rule_code:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return resolve_career_weapon_benefit_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,weapon_rule_code=weapon_rule_code,resolution_kind=resolution_kind,skill_rule_code=skill_rule_code or None)
 
 def determine_injury_crisis_cost(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

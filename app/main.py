@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure, apply_career_basic_training, apply_career_rank_zero_award, declare_career_anagathics, attempt_career_survival, resolve_career_rank_attempt, apply_career_term_training, complete_career_term, determine_career_reenlistment, decide_career_reenlistment, resolve_survival_mishap, determine_career_injury, apply_career_injury, resolve_career_medical_care, determine_injury_crisis_cost, resolve_injury_crisis
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure, apply_career_basic_training, apply_career_rank_zero_award, declare_career_anagathics, attempt_career_survival, resolve_career_rank_attempt, apply_career_term_training, complete_career_term, determine_career_reenlistment, decide_career_reenlistment, resolve_survival_mishap, determine_career_injury, apply_career_injury, resolve_career_medical_care, determine_injury_crisis_cost, resolve_injury_crisis, initialize_career_muster, roll_career_benefit, resolve_career_weapon_benefit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -214,6 +214,24 @@ def character_career_injury_application(campaign_id:str,actor_id:str,primary_cha
 def character_career_medical_care(campaign_id:str,actor_id:str,decision:str=Form(...),strength_points:int=Form(0),dexterity_points:int=Form(0),endurance_points:int=Form(0),idempotency_key:str=Form(...)):
     points={code:value for code,value in (("characteristic.strength",strength_points),("characteristic.dexterity",dexterity_points),("characteristic.endurance",endurance_points)) if value>0}
     try:resolve_career_medical_care(actor_public_id=actor_id,decision=decision,restoration_points=points,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/crew?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/characters/{actor_id}/career-muster")
+def character_career_muster(campaign_id:str,actor_id:str,idempotency_key:str=Form(...)):
+    try:initialize_career_muster(actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/crew?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/characters/{actor_id}/career-benefit")
+def character_career_benefit(campaign_id:str,actor_id:str,benefit_table_code:str=Form(...),idempotency_key:str=Form(...)):
+    try:roll_career_benefit(actor_public_id=actor_id,benefit_table_code=benefit_table_code,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/crew?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/characters/{actor_id}/career-weapon-benefit")
+def character_career_weapon_benefit(campaign_id:str,actor_id:str,weapon_rule_code:str=Form(...),resolution_kind:str=Form(...),skill_rule_code:str=Form(""),idempotency_key:str=Form(...)):
+    try:resolve_career_weapon_benefit(actor_public_id=actor_id,weapon_rule_code=weapon_rule_code,resolution_kind=resolution_kind,skill_rule_code=skill_rule_code or None,idempotency_key=idempotency_key)
     except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/crew?campaign={campaign_id}",status_code=303)
 
