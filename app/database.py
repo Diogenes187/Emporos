@@ -82,6 +82,14 @@ class CampaignReader:
             gambling_odds = connection.execute("""SELECT odds_code,rule.name,check_modifier,payoff_numerator,payoff_denominator,maximum_bet_credits FROM rule_gambling_house_odds odds JOIN rule_rule rule USING(rule_id) WHERE payoff_numerator IS NOT NULL ORDER BY display_order""").fetchall()
         return {"streetwise_operations": operations, "bribery_offenses": offenses, "gambling_odds": gambling_odds}
 
+    def field_rules(self) -> dict[str, list[dict[str, Any]]]:
+        if not self.url:
+            return {"recon_operations": [], "survival_operations": []}
+        with self._connect() as connection:
+            recon = connection.execute("""SELECT operation_code,operation_group,initcap(replace(operation_code,'-',' ')) AS name FROM rule_recon_operation ORDER BY display_order""").fetchall()
+            survival = connection.execute("""SELECT operation_code,availability_required,initcap(replace(operation_code,'-',' ')) AS name FROM rule_survival_operation ORDER BY display_order""").fetchall()
+        return {"recon_operations": recon, "survival_operations": survival}
+
     def campaign(self, public_id: str) -> dict[str, Any] | None:
         if not self.url:
             return None

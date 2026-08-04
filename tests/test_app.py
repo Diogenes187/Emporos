@@ -21,7 +21,7 @@ def test_campaign_api_returns_a_list():
 
 
 def test_primary_pages_render():
-    for path in ("/", "/crew", "/psionics", "/contacts", "/ship", "/sector", "/trade", "/journal", "/encounters", "/library"):
+    for path in ("/", "/crew", "/psionics", "/contacts", "/operations", "/ship", "/sector", "/trade", "/journal", "/encounters", "/library"):
         response = client.get(path)
         assert response.status_code == 200
         assert "Emporos" in response.text
@@ -485,6 +485,18 @@ def test_house_gambling_dispatches_published_terms(monkeypatch):
     response=client.post("/campaigns/campaign/contacts/gambling",data={"actor_public_id":"gambler","characteristic_rule_code":"characteristic.intelligence","odds_code":"high","venue_reference":"starport casino","game_reference":"cards","bet_credits":"30","idempotency_key":"gamble"},follow_redirects=False)
     assert response.status_code==303
     assert captured["bet_credits"]==30 and captured["odds_code"]=="high"
+
+
+def test_field_operations_dispatch_player_context(monkeypatch):
+    recon={};survival={}
+    monkeypatch.setattr(main_module,"perform_recon_operation",lambda **kwargs:recon.update(kwargs))
+    monkeypatch.setattr(main_module,"perform_survival_operation",lambda **kwargs:survival.update(kwargs))
+    base="/campaigns/campaign/operations"
+    observed=client.post(f"{base}/recon",data={"actor_public_id":"scout","operation_code":"spot-threat","subject_reference":"ridge line","characteristic_rule_code":"characteristic.intelligence","difficulty_rule_code":"difficulty.average","idempotency_key":"recon"},follow_redirects=False)
+    survived=client.post(f"{base}/survival",data={"actor_public_id":"scout","operation_code":"locate-fresh-water","objective_reference":"water before dusk","characteristic_rule_code":"characteristic.endurance","difficulty_rule_code":"difficulty.difficult","opportunity_available":"false","idempotency_key":"survival"},follow_redirects=False)
+    assert observed.status_code==303 and survived.status_code==303
+    assert recon["operation_code"]=="spot-threat"
+    assert survival["opportunity_available"] is False
 
 
 def test_condition_and_recovery_controls_dispatch(monkeypatch):

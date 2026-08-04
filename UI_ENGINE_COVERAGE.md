@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 118
-- Engine-only review candidates: 52
+- Direct web-application wrappers: 120
+- Engine-only review candidates: 50
 
 ## Engine-only review candidates
 
@@ -45,7 +45,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
 | `medical_runtime.py` | `apply_personal_medical_care_command` |
 | `misc_actions_runtime.py` | `perform_personal_miscellaneous_action_command` |
-| `recon.py` | `resolve_recon_command` |
 | `regulatory.py` | `resolve_regulatory_task_command` |
 | `scenes.py` | `create_scene_snapshot_command` |
 | `skill_training.py` | `allocate_skill_training_week_command` |
@@ -56,7 +55,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `source_review.py` | `reveal_campaign_source_excerpt_command` |
 | `starships.py` | `check_starship_encounter_command` |
 | `steward.py` | `resolve_steward_service_command` |
-| `survival.py` | `resolve_survival_task_command` |
 | `tasks.py` | `resolve_actor_task_command` |
 | `tasks.py` | `resolve_species_hive_mentality_command` |
 | `tasks.py` | `resolve_species_naturally_curious_command` |
@@ -169,6 +167,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `psionics.py` | `recover_psionic_strength_command` |
 | `psionics.py` | `set_telepathic_shield_command` |
 | `purchases.py` | `purchase_trade_goods_command` |
+| `recon.py` | `resolve_recon_command` |
 | `refueling.py` | `refuel_ship_command` |
 | `route_revenue.py` | `open_route_revenue_command` |
 | `sales.py` | `sell_trade_goods_command` |
@@ -184,6 +183,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `starship_charters.py` | `accept_starship_charter_command` |
 | `starship_charters.py` | `complete_starship_charter_command` |
 | `streetwise.py` | `resolve_streetwise_command` |
+| `survival.py` | `resolve_survival_task_command` |
 | `travel_planning.py` | `place_ship_command` |
 | `travel_planning.py` | `plan_jump_journey_command` |
 | `weapon_ready_runtime.py` | `advance_personal_weapon_ready_command` |
