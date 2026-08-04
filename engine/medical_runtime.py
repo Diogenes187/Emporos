@@ -54,6 +54,22 @@ class SurgeryDeterminationResult:
     replayed: bool
 
 
+@dataclass(frozen=True)
+class MedicalCareDeterminationResult:
+    command_public_id: str
+    patient_actor_public_id: str
+    doctor_actor_public_id: str
+    medical_facility_public_id: str
+    medicine_skill_modifier: int
+    endurance_modifier: int
+    available_points: int
+    damaged_characteristic_count: int
+    even_base_share: int
+    remainder_points: int
+    applied_treatment_command_public_id: str | None
+    replayed: bool
+
+
 def _load_first_aid_determination(connection, command_id, public_id, replayed):
     row = connection.execute(
         """SELECT patient.public_id,doctor.public_id,damage.public_id,
@@ -98,6 +114,26 @@ def _load_surgery_determination(connection, command_id, public_id, replayed):
         str(public_id),str(row[0]),str(row[1]),str(row[2]),str(row[3]),
         (row[4],row[5]),row[6],row[7],row[8],
         str(row[9]) if row[9] else None,replayed)
+
+
+def _load_medical_care_determination(connection,command_id,public_id,replayed):
+    row=connection.execute(
+        """SELECT patient.public_id,doctor.public_id,facility.public_id,
+                  result.medicine_skill_modifier,result.endurance_modifier,
+                  result.available_points,result.damaged_characteristic_count,
+                  result.even_base_share,result.remainder_points,treatment.public_id
+           FROM cmd_personal_medical_care_determination result
+           JOIN actor_actor patient ON patient.actor_id=result.patient_actor_id
+           JOIN actor_actor doctor ON doctor.actor_id=result.doctor_actor_id
+           JOIN health_medical_facility facility USING(medical_facility_id)
+           LEFT JOIN cmd_personal_medical_care_determination_application applied
+             ON applied.determination_command_id=result.command_id
+           LEFT JOIN cmd_command treatment
+             ON treatment.command_id=applied.treatment_command_id
+           WHERE result.command_id=%s""",(command_id,)).fetchone()
+    return MedicalCareDeterminationResult(
+        str(public_id),str(row[0]),str(row[1]),str(row[2]),row[3],row[4],
+        row[5],row[6],row[7],row[8],str(row[9]) if row[9] else None,replayed)
 
 
 class _FixedDice:
@@ -756,3 +792,104 @@ def apply_personal_medical_care_command(
             link_sql="""INSERT INTO cmd_personal_medical_care_link
                         VALUES (%s,true,%s,%s)""",
             link_values=(base,remainder))
+
+
+def determine_personal_medical_care_command(
+    connection: psycopg.Connection, *, initiator_reference: str,
+    idempotency_key: str, patient_actor_public_id: str,
+    doctor_actor_public_id: str, medical_facility_public_id: str,
+):
+    with connection.transaction():
+        existing=connection.execute(
+            """SELECT command_id,public_id,command_type,command_status
+               FROM cmd_command WHERE initiator_reference=%s
+                 AND idempotency_key=%s FOR UPDATE""",
+            (initiator_reference,idempotency_key)).fetchone()
+        if existing:
+            if existing[2:]!=("determine_personal_medical_care","completed"):
+                raise RuntimeError("Idempotency key belongs to another command")
+            return _load_medical_care_determination(
+                connection,existing[0],existing[1],True)
+        context,states=_context(connection,patient_actor_public_id,
+                                doctor_actor_public_id,initiator_reference)
+        if connection.execute(
+            """SELECT 1 FROM cmd_personal_medical_treatment_receipt
+               WHERE procedure_code='medical_care' AND patient_actor_id=%s
+                 AND campaign_day_number=%s""",(context[0],context[4])).fetchone():
+            raise ValueError("Medical Care is already applied this campaign day")
+        if _injury_status({code:value[:2] for code,value in states.items()})=="seriously_wounded":
+            raise ValueError("Surgery must restore a characteristic before Medical Care")
+        damaged=sum(value[0]<value[1] for value in states.values())
+        if not damaged:
+            raise ValueError("Medical Care requires physical characteristic damage")
+        endurance=states["characteristic.endurance"]
+        end_mod=connection.execute(
+            """SELECT modifier FROM rule_characteristic_modifier_band
+               WHERE (characteristic_rule_id IS NULL OR characteristic_rule_id=%s)
+                 AND score_range @> %s::integer
+               ORDER BY characteristic_rule_id NULLS LAST LIMIT 1""",
+            (endurance[2],endurance[0])).fetchone()[0]
+        points=max(0,2+end_mod+context[6])
+        facility=_facility(connection,medical_facility_public_id,context[1])
+        base,remainder=divmod(points,damaged)
+        command_id,public_id=connection.execute(
+            """INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key)
+               VALUES ('determine_personal_medical_care',%s,%s)
+               RETURNING command_id,public_id""",
+            (initiator_reference,idempotency_key)).fetchone()
+        connection.execute(
+            """INSERT INTO cmd_personal_medical_care_determination
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (command_id,context[1],context[0],context[3],facility,context[4],
+             context[5],context[2],context[6],end_mod,points,damaged,base,remainder))
+        connection.execute(
+            """INSERT INTO cmd_domain_event(command_id,event_order,event_type)
+               VALUES (%s,1,'personal_medical_care_determined')""",(command_id,))
+        connection.execute(
+            """UPDATE cmd_command SET command_status='completed',
+                      completed_at=clock_timestamp() WHERE command_id=%s""",(command_id,))
+        return _load_medical_care_determination(
+            connection,command_id,public_id,False)
+
+
+def apply_determined_personal_medical_care_command(
+    connection: psycopg.Connection, *, initiator_reference: str,
+    idempotency_key: str, determination_command_public_id: str,
+    allocations: tuple[tuple[str,int],...],
+):
+    with connection.transaction():
+        row=connection.execute(
+            """SELECT result.command_id,patient.public_id,doctor.public_id,
+                      facility.public_id,result.patient_version,
+                      patient.concurrency_version,result.campaign_day_number,
+                      result.campaign_second_of_day,clock.day_number,clock.second_of_day
+               FROM cmd_personal_medical_care_determination result
+               JOIN cmd_command command ON command.command_id=result.command_id
+               JOIN actor_actor patient ON patient.actor_id=result.patient_actor_id
+               JOIN actor_actor doctor ON doctor.actor_id=result.doctor_actor_id
+               JOIN health_medical_facility facility USING(medical_facility_id)
+               JOIN camp_clock clock ON clock.campaign_id=result.campaign_id
+               WHERE command.public_id=%s AND command.initiator_reference=%s
+               FOR UPDATE OF result""",
+            (determination_command_public_id,initiator_reference)).fetchone()
+        if row is None:raise ValueError("Medical Care determination does not exist")
+        applied=connection.execute(
+            """SELECT treatment.command_id FROM cmd_personal_medical_care_determination_application link
+               JOIN cmd_command treatment ON treatment.command_id=link.treatment_command_id
+               WHERE link.determination_command_id=%s""",(row[0],)).fetchone()
+        if applied:
+            existing=connection.execute(
+                """SELECT command_id,public_id FROM cmd_command WHERE initiator_reference=%s
+                   AND idempotency_key=%s AND command_type='apply_personal_medical_care'
+                   AND command_status='completed'""",(initiator_reference,idempotency_key)).fetchone()
+            if existing and existing[0]==applied[0]:return _load(connection,existing[0],existing[1],True)
+            raise ValueError("Medical Care determination has already been applied")
+        if row[4]!=row[5] or (row[6],row[7])!=(row[8],row[9]):
+            raise ValueError("Medical Care determination is stale because patient state or campaign time changed")
+        result=apply_personal_medical_care_command(
+            connection,initiator_reference=initiator_reference,idempotency_key=idempotency_key,
+            patient_actor_public_id=str(row[1]),doctor_actor_public_id=str(row[2]),
+            medical_facility_public_id=str(row[3]),allocations=allocations)
+        treatment_id=connection.execute("SELECT command_id FROM cmd_command WHERE public_id=%s",(result.command_public_id,)).fetchone()[0]
+        connection.execute("INSERT INTO cmd_personal_medical_care_determination_application VALUES (%s,%s)",(row[0],treatment_id))
+        return result

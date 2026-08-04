@@ -53,10 +53,12 @@ from engine.injury_runtime import resolve_personal_natural_healing_command
 from engine.medical_runtime import (
     apply_determined_personal_first_aid_command,
     apply_determined_personal_surgery_command,
+    apply_determined_personal_medical_care_command,
     apply_personal_first_aid_command,
     apply_personal_medical_care_command,
     determine_personal_first_aid_command,
     determine_personal_surgery_command,
+    determine_personal_medical_care_command,
     resolve_personal_surgery_command,
 )
 from engine.mental_healing import resolve_personal_mental_healing_command
@@ -2708,12 +2710,20 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                     """UPDATE enc_personal_combatant
                        SET seriously_wounded=false
                        WHERE actor_id=%s""", (actor_ids[actors[1]],))
-                care = apply_personal_medical_care_command(
+                care_plan = determine_personal_medical_care_command(
                     connection, initiator_reference="referee",
-                    idempotency_key="medical-daily-care",
+                    idempotency_key="medical-daily-care-determine",
                     patient_actor_public_id=actors[1],
                     doctor_actor_public_id=actors[2],
                     medical_facility_public_id=str(facility_public),
+                )
+                self.assertEqual(care_plan.available_points, 3)
+                self.assertEqual(care_plan.even_base_share, 1)
+                self.assertEqual(care_plan.remainder_points, 1)
+                care = apply_determined_personal_medical_care_command(
+                    connection, initiator_reference="referee",
+                    idempotency_key="medical-daily-care",
+                    determination_command_public_id=care_plan.command_public_id,
                     allocations=(
                         ("characteristic.strength", 2),
                         ("characteristic.endurance", 1),
