@@ -37,6 +37,7 @@
 <span>{% if actor.age_years %}Age {{ actor.age_years }}{% else %}Career entry available{% endif %}</span>
 <span>{{ actor.injury.injury_status|replace('_',' ')|upper }}</span>
 </div>
+{% if actor.psionics %}<p><small>PSI {{ actor.psionics.current_value }}/{{ actor.psionics.maximum_value }} · <a href="/psionics?campaign={{ campaign.public_id }}">Open Psionics</a></small></p>{% endif %}
         <details>
 <summary>Skills</summary>
 <div class="station-list">{% for skill in actor.skills %}<article>

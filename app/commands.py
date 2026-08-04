@@ -68,6 +68,7 @@ from engine.grappling_runtime import apply_personal_grapple_option_command, reso
 from engine.coup_de_grace_runtime import resolve_personal_coup_de_grace_command  # noqa: E402
 from engine.free_actions_runtime import perform_personal_free_action_command  # noqa: E402
 from engine.extended_actions_runtime import abandon_personal_extended_action_command, advance_personal_extended_action_command, start_personal_extended_action_command  # noqa: E402
+from engine.psionics import activate_psionic_power_command, recover_psionic_strength_command, set_telepathic_shield_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
@@ -378,6 +379,20 @@ def progress_combat_extended_action(*,encounter_public_id:str,actor_public_id:st
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     command=advance_personal_extended_action_command if operation=="advance" else abandon_personal_extended_action_command
     with psycopg.connect(url) as connection:return command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id)
+
+def activate_self_psionic_power(*,actor_public_id:str,power_rule_code:str,variable_points:int,idempotency_key:str):
+    allowed={"psionics.power.suspended-animation","psionics.power.enhanced-strength","psionics.power.enhanced-endurance"}
+    if power_rule_code not in allowed:raise ValueError("This power requires a dedicated activation form")
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return activate_psionic_power_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,power_rule_code=power_rule_code,variable_points=variable_points)
+
+def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return recover_psionic_strength_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)
+
+def set_actor_telepathic_shield(*,actor_public_id:str,shield_raised:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return set_telepathic_shield_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,shield_raised=shield_raised)
 
 def complete_combat_turn(*,encounter_public_id:str,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

@@ -435,6 +435,19 @@ def test_free_coup_and_extended_action_batch_dispatch(monkeypatch):
     assert [item["operation"] for item in progress]==["advance","abandon"]
 
 
+def test_psionics_page_controls_dispatch(monkeypatch):
+    activated={};recovered={};shielded={}
+    monkeypatch.setattr(main_module,"activate_self_psionic_power",lambda **kwargs:activated.update(kwargs))
+    monkeypatch.setattr(main_module,"recover_actor_psionic_strength",lambda **kwargs:recovered.update(kwargs))
+    monkeypatch.setattr(main_module,"set_actor_telepathic_shield",lambda **kwargs:shielded.update(kwargs))
+    base="/campaigns/campaign/characters/actor/psionics"
+    responses=[client.post(f"{base}/activate",data={"power_rule_code":"psionics.power.enhanced-strength","variable_points":"2","idempotency_key":"activate"},follow_redirects=False),client.post(f"{base}/recover",data={"idempotency_key":"recover"},follow_redirects=False),client.post(f"{base}/shield",data={"shield_raised":"false","idempotency_key":"shield"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert activated["variable_points"]==2
+    assert recovered=={"actor_public_id":"actor","idempotency_key":"recover"}
+    assert shielded=={"actor_public_id":"actor","shield_raised":False,"idempotency_key":"shield"}
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

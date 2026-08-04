@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 110
-- Engine-only review candidates: 60
+- Direct web-application wrappers: 113
+- Engine-only review candidates: 57
 
 ## Engine-only review candidates
 
@@ -49,9 +49,6 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
 | `medical_runtime.py` | `apply_personal_medical_care_command` |
 | `misc_actions_runtime.py` | `perform_personal_miscellaneous_action_command` |
-| `psionics.py` | `activate_psionic_power_command` |
-| `psionics.py` | `recover_psionic_strength_command` |
-| `psionics.py` | `set_telepathic_shield_command` |
 | `recon.py` | `resolve_recon_command` |
 | `regulatory.py` | `resolve_regulatory_task_command` |
 | `scenes.py` | `create_scene_snapshot_command` |
@@ -169,6 +166,9 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `passenger_manifest.py` | `finalize_passenger_manifest_command` |
 | `postal_contracts.py` | `accept_postal_contract_command` |
 | `postal_contracts.py` | `deliver_postal_contract_command` |
+| `psionics.py` | `activate_psionic_power_command` |
+| `psionics.py` | `recover_psionic_strength_command` |
+| `psionics.py` | `set_telepathic_shield_command` |
 | `purchases.py` | `purchase_trade_goods_command` |
 | `refueling.py` | `refuel_ship_command` |
 | `route_revenue.py` | `open_route_revenue_command` |

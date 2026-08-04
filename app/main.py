@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import CampaignReader, summary_dict
-from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure, apply_career_basic_training, apply_career_rank_zero_award, declare_career_anagathics, attempt_career_survival, resolve_career_rank_attempt, apply_career_term_training, complete_career_term, determine_career_reenlistment, decide_career_reenlistment, resolve_survival_mishap, determine_career_injury, apply_career_injury, resolve_career_medical_care, determine_injury_crisis_cost, resolve_injury_crisis, initialize_career_muster, roll_career_benefit, resolve_career_weapon_benefit, determine_career_aging, apply_career_aging, determine_aging_crisis_cost, resolve_aging_crisis, update_character_final_details, finish_character_creation, hasten_combatant, delay_combat_turn, resume_combat_turn, forfeit_combat_turn, change_combat_stance, set_combat_cover, apply_personal_fatigue, complete_personal_fatigue_rest, resolve_personal_unconscious_recovery, resolve_personal_mental_healing, determine_personal_first_aid, apply_determined_personal_first_aid, determine_personal_surgery, apply_determined_personal_surgery, determine_personal_medical_care, apply_determined_personal_medical_care, determine_personal_natural_healing, apply_determined_personal_natural_healing, spend_combat_action, aim_combatant_for_kill, resolve_combat_grapple, apply_combat_grapple_option, perform_combat_free_action, resolve_combat_coup_de_grace, start_combat_extended_action, progress_combat_extended_action
+from app.commands import acquire_ship, create_campaign, import_sector, initialize_character, place_ship, plan_jump, plot_jump, resolve_jump, run_jump, open_market, roll_purchase_price, prepare_trading, purchase_goods, roll_sale_price, sell_goods, refuel_ship, pay_ship_expense, assign_ship_crew, add_campaign_note, archive_play_session, pay_ship_crew, open_route_revenue, accept_freight_contract, deliver_freight_contract, book_route_passengers, board_route_passengers, revive_low_passenger, finalize_passenger_manifest, accept_postal_contract, deliver_postal_contract, quote_starship_charter, accept_starship_charter, complete_starship_charter, open_ship_mortgage, pay_ship_mortgage, ingest_campaign_source, review_campaign_source, send_referee_message, confirm_referee_action, create_encounter, add_encounter_participant, begin_personal_combat, initialize_personal_combat, begin_combat_turn, move_combatant, aim_combatant, complete_combat_turn, advance_combat_round, ready_combat_weapon, reload_combat_weapon, declare_combat_attack, resolve_combat_attack, apply_combat_damage, react_to_combat_attack, end_personal_combat, equip_actor_armor, unequip_actor_armor, purchase_personal_equipment, purchase_personal_ammunition, attempt_career_entry, resolve_career_entry_failure, apply_career_basic_training, apply_career_rank_zero_award, declare_career_anagathics, attempt_career_survival, resolve_career_rank_attempt, apply_career_term_training, complete_career_term, determine_career_reenlistment, decide_career_reenlistment, resolve_survival_mishap, determine_career_injury, apply_career_injury, resolve_career_medical_care, determine_injury_crisis_cost, resolve_injury_crisis, initialize_career_muster, roll_career_benefit, resolve_career_weapon_benefit, determine_career_aging, apply_career_aging, determine_aging_crisis_cost, resolve_aging_crisis, update_character_final_details, finish_character_creation, hasten_combatant, delay_combat_turn, resume_combat_turn, forfeit_combat_turn, change_combat_stance, set_combat_cover, apply_personal_fatigue, complete_personal_fatigue_rest, resolve_personal_unconscious_recovery, resolve_personal_mental_healing, determine_personal_first_aid, apply_determined_personal_first_aid, determine_personal_surgery, apply_determined_personal_surgery, determine_personal_medical_care, apply_determined_personal_medical_care, determine_personal_natural_healing, apply_determined_personal_natural_healing, spend_combat_action, aim_combatant_for_kill, resolve_combat_grapple, apply_combat_grapple_option, perform_combat_free_action, resolve_combat_coup_de_grace, start_combat_extended_action, progress_combat_extended_action, activate_self_psionic_power, recover_actor_psionic_strength, set_actor_telepathic_shield
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +25,7 @@ app.mount(
 NAVIGATION = (
     ("dashboard", "Command"),
     ("crew", "Crew"),
+    ("psionics", "Psionics"),
     ("ship", "Ship"),
     ("sector", "Sector"),
     ("trade", "Trade"),
@@ -40,6 +41,24 @@ PAGE_COPY = {
     "trade": ("Exchange", "Held markets, freight, passengers, cargo, and audited transactions."),
     "encounters": ("Encounters", "Persistent participants, intentions, rounds, injuries, and outcomes."),
 }
+
+@app.post("/campaigns/{campaign_id}/characters/{actor_id}/psionics/activate")
+def psionic_activate(campaign_id:str,actor_id:str,power_rule_code:str=Form(...),variable_points:int=Form(0),idempotency_key:str=Form(...)):
+    try:activate_self_psionic_power(actor_public_id=actor_id,power_rule_code=power_rule_code,variable_points=variable_points,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/psionics?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/characters/{actor_id}/psionics/recover")
+def psionic_recover(campaign_id:str,actor_id:str,idempotency_key:str=Form(...)):
+    try:recover_actor_psionic_strength(actor_public_id=actor_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/psionics?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/characters/{actor_id}/psionics/shield")
+def psionic_shield(campaign_id:str,actor_id:str,shield_raised:bool=Form(...),idempotency_key:str=Form(...)):
+    try:set_actor_telepathic_shield(actor_public_id=actor_id,shield_raised=shield_raised,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/psionics?campaign={campaign_id}",status_code=303)
 
 reader = CampaignReader()
 
@@ -876,6 +895,11 @@ def journal(request:Request,campaign:str|None=None):
 def encounters(request:Request,campaign:str|None=None):
     current=selected_campaign(campaign)
     return templates.TemplateResponse(request=request,name="encounters.html",context=page_context(request,"encounters",campaign=current,creation_key=str(uuid.uuid4())))
+
+@app.get("/psionics",response_class=HTMLResponse)
+def psionics(request:Request,campaign:str|None=None):
+    current=selected_campaign(campaign)
+    return templates.TemplateResponse(request=request,name="psionics.html",context=page_context(request,"psionics",campaign=current,creation_key=str(uuid.uuid4())))
 
 
 @app.get("/{page_name}", response_class=HTMLResponse)
