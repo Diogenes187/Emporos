@@ -287,6 +287,16 @@ def main() -> int:
             run_project_tool(importer, env)
 
     run_project_tool("verify_database.py", env)
+    with psycopg.connect(dsn) as connection:
+        connection.execute(
+            """INSERT INTO sys_database_bootstrap_completion (
+                   singleton, application_build
+               ) VALUES (true, %s)
+               ON CONFLICT (singleton) DO UPDATE SET
+                   completed_at=clock_timestamp(),
+                   application_build=EXCLUDED.application_build""",
+            (args.build,),
+        )
     print("bootstrapped and verified an empty Base Cepheus database")
     return 0
 

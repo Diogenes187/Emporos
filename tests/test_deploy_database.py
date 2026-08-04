@@ -8,11 +8,11 @@ from tools import deploy_database
 
 class DeployDatabaseTests(unittest.TestCase):
     def run_main(
-        self, initialized: bool, foundation_loaded: bool = True
+        self, initialized: bool, bootstrap_complete: bool = True
     ) -> list[tuple[str, ...]]:
         connection = MagicMock()
         connection.execute.return_value.fetchone.side_effect = (
-            [(initialized,), (foundation_loaded,)]
+            [(initialized,), (True,), (bootstrap_complete,)]
             if initialized else [(False,)]
         )
         context = MagicMock()
@@ -32,7 +32,7 @@ class DeployDatabaseTests(unittest.TestCase):
             "SELECT to_regclass('public.sys_schema_migration') IS NOT NULL"
             ,),
         )
-        self.assertEqual(connection.execute.call_count, 2 if initialized else 1)
+        self.assertEqual(connection.execute.call_count, 3 if initialized else 1)
         return calls
 
     def test_provider_relations_do_not_prevent_empty_database_bootstrap(self) -> None:
