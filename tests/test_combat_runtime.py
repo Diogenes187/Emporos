@@ -198,6 +198,16 @@ class PersonalCombatRuntimeIntegrationTests(unittest.TestCase):
                        WHERE actor.public_id=%s
                          AND weapon.rule_code='equipment.weapon.dagger'""",
                     (actors[0],))
+                with self.assertRaisesRegex(ValueError,"not ready"):
+                    declare_personal_attack_command(
+                        connection,idempotency_key="held-unready",**arguments)
+                connection.execute(
+                    """INSERT INTO actor_weapon_state(actor_id,weapon_rule_id,ready)
+                       SELECT actor.actor_id,weapon.rule_id,true
+                       FROM actor_actor actor CROSS JOIN rule_rule weapon
+                       WHERE actor.public_id=%s
+                         AND weapon.rule_code='equipment.weapon.dagger'""",
+                    (actors[0],))
                 declared=declare_personal_attack_command(
                     connection,idempotency_key="held-accepted",**arguments)
                 self.assertEqual(declared.item_rule_code,"equipment.weapon.dagger")

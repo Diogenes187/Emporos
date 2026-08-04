@@ -63,6 +63,7 @@ from engine.combat_runtime import declare_personal_attack_command,declare_person
 from engine.commands import resolve_personal_attack_command  # noqa: E402
 from engine.combat_resolution_runtime import resolve_personal_combat_command  # noqa: E402
 from engine.armor_runtime import equip_personal_armor_command,unequip_personal_armor_command  # noqa: E402
+from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
 
 
 def create_campaign(
@@ -312,6 +313,10 @@ def complete_combat_turn(*,encounter_public_id:str,actor_public_id:str,idempoten
 def advance_combat_round(*,encounter_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return advance_personal_combat_round_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id)
+
+def ready_combat_weapon(*,encounter_public_id:str,actor_public_id:str,weapon_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return advance_personal_weapon_ready_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,weapon_rule_code=weapon_rule_code)
 
 def declare_combat_attack(*,encounter_public_id:str,attacker_actor_public_id:str,target_actor_public_id:str,item_rule_code:str,attack_profile_code:str,range_rule_code:str,target_has_cover:bool,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
