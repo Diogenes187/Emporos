@@ -6,9 +6,9 @@
 <small>TACTICAL STATE</small>
 <h1>Encounters</h1>
 <p>Participants, sides, escalation, awareness, range, and combat rounds remain engine-owned.</p>
-</div>{% if campaign %}<span>{{ campaign.encounters|length }} recorded</span>{% endif %}</section>
+</div>{% if campaign %}<div><span>{{ campaign.encounters|length }} recorded</span> <a class="build-workspace-launch" href="#encounter-builder">New encounter</a></div>{% endif %}</section>
 {% if campaign %}
-<section class="panel">
+<section id="encounter-builder" class="panel build-workspace"><a class="workspace-close" href="#">Save and close</a>
 <header>
 <div>
 <small>NEW ENCOUNTER</small>

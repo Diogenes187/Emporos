@@ -3,10 +3,10 @@
 {% block content %}
 <section class="page-heading compact">
   <div><small>CAMPAIGN SOURCES</small><h1>Library</h1><p>Adventures, sectors, rules, and setting material with complete import accounting.</p></div>
-  {% if campaign %}<span>{{ campaign.source_documents|length }} installed source{{ '' if campaign.source_documents|length==1 else 's' }}</span>{% endif %}
+  {% if campaign %}<div><span>{{ campaign.source_documents|length }} installed source{{ '' if campaign.source_documents|length==1 else 's' }}</span> <a class="build-workspace-launch" href="#source-builder">Install source</a></div>{% endif %}
 </section>
 <section class="library-grid">
-  <article class="upload-card">
+  <article id="source-builder" class="upload-card build-workspace"><a class="workspace-close" href="#">Save and close</a>
     <div class="upload-icon">↑</div><h2>Bring a source aboard</h2><p>PDF or text. Every page is accounted for before a source can be marked ready.</p>{% if campaign %}<form method="post" enctype="multipart/form-data" action="/campaigns/{{ campaign.public_id }}/sources"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-source"><label><span>Title</span><input name="title" required></label><label><span>Kind</span><select name="source_kind"><option value="adventure">Adventure</option><option value="sourcebook">Sourcebook</option><option value="handout">Handout</option><option value="notes">Notes</option></select></label><input type="file" name="source" accept=".pdf,.txt,application/pdf,text/plain" required><button type="submit">Ingest complete source</button></form>{% else %}<p>Select a campaign first.</p>{% endif %}
   </article>
   <article class="panel source-list">
