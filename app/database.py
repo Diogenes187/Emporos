@@ -509,7 +509,7 @@ class CampaignReader:
         try:
             with self._connect() as connection:
                 version = connection.execute(
-                    "SELECT COALESCE(max(migration_number),0) AS version "
+                    "SELECT COALESCE(max(version),0) AS version "
                     "FROM sys_schema_migration"
                 ).fetchone()["version"]
             return {"configured": True, "connected": True, "schema_version": version}
