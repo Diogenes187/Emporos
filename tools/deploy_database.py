@@ -55,6 +55,7 @@ def main() -> int:
         else:
             if migration_version >= 571:
                 run("tools/migrate.py")
+                run("tools/import_book1_melee_weapons.py")
                 run("tools/verify_database.py")
                 run("tools/complete_database_bootstrap.py")
                 return 0

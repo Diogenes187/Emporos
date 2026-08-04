@@ -55,6 +55,7 @@ class DeployDatabaseTests(unittest.TestCase):
             self.run_main(True, False),
             [
                 ("tools/migrate.py",),
+                ("tools/import_book1_melee_weapons.py",),
                 ("tools/verify_database.py",),
                 ("tools/complete_database_bootstrap.py",),
             ],
