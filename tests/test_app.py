@@ -675,6 +675,14 @@ def test_social_content_and_patron_brief_dispatch(monkeypatch):
     assert selection["encounter_public_id"]=="encounter" and brief["truth_two"]=="Courier captured" and brief["objective_priority"]==4
 
 
+def test_extreme_range_authorization_dispatch(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"authorize_extreme_range",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/encounters/encounter/extreme-range-authorizations",data={"attacker_actor_public_id":"shooter","target_actor_public_id":"target","weapon_selection":"equipment.weapon.laser-rifle||rifle","rest_reference":"tripod","line_of_sight":"true","idempotency_key":"extreme"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured["item_rule_code"]=="equipment.weapon.laser-rifle" and captured["attack_profile_code"]=="rifle" and captured["line_of_sight"] is True
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))

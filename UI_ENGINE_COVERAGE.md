@@ -5,14 +5,13 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 160
-- Engine-only review candidates: 10
+- Direct web-application wrappers: 161
+- Engine-only review candidates: 9
 
 ## Engine-only review candidates
 
 | Engine module | Command |
 |---|---|
-| `extreme_range_runtime.py` | `authorize_extreme_range_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
 | `medical_runtime.py` | `apply_personal_first_aid_command` |
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
@@ -114,6 +113,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `extended_actions_runtime.py` | `advance_personal_extended_action_command` |
 | `extended_actions_runtime.py` | `abandon_personal_extended_action_command` |
 | `extended_actions_runtime.py` | `resolve_personal_extended_action_interruption_command` |
+| `extreme_range_runtime.py` | `authorize_extreme_range_command` |
 | `free_actions_runtime.py` | `perform_personal_free_action_command` |
 | `freight_contracts.py` | `accept_freight_contract_command` |
 | `freight_delivery.py` | `deliver_freight_contract_command` |

@@ -88,6 +88,7 @@ from engine.scenes import SceneFact,create_scene_snapshot_command  # noqa: E402
 from engine.tasks import resolve_species_hive_mentality_command,resolve_species_naturally_curious_command,evaluate_species_low_light_visibility_command  # noqa: E402
 from engine.ground_starship_runtime import resolve_ground_starship_volley_attacks_command,finalize_ground_starship_volley_command  # noqa: E402
 from engine.social_content import PatronObjective,PatronRequirement,select_social_content_command,create_patron_brief_command  # noqa: E402
+from engine.extreme_range_runtime import authorize_extreme_range_command  # noqa: E402
 from engine.transport import resolve_transport_operation_command  # noqa: E402
 from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
@@ -534,6 +535,10 @@ def create_patron_brief(*,campaign_public_id:str,brief_code:str,patron_name_refe
     objectives=(PatronObjective(objective_actor_role,objective_kind,objective_reference,objective_priority),)
     with psycopg.connect(url) as connection:return create_patron_brief_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,brief_code=brief_code,patron_name_reference=patron_name_reference,role_reference=role_reference,reward_summary=reward_summary,player_mission_summary=player_mission_summary,requirements=requirements,truth_variants=(truth_one,truth_two),objectives=objectives)
 
+def authorize_extreme_range(*,encounter_public_id:str,attacker_actor_public_id:str,target_actor_public_id:str,item_rule_code:str,attack_profile_code:str,rest_reference:str,line_of_sight:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return authorize_extreme_range_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,attacker_actor_public_id=attacker_actor_public_id,target_actor_public_id=target_actor_public_id,item_rule_code=item_rule_code,attack_profile_code=attack_profile_code,rest_reference=rest_reference,line_of_sight=line_of_sight)
+
 def perform_ship_transport_operation(*,actor_public_id:str,ship_public_id:str,operation_kind:str,operation_reference:str,challenging_conditions:bool,characteristic_rule_code:str,difficulty_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_transport_operation_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,target_public_id=ship_public_id,target_kind="ship",operation_kind=operation_kind,operation_reference=operation_reference,challenging_conditions=challenging_conditions,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code)
@@ -641,9 +646,9 @@ def reload_combat_weapon(*,encounter_public_id:str,actor_public_id:str,weapon_ru
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return advance_weapon_reload_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,actor_public_id=actor_public_id,weapon_rule_code=weapon_rule_code,ammunition_rule_code=ammunition_rule_code,require_actor_holding=True)
 
-def declare_combat_attack(*,encounter_public_id:str,attacker_actor_public_id:str,target_actor_public_id:str,item_rule_code:str,attack_profile_code:str,range_rule_code:str,target_has_cover:bool,idempotency_key:str):
+def declare_combat_attack(*,encounter_public_id:str,attacker_actor_public_id:str,target_actor_public_id:str,item_rule_code:str,attack_profile_code:str,range_rule_code:str,target_has_cover:bool,extreme_range_authorization_public_id:str|None=None,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
-    with psycopg.connect(url) as connection:return declare_personal_attack_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,attacker_actor_public_id=attacker_actor_public_id,target_actor_public_id=target_actor_public_id,item_rule_code=item_rule_code,attack_profile_code=attack_profile_code,range_rule_code=range_rule_code,target_has_cover=target_has_cover,require_actor_holding=True)
+    with psycopg.connect(url) as connection:return declare_personal_attack_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,encounter_public_id=encounter_public_id,attacker_actor_public_id=attacker_actor_public_id,target_actor_public_id=target_actor_public_id,item_rule_code=item_rule_code,attack_profile_code=attack_profile_code,range_rule_code=range_rule_code,target_has_cover=target_has_cover,extreme_range_authorization_public_id=extreme_range_authorization_public_id or None,require_actor_holding=True)
 
 def resolve_combat_attack(*,personal_attack_public_id:str,item_rule_code:str,attack_profile_code:str,range_rule_code:str,target_actor_public_id:str,armor_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
