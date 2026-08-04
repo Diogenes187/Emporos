@@ -256,6 +256,11 @@ def main() -> int:
         help="Resume an interrupted bootstrap from its recorded migration phase",
     )
     parser.add_argument(
+        "--start-at",
+        type=int,
+        help="On recovery, skip importer phases below this migration target",
+    )
+    parser.add_argument(
         "--build",
         default=os.environ.get("BASE_CEPHEUS_BUILD", "development"),
         help="Application build identity recorded with applied migrations",
@@ -279,6 +284,12 @@ def main() -> int:
     env["BASE_CEPHEUS_BUILD"] = args.build
 
     for target, importers in BOOTSTRAP_PHASES:
+        if (
+            args.start_at is not None
+            and target is not None
+            and target < args.start_at
+        ):
+            continue
         migration_arguments = (
             ("--target", str(target)) if target is not None else ()
         )

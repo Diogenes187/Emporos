@@ -34,7 +34,11 @@ def main() -> int:
             "SELECT to_regclass('public.sys_schema_migration') IS NOT NULL"
         ).fetchone()[0]
         bootstrap_complete = False
+        migration_version = 0
         if initialized:
+            migration_version = connection.execute(
+                "SELECT COALESCE(max(version), 0) FROM sys_schema_migration"
+            ).fetchone()[0]
             marker_exists = connection.execute(
                 "SELECT to_regclass("
                 "'public.sys_database_bootstrap_completion') IS NOT NULL"
@@ -49,7 +53,13 @@ def main() -> int:
             run("tools/migrate.py")
             run("tools/verify_database.py")
         else:
-            run("tools/bootstrap_database.py", "--dsn", dsn, "--resume")
+            arguments = ["tools/bootstrap_database.py", "--dsn", dsn, "--resume"]
+            # The first hosted bootstrap timed out after catalogue phase 268,
+            # then a retry applied the remaining schema before content imports.
+            # Old importers cannot all be replayed against that final schema.
+            if migration_version >= 570:
+                arguments.extend(("--start-at", "269"))
+            run(*arguments)
     else:
         run("tools/bootstrap_database.py", "--dsn", dsn)
     return 0
