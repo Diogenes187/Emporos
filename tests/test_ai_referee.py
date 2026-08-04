@@ -18,12 +18,16 @@ class RefereeConversationTests(unittest.TestCase):
   with psycopg.connect(os.environ['BASE_CEPHEUS_DATABASE_URL']) as c:
    with c.transaction(force_rollback=True):
     suffix=str(uuid.uuid4());owner='referee-test';campaign=create_campaign_command(c,initiator_reference=owner,idempotency_key='campaign-'+suffix,name='Referee Test');provider=FakeProvider()
+    campaign_id=c.execute("SELECT campaign_id FROM camp_campaign WHERE public_id=%s",(campaign.campaign_public_id,)).fetchone()[0];actor_id=c.execute("INSERT INTO actor_actor(campaign_id,name,controller_reference) VALUES(%s,'Mara',%s) RETURNING actor_id",(campaign_id,owner)).fetchone()[0]
+    for code,current in [('characteristic.strength',7),('characteristic.dexterity',8),('characteristic.endurance',5)]:
+     rule_id=c.execute("SELECT rule_id FROM rule_rule WHERE rule_code=%s",(code,)).fetchone()[0];c.execute("INSERT INTO actor_characteristic VALUES(%s,%s,8,%s)",(actor_id,rule_id,current))
     result=submit_referee_turn(c,initiator_reference=owner,idempotency_key='turn-'+suffix,campaign_public_id=campaign.campaign_public_id,player_text='I enter the docking bay.',provider=provider)
     replay=submit_referee_turn(c,initiator_reference=owner,idempotency_key='turn-'+suffix,campaign_public_id=campaign.campaign_public_id,player_text='ignored on replay',provider=provider)
     self.assertEqual(result.command_public_id,replay.command_public_id);self.assertTrue(replay.replayed)
     self.assertEqual(c.execute("SELECT count(*) FROM camp_referee_message message JOIN camp_referee_turn turn USING(referee_turn_id,campaign_id) WHERE turn.public_id=%s",(result.turn_public_id,)).fetchone()[0],2)
     audit=c.execute("SELECT purpose_code,invocation_status,input_sha256,output_sha256 FROM ai_model_invocation invocation JOIN camp_referee_turn turn ON turn.source_command_id=invocation.source_command_id WHERE turn.public_id=%s",(result.turn_public_id,)).fetchone();self.assertEqual(audit[:2],('referee_narration','completed'));self.assertTrue(all(len(value)==64 for value in audit[2:]))
     self.assertIn('A proposed tool is not yet executed',provider.messages[0]['content'])
+    self.assertIn('Mara: STR 7, DEX 8, END 5; wounded',provider.messages[1]['content'])
     proposed=FakeProvider('{"narration":"The ship is ready; departure awaits confirmation.","tool_request":{"name":"start_spacecraft_journey_leg","summary":"Begin the prepared jump","arguments":{"journey_public_id":"00000000-0000-0000-0000-000000000001","leg_order":1}}}')
     turn=submit_referee_turn(c,initiator_reference=owner,idempotency_key='proposal-'+suffix,campaign_public_id=campaign.campaign_public_id,player_text='Begin the prepared jump.',provider=proposed)
     stored=c.execute("SELECT request.tool_name,count(argument.argument_name) FROM camp_referee_tool_request request JOIN camp_referee_tool_argument argument USING(referee_tool_request_id) JOIN camp_referee_turn turn USING(referee_turn_id,campaign_id) WHERE turn.public_id=%s GROUP BY request.tool_name",(turn.turn_public_id,)).fetchone();self.assertEqual(stored,('start_spacecraft_journey_leg',2))
