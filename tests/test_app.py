@@ -71,6 +71,25 @@ def test_crew_requires_campaign_without_inventing_a_character():
     assert "Elara Venn" not in response.text
 
 
+def test_character_initialization_does_not_accept_a_name(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "initialize_character",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/characters",
+        data={"idempotency_key": "character-start-test"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert captured == {
+        "campaign_public_id": "campaign",
+        "idempotency_key": "character-start-test",
+    }
+
+
 def test_ship_requires_campaign_and_has_no_decorative_vessel():
     response=client.get("/ship")
     assert response.status_code == 200

@@ -472,13 +472,11 @@ def campaign_create(
 @app.post("/campaigns/{campaign_id}/characters")
 def character_initialize(
     campaign_id: str,
-    name: str = Form(...),
     idempotency_key: str = Form(...),
 ):
     try:
         initialize_character(
             campaign_public_id=campaign_id,
-            name=name,
             idempotency_key=idempotency_key,
         )
     except PermissionError as exc:

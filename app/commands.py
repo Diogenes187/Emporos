@@ -128,9 +128,7 @@ def create_campaign(
         )
 
 
-def initialize_character(
-    *, campaign_public_id: str, name: str, idempotency_key: str
-):
+def initialize_character(*, campaign_public_id: str, idempotency_key: str):
     url = database_url()
     if not url:
         raise RuntimeError("No Emporos database URL is configured")
@@ -143,7 +141,7 @@ def initialize_character(
             initiator_reference=authority,
             idempotency_key=idempotency_key,
             campaign_public_id=campaign_public_id,
-            character_name=name,
+            character_name="Unnamed Traveller",
         )
 
 

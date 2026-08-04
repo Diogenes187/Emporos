@@ -14,22 +14,49 @@ from engine.careers import attempt_career_entry_command
     "requires the project PostgreSQL database",
 )
 class CharacterFinalDetailsIntegrationTests(unittest.TestCase):
-    def _actor(self, connection):
+    def _actor(self, connection, *, creation_finished=False):
         campaign_id = connection.execute(
             """INSERT INTO camp_campaign (name,owner_reference)
                VALUES ('Final Details','player') RETURNING campaign_id"""
         ).fetchone()[0]
-        return str(connection.execute(
+        actor_id, actor_public_id = connection.execute(
             """INSERT INTO actor_actor
                (campaign_id,name,controller_reference)
-               VALUES (%s,'Working Name','player') RETURNING public_id""",
+               VALUES (%s,'Unnamed Traveller','player')
+               RETURNING actor_id,public_id""",
             (campaign_id,),
-        ).fetchone()[0])
+        ).fetchone()
+        if creation_finished:
+            connection.execute(
+                """INSERT INTO actor_lifepath_state
+                   (actor_id,age_years,lifepath_status)
+                   VALUES (%s,18,'completed')""",
+                (actor_id,),
+            )
+        return str(actor_public_id)
+
+    def test_name_is_rejected_until_lifepath_creation_is_finished(self):
+        with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
+            with connection.transaction(force_rollback=True):
+                actor_public = self._actor(connection, creation_finished=True)
+                connection.execute(
+                    """UPDATE actor_lifepath_state SET lifepath_status='active'
+                       WHERE actor_id=(SELECT actor_id FROM actor_actor
+                                       WHERE public_id=%s)""",
+                    (actor_public,),
+                )
+                with self.assertRaisesRegex(ValueError, "finish lifepath"):
+                    update_character_final_details_command(
+                        connection, initiator_reference="player",
+                        idempotency_key="details-too-early",
+                        actor_public_id=actor_public,
+                        character_name="Premature Name",
+                    )
 
     def test_player_revisions_preserve_prior_profile_and_ordered_goals(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
             with connection.transaction(force_rollback=True):
-                actor_public = self._actor(connection)
+                actor_public = self._actor(connection, creation_finished=True)
                 first = update_character_final_details_command(
                     connection, initiator_reference="player",
                     idempotency_key="details-one",
@@ -83,7 +110,7 @@ class CharacterFinalDetailsIntegrationTests(unittest.TestCase):
     def test_retry_returns_same_revision_and_wrong_controller_is_rejected(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
             with connection.transaction(force_rollback=True):
-                actor_public = self._actor(connection)
+                actor_public = self._actor(connection, creation_finished=True)
                 arguments = dict(
                     initiator_reference="player",
                     idempotency_key="details-retry",
@@ -113,7 +140,7 @@ class CharacterFinalDetailsIntegrationTests(unittest.TestCase):
     def test_blank_prose_is_rejected_but_fields_may_be_explicitly_cleared(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
             with connection.transaction(force_rollback=True):
-                actor_public = self._actor(connection)
+                actor_public = self._actor(connection, creation_finished=True)
                 with self.assertRaisesRegex(ValueError, "Appearance"):
                     update_character_final_details_command(
                         connection, initiator_reference="player",

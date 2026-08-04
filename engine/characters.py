@@ -105,14 +105,21 @@ def update_character_final_details_command(
             return _load_final_details(
                 connection, existing[0], existing[1], True)
         actor = connection.execute(
-            """SELECT actor_id,concurrency_version
-               FROM actor_actor
-               WHERE public_id=%s AND controller_reference=%s
-               FOR UPDATE""",
+            """SELECT actor.actor_id,actor.concurrency_version,
+                      lifepath.lifepath_status
+               FROM actor_actor actor
+               LEFT JOIN actor_lifepath_state lifepath
+                 ON lifepath.actor_id=actor.actor_id
+               WHERE actor.public_id=%s AND actor.controller_reference=%s
+               FOR UPDATE OF actor""",
             (actor_public_id, initiator_reference),
         ).fetchone()
         if actor is None:
             raise ValueError("Actor is absent or not controlled by this player")
+        if actor[2] != "completed":
+            raise ValueError(
+                "Character must finish lifepath creation before being named"
+            )
         revision = connection.execute(
             """SELECT COALESCE(MAX(revision_number),0)+1
                FROM actor_character_profile_revision WHERE actor_id=%s""",
