@@ -60,7 +60,7 @@ from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
 from engine.encounters import create_encounter_command,add_encounter_participant_command,transition_encounter_mode_command  # noqa: E402
 from engine.combat_runtime import initialize_personal_combat_command,begin_personal_turn_command,move_personal_combatant_command,aim_personal_attack_command,complete_personal_turn_command,advance_personal_combat_round_command,advance_weapon_reload_command  # noqa: E402
 from engine.combat_runtime import declare_personal_attack_command,declare_personal_reaction_command  # noqa: E402
-from engine.commands import resolve_personal_attack_command  # noqa: E402
+from engine.commands import resolve_personal_attack_command,apply_personal_damage_command  # noqa: E402
 from engine.combat_resolution_runtime import resolve_personal_combat_command  # noqa: E402
 from engine.armor_runtime import equip_personal_armor_command,unequip_personal_armor_command  # noqa: E402
 from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
@@ -329,6 +329,11 @@ def declare_combat_attack(*,encounter_public_id:str,attacker_actor_public_id:str
 def resolve_combat_attack(*,personal_attack_public_id:str,item_rule_code:str,attack_profile_code:str,range_rule_code:str,target_actor_public_id:str,armor_rule_code:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_personal_attack_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,personal_attack_public_id=personal_attack_public_id,item_rule_code=item_rule_code,attack_profile_code=attack_profile_code,range_rule_code=range_rule_code,target_actor_public_id=target_actor_public_id,armor_rule_code=armor_rule_code,use_equipped_armor=True)
+
+def apply_combat_damage(*,damage_instance_public_id:str,strength_damage:int,dexterity_damage:int,endurance_damage:int,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    allocations=tuple((code,value) for code,value in (("characteristic.endurance",endurance_damage),("characteristic.strength",strength_damage),("characteristic.dexterity",dexterity_damage)) if value>0)
+    with psycopg.connect(url) as connection:return apply_personal_damage_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,damage_instance_public_id=damage_instance_public_id,allocations=allocations)
 
 def react_to_combat_attack(*,encounter_public_id:str,actor_public_id:str,attack_trigger_reference:str,reaction_kind:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
