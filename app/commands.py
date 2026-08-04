@@ -79,6 +79,8 @@ from engine.regulatory import resolve_regulatory_task_command  # noqa: E402
 from engine.computer import perform_computer_basic_operation_command  # noqa: E402
 from engine.devices import resolve_device_operation_command  # noqa: E402
 from engine.leadership import begin_leadership_coordination_command, allocate_leadership_coordination_command  # noqa: E402
+from engine.linguistics import assign_actor_language_command, decipher_preserved_language_command  # noqa: E402
+from engine.skill_training import allocate_skill_training_week_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
 from engine.characters import update_character_final_details_command  # noqa: E402
@@ -451,6 +453,18 @@ def begin_leadership_coordination(*,leader_actor_public_id:str,goal_reference:st
 def allocate_leadership_coordination(*,coordination_public_id:str,recipient_actor_public_id:str,points:int,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return allocate_leadership_coordination_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,coordination_public_id=coordination_public_id,recipient_actor_public_id=recipient_actor_public_id,points=points)
+
+def assign_actor_language(*,actor_public_id:str,language_code:str,proficiency_kind:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return assign_actor_language_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,language_code=language_code,proficiency_kind=proficiency_kind)
+
+def decipher_language_specimen(*,actor_public_id:str,specimen_reference:str,specimen_medium:str,characteristic_rule_code:str,difficulty_rule_code:str,language_code:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return decipher_preserved_language_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,specimen_reference=specimen_reference,specimen_medium=specimen_medium,characteristic_rule_code=characteristic_rule_code,difficulty_rule_code=difficulty_rule_code,language_code=language_code or None)
+
+def train_actor_skill_week(*,actor_public_id:str,skill_rule_code:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return allocate_skill_training_week_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,skill_rule_code=skill_rule_code)
 
 def recover_actor_psionic_strength(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

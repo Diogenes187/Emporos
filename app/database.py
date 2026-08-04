@@ -410,6 +410,8 @@ class CampaignReader:
                         }]
                 encounter["sides"]=connection.execute("SELECT side_code,side_name FROM enc_side side JOIN enc_encounter encounter USING(encounter_id) WHERE encounter.public_id=%s ORDER BY side.display_order",(encounter["public_id"],)).fetchall()
             leadership_coordinations=connection.execute("""SELECT coordination.public_id::text AS public_id,leader.public_id::text AS leader_actor_public_id,COALESCE(profile.character_name,leader.name) AS leader_name,coordination.goal_reference,coordination.pool_points_total,coordination.pool_points_remaining,coordination.coordination_status FROM camp_leadership_coordination coordination JOIN actor_actor leader ON leader.actor_id=coordination.leader_actor_id LEFT JOIN actor_current_character_profile profile ON profile.actor_id=leader.actor_id WHERE coordination.campaign_id=%s AND coordination.coordination_status='active' ORDER BY coordination.coordination_id DESC""",(campaign_id,)).fetchall()
+            campaign_languages=connection.execute("""SELECT language_code,name AS language_name FROM camp_language WHERE campaign_id=%s ORDER BY name""",(campaign_id,)).fetchall()
+            skill_training_options=connection.execute("""SELECT rule.rule_code,rule.name FROM rule_skill skill JOIN rule_rule rule USING(rule_id) WHERE rule.rule_status='approved' AND rule.rule_code<>(SELECT forbidden.rule_code FROM rule_gameplay_skill_training training JOIN rule_rule forbidden ON forbidden.rule_id=training.forbidden_skill_rule_id) ORDER BY rule.name""").fetchall()
         return {
             **campaign,
             "actors": actors,
@@ -447,6 +449,8 @@ class CampaignReader:
             "pending_damage": pending_damage,
             "encounters": encounters,
             "leadership_coordinations": leadership_coordinations,
+            "campaign_languages": campaign_languages,
+            "skill_training_options": skill_training_options,
             "weapon_options": weapon_options,
             "armor_options": armor_options,
         }

@@ -5,8 +5,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 ## Snapshot
 
 - Engine command entry points: 170
-- Direct web-application wrappers: 126
-- Engine-only review candidates: 44
+- Direct web-application wrappers: 129
+- Engine-only review candidates: 41
 
 ## Engine-only review candidates
 
@@ -35,14 +35,11 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ground_starship_runtime.py` | `finalize_ground_starship_volley_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
 | `liaison.py` | `resolve_liaison_negotiation_command` |
-| `linguistics.py` | `assign_actor_language_command` |
-| `linguistics.py` | `decipher_preserved_language_command` |
 | `medical_runtime.py` | `apply_personal_first_aid_command` |
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
 | `medical_runtime.py` | `apply_personal_medical_care_command` |
 | `misc_actions_runtime.py` | `perform_personal_miscellaneous_action_command` |
 | `scenes.py` | `create_scene_snapshot_command` |
-| `skill_training.py` | `allocate_skill_training_week_command` |
 | `social_content.py` | `select_social_content_command` |
 | `social_content.py` | `create_patron_brief_command` |
 | `source_review.py` | `review_campaign_source_page_command` |
@@ -146,6 +143,8 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `jump_attempts.py` | `resolve_jump_attempt_command` |
 | `leadership.py` | `begin_leadership_coordination_command` |
 | `leadership.py` | `allocate_leadership_coordination_command` |
+| `linguistics.py` | `assign_actor_language_command` |
+| `linguistics.py` | `decipher_preserved_language_command` |
 | `low_passage_revival.py` | `revive_low_passenger_command` |
 | `markets.py` | `open_trade_market_command` |
 | `medical_runtime.py` | `determine_personal_first_aid_command` |
@@ -175,6 +174,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `ship_mortgages.py` | `open_ship_mortgage_command` |
 | `ship_mortgages.py` | `pay_ship_mortgage_command` |
 | `ships.py` | `acquire_ship_command` |
+| `skill_training.py` | `allocate_skill_training_week_command` |
 | `source_library.py` | `ingest_campaign_source_command` |
 | `spacecraft_journeys.py` | `start_spacecraft_journey_leg_command` |
 | `spacecraft_journeys.py` | `complete_spacecraft_journey_leg_command` |

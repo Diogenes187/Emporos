@@ -532,6 +532,17 @@ def test_regulatory_technical_and_leadership_operations_dispatch(monkeypatch):
     assert leadership["leader_actor_public_id"]=="captain" and allocation["points"]==2
 
 
+def test_language_and_weekly_training_dispatch(monkeypatch):
+    language={};decipher={};training={}
+    monkeypatch.setattr(main_module,"assign_actor_language",lambda **kwargs:language.update(kwargs))
+    monkeypatch.setattr(main_module,"decipher_language_specimen",lambda **kwargs:decipher.update(kwargs))
+    monkeypatch.setattr(main_module,"train_actor_skill_week",lambda **kwargs:training.update(kwargs))
+    responses=[client.post("/campaigns/campaign/characters/actor/languages",data={"language_code":"vilani","proficiency_kind":"additional","idempotency_key":"language"},follow_redirects=False),client.post("/campaigns/campaign/operations/decipher-language",data={"actor_public_id":"actor","specimen_reference":"obelisk-1","specimen_medium":"inscription","characteristic_rule_code":"characteristic.education","difficulty_rule_code":"difficulty.difficult","language_code":"","idempotency_key":"decipher"},follow_redirects=False),client.post("/campaigns/campaign/characters/actor/skill-training",data={"skill_rule_code":"skill.piloting","idempotency_key":"training"},follow_redirects=False)]
+    assert all(response.status_code==303 for response in responses)
+    assert language["proficiency_kind"]=="additional"
+    assert decipher["language_code"] is None and training["skill_rule_code"]=="skill.piloting"
+
+
 def test_condition_and_recovery_controls_dispatch(monkeypatch):
     fatigue={};rest={};recovery={};mental={}
     monkeypatch.setattr(main_module,"apply_personal_fatigue",lambda **kwargs:fatigue.update(kwargs))
