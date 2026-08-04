@@ -41,11 +41,9 @@ class CampaignReader:
     def _connect(self):
         if not self.url:
             raise RuntimeError("No Emporos database URL is configured")
-        return psycopg.connect(
-            self.url,
-            row_factory=dict_row,
-            options="-c default_transaction_read_only=on",
-        )
+        connection = psycopg.connect(self.url, row_factory=dict_row)
+        connection.execute("SET TRANSACTION READ ONLY")
+        return connection
 
     def campaigns(self, limit: int = 30, user_id: int | None = None) -> list[CampaignSummary]:
         if not self.url:

@@ -22,6 +22,15 @@ class DatabaseStatusTests(unittest.TestCase):
         )
         self.assertIn("max(version)", connection.execute.call_args.args[0])
 
+    def test_connection_sets_transaction_read_only_after_connect(self) -> None:
+        connection = MagicMock()
+        with patch("app.database.psycopg.connect", return_value=connection) as connect:
+            result = CampaignReader("postgresql://test")._connect()
+
+        self.assertIs(result, connection)
+        connect.assert_called_once_with("postgresql://test", row_factory=unittest.mock.ANY)
+        connection.execute.assert_called_once_with("SET TRANSACTION READ ONLY")
+
 
 if __name__ == "__main__":
     unittest.main()
