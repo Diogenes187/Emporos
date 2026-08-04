@@ -251,6 +251,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dsn")
     parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume an interrupted bootstrap from its recorded migration phase",
+    )
+    parser.add_argument(
         "--build",
         default=os.environ.get("BASE_CEPHEUS_BUILD", "development"),
         help="Application build identity recorded with applied migrations",
@@ -262,7 +267,7 @@ def main() -> int:
 
     with psycopg.connect(dsn) as connection:
         relations = public_relations(connection)
-    if relations:
+    if relations and not args.resume:
         sample = ", ".join(relations[:5])
         parser.error(
             "bootstrap requires an empty Emporos schema; found relations: "

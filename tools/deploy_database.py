@@ -33,9 +33,18 @@ def main() -> int:
         initialized = connection.execute(
             "SELECT to_regclass('public.sys_schema_migration') IS NOT NULL"
         ).fetchone()[0]
+        foundation_loaded = False
+        if initialized:
+            foundation_loaded = connection.execute(
+                "SELECT EXISTS(SELECT 1 FROM rule_rule "
+                "WHERE rule_code='skill.natural-weapons')"
+            ).fetchone()[0]
     if initialized:
-        run("tools/migrate.py")
-        run("tools/verify_database.py")
+        if foundation_loaded:
+            run("tools/migrate.py")
+            run("tools/verify_database.py")
+        else:
+            run("tools/bootstrap_database.py", "--dsn", dsn, "--resume")
     else:
         run("tools/bootstrap_database.py", "--dsn", dsn)
     return 0

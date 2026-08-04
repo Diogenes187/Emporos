@@ -7,9 +7,14 @@ from tools import deploy_database
 
 
 class DeployDatabaseTests(unittest.TestCase):
-    def run_main(self, initialized: bool) -> list[tuple[str, ...]]:
+    def run_main(
+        self, initialized: bool, foundation_loaded: bool = True
+    ) -> list[tuple[str, ...]]:
         connection = MagicMock()
-        connection.execute.return_value.fetchone.return_value = (initialized,)
+        connection.execute.return_value.fetchone.side_effect = (
+            [(initialized,), (foundation_loaded,)]
+            if initialized else [(False,)]
+        )
         context = MagicMock()
         context.__enter__.return_value = connection
         calls: list[tuple[str, ...]] = []
@@ -21,9 +26,13 @@ class DeployDatabaseTests(unittest.TestCase):
         ):
             self.assertEqual(deploy_database.main(), 0)
 
-        connection.execute.assert_called_once_with(
+        self.assertEqual(
+            connection.execute.call_args_list[0].args,
+            (
             "SELECT to_regclass('public.sys_schema_migration') IS NOT NULL"
+            ,),
         )
+        self.assertEqual(connection.execute.call_count, 2 if initialized else 1)
         return calls
 
     def test_provider_relations_do_not_prevent_empty_database_bootstrap(self) -> None:
@@ -36,6 +45,19 @@ class DeployDatabaseTests(unittest.TestCase):
         self.assertEqual(
             self.run_main(True),
             [("tools/migrate.py",), ("tools/verify_database.py",)],
+        )
+
+    def test_interrupted_bootstrap_is_resumed(self) -> None:
+        self.assertEqual(
+            self.run_main(True, False),
+            [
+                (
+                    "tools/bootstrap_database.py",
+                    "--dsn",
+                    "postgresql://test",
+                    "--resume",
+                )
+            ],
         )
 
 
