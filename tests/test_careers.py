@@ -1050,6 +1050,39 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
                 ).fetchone()[0]
                 self.assertEqual((stored, receipts), (4, 4))
 
+    def test_term_training_accepts_keyed_cascade_specializations(self):
+        with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
+            with connection.transaction(force_rollback=True):
+                _, actor_public = self._actor(connection)
+                self._merchant_ready_for_survival(connection, actor_public)
+                attempt_career_survival_command(
+                    connection, initiator_reference="player",
+                    idempotency_key="keyed-training-survival",
+                    actor_public_id=actor_public,
+                    random_source=FixedRandom((6, 6)),
+                )
+                resolve_career_rank_attempt_command(
+                    connection, initiator_reference="player",
+                    idempotency_key="keyed-training-commission",
+                    actor_public_id=actor_public,
+                    attempt_kind="commission", decision="decline",
+                )
+                result = apply_career_term_training_command(
+                    connection, initiator_reference="player",
+                    idempotency_key="keyed-training-roll",
+                    actor_public_id=actor_public,
+                    training_table_code="service",
+                    cascade_specializations={
+                        "skill.gun-combat": "skill.slug-pistol",
+                        "skill.melee-combat": "skill.slashing-weapons",
+                        "skill.vehicle": "skill.wheeled-vehicle",
+                    },
+                    random_source=FixedRandom((4,)),
+                )
+                self.assertEqual(
+                    result.granted_rule_code, "skill.slashing-weapons"
+                )
+
     def test_term_training_uses_player_table_and_rank_bonus_rolls(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
             with connection.transaction(force_rollback=True):

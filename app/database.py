@@ -137,7 +137,7 @@ class CampaignReader:
                 actor["rank_zero_award"]=rank_zero
                 term_step=connection.execute("""SELECT stint.career_stint_id,stint.career_rule_id,stint.assignment_rule_id,stint.terms_completed,stint.rank_number,stint.entry_method,career_rule.name AS career_name FROM actor_career_stint stint JOIN rule_rule career_rule ON career_rule.rule_id=stint.career_rule_id WHERE stint.actor_id=%s AND stint.stint_status='active' AND stint.rank_zero_award_completed ORDER BY stint.stint_order DESC LIMIT 1""",(actor_id,)).fetchone()
                 if term_step:
-                    unresolved=connection.execute("""SELECT term.term_number,term.term_status,term.survival_check_total,term.survival_target,term.survived,characteristic.name AS characteristic_name,term.survival_characteristic_value,term.survival_characteristic_modifier,term.second_survival_check_required,term.second_survival_check_total,term.second_survival_passed FROM actor_career_term term JOIN rule_rule characteristic ON characteristic.rule_id=term.survival_characteristic_rule_id WHERE term.career_stint_id=%s AND term.term_status<>'completed' ORDER BY term.term_number DESC LIMIT 1""",(term_step["career_stint_id"],)).fetchone()
+                    unresolved=connection.execute("""SELECT term.term_number,term.term_status,term.survival_check_total,term.survival_target,term.survived,characteristic.name AS characteristic_name,term.survival_characteristic_value,term.survival_characteristic_modifier,term.second_survival_check_required,term.second_survival_check_total,term.second_survival_passed,term.bonus_training_rolls,term.training_rolls_completed FROM actor_career_term term JOIN rule_rule characteristic ON characteristic.rule_id=term.survival_characteristic_rule_id WHERE term.career_stint_id=%s AND term.term_status<>'completed' ORDER BY term.term_number DESC LIMIT 1""",(term_step["career_stint_id"],)).fetchone()
                     if unresolved:
                         term_step.update(unresolved);term_step["stage"]="survival_result"
                         if unresolved["survived"]:
@@ -153,7 +153,25 @@ class CampaignReader:
                                 award["specializations"]=connection.execute("""SELECT specialty_rule.rule_code,specialty_rule.name FROM rule_skill_specialty specialty JOIN rule_rule specialty_rule ON specialty_rule.rule_id=specialty.specialty_rule_id WHERE specialty.parent_skill_rule_id=(SELECT rule_id FROM rule_rule WHERE rule_code=%s) ORDER BY specialty.display_order""",(award["skill_rule_code"],)).fetchall() if award and award["cascade_skill"] else []
                                 term_step["rank_attempt"]={"attempt_kind":attempt_kind,"target_number":progression[f"{attempt_kind}_target"],"resulting_rank":resulting_rank,"award":award}
                                 term_step["stage"]="rank_decision"
-                            else:term_step["stage"]="term_training_pending"
+                            else:
+                                term_step["stage"]="term_training_pending"
+                                hierarchy=progression["commission_target"] is not None
+                                term_step["allowed_training_rolls"]=(1 if hierarchy else 2)+unresolved["bonus_training_rolls"]
+                                term_step["training_results"]=connection.execute("""SELECT receipt.training_roll_order,entry.training_table_code,entry.roll_value,entry.source_outcome_text,COALESCE(granted.name,characteristic.name) AS result_name,COALESCE(receipt.prior_skill_level,receipt.prior_characteristic_current) AS prior_value,COALESCE(receipt.resulting_skill_level,receipt.resulting_characteristic_current) AS resulting_value FROM cmd_career_term_training_receipt receipt JOIN rule_career_training_entry entry ON entry.career_training_entry_id=receipt.training_entry_id LEFT JOIN rule_rule granted ON granted.rule_id=receipt.granted_skill_rule_id LEFT JOIN rule_rule characteristic ON characteristic.rule_id=receipt.characteristic_rule_id JOIN actor_career_term term USING(career_term_id) WHERE term.career_stint_id=%s AND term.term_number=%s ORDER BY receipt.training_roll_order""",(term_step["career_stint_id"],unresolved["term_number"])).fetchall()
+                                if unresolved["training_rolls_completed"]>=term_step["allowed_training_rolls"]:
+                                    term_step["stage"]="term_completion_pending"
+                                    term_step["training_tables"]=[]
+                                else:
+                                    education=next((stat["current"] for stat in actor["characteristics"] if stat["code"]=="characteristic.education"),0)
+                                    term_step["training_tables"]=[]
+                                    for table in connection.execute("""SELECT DISTINCT training_table_code FROM rule_career_training_entry WHERE career_rule_id=%s AND assignment_rule_id IS NOT DISTINCT FROM %s ORDER BY training_table_code""",(term_step["career_rule_id"],term_step["assignment_rule_id"])).fetchall():
+                                        table_code=table["training_table_code"]
+                                        if table_code=="advanced_education" and education<8:continue
+                                        option={"code":table_code,"name":table_code.replace("_"," ").title(),"cascades":[]}
+                                        cascades=connection.execute("""SELECT DISTINCT skill_rule.rule_code,skill_rule.name FROM rule_career_training_entry entry JOIN rule_skill skill ON skill.rule_id=entry.skill_rule_id JOIN rule_rule skill_rule ON skill_rule.rule_id=entry.skill_rule_id WHERE entry.career_rule_id=%s AND entry.assignment_rule_id IS NOT DISTINCT FROM %s AND entry.training_table_code=%s AND skill.cascade_skill ORDER BY skill_rule.name""",(term_step["career_rule_id"],term_step["assignment_rule_id"],table_code)).fetchall()
+                                        for cascade in cascades:
+                                            cascade["specializations"]=connection.execute("""SELECT specialty_rule.rule_code,specialty_rule.name FROM rule_skill_specialty specialty JOIN rule_rule specialty_rule ON specialty_rule.rule_id=specialty.specialty_rule_id WHERE specialty.parent_skill_rule_id=(SELECT rule_id FROM rule_rule WHERE rule_code=%s) ORDER BY specialty.display_order""",(cascade["rule_code"],)).fetchall()
+                                        option["cascades"]=cascades;term_step["training_tables"].append(option)
                     else:
                         term_step["term_number"]=term_step["terms_completed"]+1
                         declaration=connection.execute("""SELECT uses_anagathics,continuous_course_terms,cost_credits,declaration_status FROM actor_career_anagathic_term WHERE career_stint_id=%s AND term_number=%s""",(term_step["career_stint_id"],term_step["term_number"])).fetchone()

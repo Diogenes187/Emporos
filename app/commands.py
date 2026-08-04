@@ -66,7 +66,7 @@ from engine.armor_runtime import equip_personal_armor_command,unequip_personal_a
 from engine.weapon_ready_runtime import advance_personal_weapon_ready_command  # noqa: E402
 from engine.equipment_purchases import purchase_personal_equipment_command  # noqa: E402
 from engine.ammunition_purchases import purchase_personal_ammunition_command  # noqa: E402
-from engine.careers import apply_career_basic_training_command, apply_career_rank_zero_award_command, attempt_career_entry_command, attempt_career_survival_command, declare_career_anagathics_command, resolve_career_rank_attempt_command, resolve_failed_career_entry_command  # noqa: E402
+from engine.careers import apply_career_basic_training_command, apply_career_rank_zero_award_command, apply_career_term_training_command, attempt_career_entry_command, attempt_career_survival_command, declare_career_anagathics_command, resolve_career_rank_attempt_command, resolve_failed_career_entry_command  # noqa: E402
 
 
 def create_campaign(
@@ -391,3 +391,7 @@ def attempt_career_survival(*,actor_public_id:str,idempotency_key:str):
 def resolve_career_rank_attempt(*,actor_public_id:str,attempt_kind:str,decision:str,cascade_specialization:str|None,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_career_rank_attempt_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,attempt_kind=attempt_kind,decision=decision,cascade_specialization=cascade_specialization)
+
+def apply_career_term_training(*,actor_public_id:str,training_table_code:str,cascade_specializations:dict[str,str],idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return apply_career_term_training_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,training_table_code=training_table_code,cascade_specializations=cascade_specializations)

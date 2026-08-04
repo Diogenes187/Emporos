@@ -2705,7 +2705,9 @@ def apply_career_term_training_command(
     connection: psycopg.Connection, *, initiator_reference: str,
     idempotency_key: str, actor_public_id: str,
     training_table_code: str,
-    cascade_specialization: str | None = None, random_source=None,
+    cascade_specialization: str | None = None,
+    cascade_specializations: dict[str, str] | None = None,
+    random_source=None,
 ) -> CareerTermTrainingResult:
     """Apply one player-selected CE Skills and Training table roll."""
     valid_tables = {
@@ -2714,6 +2716,11 @@ def apply_career_term_training_command(
     }
     if training_table_code not in valid_tables:
         raise ValueError("Unknown career training table")
+    if cascade_specialization is not None and cascade_specializations:
+        raise ValueError(
+            "Supply either one legacy specialization or keyed specializations"
+        )
+    specializations = cascade_specializations or {}
     rng = random_source or secrets.SystemRandom()
     with connection.transaction():
         existing = connection.execute(
@@ -2809,7 +2816,11 @@ def apply_career_term_training_command(
         if entry[1] == "skill":
             granted_skill_id = entry[2]
             if entry[6]:
-                if cascade_specialization is None:
+                selected_specialization = (
+                    specializations.get(entry[7])
+                    if specializations else cascade_specialization
+                )
+                if selected_specialization is None:
                     raise ValueError(
                         f"Cascade skill {entry[7]} requires a specialization")
                 specialty = connection.execute(
@@ -2819,11 +2830,11 @@ def apply_career_term_training_command(
                          ON rule.rule_id=specialty.specialty_rule_id
                        WHERE specialty.parent_skill_rule_id=%s
                          AND rule.rule_code=%s""",
-                    (entry[2], cascade_specialization),
+                    (entry[2], selected_specialization),
                 ).fetchone()
                 if specialty is None:
                     raise ValueError(
-                        f"{cascade_specialization} is not a specialty "
+                        f"{selected_specialization} is not a specialty "
                         f"of {entry[7]}")
                 granted_skill_id = specialty[0]
             elif cascade_specialization is not None:

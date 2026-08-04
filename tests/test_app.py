@@ -265,3 +265,12 @@ def test_career_rank_attempt_dispatches_player_decision(monkeypatch):
     response=client.post("/campaigns/campaign/characters/actor/career-rank-attempt",data={"attempt_kind":"commission","decision":"attempt","cascade_specialization":"skill.slug-pistol","idempotency_key":"commission-test"},follow_redirects=False)
     assert response.status_code==303
     assert captured=={"actor_public_id":"actor","attempt_kind":"commission","decision":"attempt","cascade_specialization":"skill.slug-pistol","idempotency_key":"commission-test"}
+
+
+def test_career_term_training_dispatches_keyed_specializations(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"apply_career_term_training",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/career-term-training",data={"training_table_code":"service","specialization":["skill.gun-combat||skill.slug-pistol","skill.melee-combat||skill.slashing-weapons","skill.vehicle||skill.wheeled-vehicle"],"idempotency_key":"term-training-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert captured["training_table_code"]=="service"
+    assert captured["cascade_specializations"]=={"skill.gun-combat":"skill.slug-pistol","skill.melee-combat":"skill.slashing-weapons","skill.vehicle":"skill.wheeled-vehicle"}
