@@ -165,13 +165,16 @@ class CampaignReader:
                 actor["rank_zero_award"]=rank_zero
                 term_step=connection.execute("""SELECT stint.career_stint_id,stint.career_rule_id,stint.assignment_rule_id,stint.terms_completed,stint.rank_number,stint.entry_method,career_rule.name AS career_name FROM actor_career_stint stint JOIN rule_rule career_rule ON career_rule.rule_id=stint.career_rule_id WHERE stint.actor_id=%s AND stint.stint_status='active' AND stint.rank_zero_award_completed ORDER BY stint.stint_order DESC LIMIT 1""",(actor_id,)).fetchone()
                 if term_step:
+                    progression_summary=connection.execute("""SELECT commission_target,advancement_target FROM rule_career_progression WHERE career_rule_id=%s AND (assignment_rule_id=%s OR assignment_rule_id IS NULL) ORDER BY (assignment_rule_id IS NOT NULL) DESC LIMIT 1""",(term_step["career_rule_id"],term_step["assignment_rule_id"])).fetchone()
+                    term_step["commission_target"]=progression_summary["commission_target"] if progression_summary else None
+                    term_step["promotion_target"]=progression_summary["advancement_target"] if progression_summary else None
                     unresolved=connection.execute("""SELECT term.term_number,term.term_status,term.survival_check_total,term.survival_target,term.survived,characteristic.name AS characteristic_name,term.survival_characteristic_value,term.survival_characteristic_modifier,term.second_survival_check_required,term.second_survival_check_total,term.second_survival_passed,term.bonus_training_rolls,term.training_rolls_completed FROM actor_career_term term JOIN rule_rule characteristic ON characteristic.rule_id=term.survival_characteristic_rule_id WHERE term.career_stint_id=%s AND term.term_status<>'completed' ORDER BY term.term_number DESC LIMIT 1""",(term_step["career_stint_id"],)).fetchone()
                     if unresolved:
                         term_step.update(unresolved);term_step["stage"]="survival_result"
                         if unresolved["survived"]:
                             term_step["rank_results"]=connection.execute("""SELECT receipt.attempt_kind,receipt.decision,receipt.check_total,receipt.target_number,receipt.succeeded,receipt.prior_rank,receipt.resulting_rank FROM cmd_career_rank_attempt_receipt receipt JOIN actor_career_term term USING(career_term_id) WHERE term.career_stint_id=%s AND term.term_number=%s ORDER BY receipt.command_id""",(term_step["career_stint_id"],unresolved["term_number"])).fetchall()
                             decisions={row["attempt_kind"] for row in term_step["rank_results"]}
-                            progression=connection.execute("""SELECT commission_target,advancement_target FROM rule_career_progression WHERE career_rule_id=%s AND assignment_rule_id IS NOT DISTINCT FROM %s""",(term_step["career_rule_id"],term_step["assignment_rule_id"])).fetchone()
+                            progression=progression_summary
                             attempt_kind=None
                             if term_step["rank_number"]==0 and progression["commission_target"] is not None and "commission" not in decisions and not (term_step["entry_method"]=="draft" and unresolved["term_number"]==1):attempt_kind="commission"
                             elif 1<=term_step["rank_number"]<6 and progression["advancement_target"] is not None and "advancement" not in decisions:attempt_kind="advancement"

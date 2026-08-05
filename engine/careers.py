@@ -1512,7 +1512,10 @@ def attempt_career_survival_command(
                       progression.survival_target
                FROM rule_career_progression progression
                WHERE progression.career_rule_id=%s
-                 AND progression.assignment_rule_id IS NOT DISTINCT FROM %s""",
+                 AND (progression.assignment_rule_id=%s
+                      OR progression.assignment_rule_id IS NULL)
+               ORDER BY (progression.assignment_rule_id IS NOT NULL) DESC
+               LIMIT 1""",
             (stint[2], stint[3]),
         ).fetchone()
         if progression is None or progression[0] is None:
@@ -2495,7 +2498,8 @@ def resolve_career_rank_attempt_command(
                       advancement_characteristic_rule_id,advancement_target
                FROM rule_career_progression
                WHERE career_rule_id=%s
-                 AND assignment_rule_id IS NOT DISTINCT FROM %s""",
+                 AND (assignment_rule_id=%s OR assignment_rule_id IS NULL)
+               ORDER BY (assignment_rule_id IS NOT NULL) DESC LIMIT 1""",
             (term[3], term[5]),
         ).fetchone()
         offset = 0 if attempt_kind == "commission" else 2
