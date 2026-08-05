@@ -125,6 +125,41 @@ def test_characteristic_reroll_dispatches(monkeypatch):
     }
 
 
+def test_uuid_campaign_middleware_preserves_form_body(monkeypatch):
+    captured = {}
+    campaign_id = "11111111-1111-4111-8111-111111111111"
+    monkeypatch.setattr(
+        main_module,
+        "attempt_career_entry",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    monkeypatch.setattr(
+        main_module,
+        "resources_belong_to_campaign",
+        lambda campaign, submitted: True,
+    )
+    monkeypatch.setattr(
+        main_module,
+        "numeric_resources_belong_to_campaign",
+        lambda campaign, submitted: True,
+    )
+    response = client.post(
+        f"/campaigns/{campaign_id}/characters/actor/career-entry",
+        data={
+            "career_selection": "career.merchant||assignment.merchant",
+            "idempotency_key": "career-entry-test",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert captured == {
+        "actor_public_id": "actor",
+        "career_code": "career.merchant",
+        "assignment_code": "assignment.merchant",
+        "idempotency_key": "career-entry-test",
+    }
+
+
 def test_unfinished_character_discard_dispatches(monkeypatch):
     captured = {}
     monkeypatch.setattr(

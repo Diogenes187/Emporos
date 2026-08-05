@@ -66,6 +66,10 @@ async def require_account_and_campaign_access(request: Request, call_next):
             if value.isdecimal():
                 numeric_submitted.setdefault(key, set()).add(int(value))
         if request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
+            # Cache the bytes before parsing. Function middleware otherwise
+            # consumes the form stream and downstream FastAPI handlers receive
+            # an empty body.
+            await request.body()
             form = await request.form()
             submitted.update(str(value) for _, value in form.multi_items()
                              if PUBLIC_UUID.fullmatch(str(value)))
