@@ -969,10 +969,11 @@ def source_review(campaign_id:str,document_id:str,idempotency_key:str=Form(...))
     return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
 
 @app.post("/campaigns/{campaign_id}/referee-turns")
-def referee_turn(campaign_id:str,player_text:str=Form(...),idempotency_key:str=Form(...)):
+def referee_turn(campaign_id:str,player_text:str=Form(...),idempotency_key:str=Form(...),return_to:str=Form("")):
     try:send_referee_message(campaign_public_id=campaign_id,player_text=player_text,idempotency_key=idempotency_key)
     except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
-    return RedirectResponse(url=f"/?campaign={campaign_id}",status_code=303)
+    destination = "/play" if return_to == "play" else "/"
+    return RedirectResponse(url=f"{destination}?campaign={campaign_id}",status_code=303)
 
 @app.post("/campaigns/{campaign_id}/referee-actions/{request_id}/confirm")
 def referee_action_confirm(campaign_id:str,request_id:str,idempotency_key:str=Form(...)):
@@ -1308,6 +1309,19 @@ def dashboard(request: Request, campaign: str | None = None, invite_created: str
             campaigns=reader.campaigns(user_id=request.state.user.user_id),
             creation_key=str(uuid.uuid4()),
             invite_created=invite_created,
+        ),
+    )
+
+
+@app.get("/play", response_class=HTMLResponse)
+def play(request: Request, campaign: str | None = None):
+    current = selected_campaign(campaign)
+    return templates.TemplateResponse(
+        request=request,
+        name="play.html",
+        context=page_context(
+            request, "dashboard", campaign=current,
+            creation_key=str(uuid.uuid4()),
         ),
     )
 

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ campaign.name ~ ' · ' if campaign else '' }}Emporos</title>
+  <link rel="stylesheet" href="/static/css/play.css?v=20260805">
+</head>
+<body>
+<header class="bridge-header">
+  <a class="wordmark" href="/play{{ campaign_query }}">EMPOROS</a>
+  {% if campaign %}<strong class="campaign-name">{{ campaign.name }}</strong>{% endif %}
+  <nav aria-label="Campaign controls">
+    <a href="/library{{ campaign_query }}">Module</a>
+    <a href="/journal{{ campaign_query }}">Notes</a>
+    <a href="/">Campaigns</a>
+  </nav>
+  <span class="spacer"></span>
+  {% if campaign %}<span class="status"><i></i> Day {{ campaign.day_number }}</span>{% endif %}
+  <span class="user">{{ current_user.display_name }}</span>
+  <form method="post" action="/logout"><button type="submit">Logout</button></form>
+</header>
+
+{% if not campaign %}
+<main class="empty-bridge"><h1>Choose a campaign first.</h1><a href="/">Open campaign registry</a></main>
+{% else %}
+<main class="bridge" data-play-bridge>
+  <section class="mapwrap">
+    <div class="mapctl">
+      <span class="control-label">STAR MAP</span>
+      <a href="/sector{{ campaign_query }}">Navigation</a>
+      <a href="/trade{{ campaign_query }}">Trade</a>
+      <a href="/encounters{{ campaign_query }}">Combat</a>
+      <span class="pill">{{ campaign.systems|length }} systems</span>
+      {% if campaign.ships %}<span class="pill">{{ campaign.ships[0].name }}</span>{% endif %}
+    </div>
+    <div class="map" title="Select a world to open its navigation record">
+      {% if campaign.systems %}
+      <svg viewBox="0 0 1000 720" role="img" aria-label="{{ campaign.systems[0].sector_name }} star map">
+        <defs><pattern id="hexes" width="72" height="124.7" patternUnits="userSpaceOnUse" patternTransform="scale(.5)"><path d="M36 2 70 21v40L36 80 2 61V21Z" fill="none" stroke="currentColor" stroke-width="1"/></pattern></defs>
+        <rect width="1000" height="720" fill="url(#hexes)" class="hexfield"/>
+        {% for system in campaign.systems[:120] %}
+        <a href="/sector?campaign={{ campaign.public_id }}&system={{ system.public_id }}" class="world">
+          <circle cx="{{ 45 + ((system.hex_column-1)/31*900) }}" cy="{{ 45 + ((system.hex_row-1)/39*620) }}" r="8"/>
+          <text x="{{ 58 + ((system.hex_column-1)/31*900) }}" y="{{ 42 + ((system.hex_row-1)/39*620) }}">{{ system.name }}</text>
+          <text class="hex-label" x="{{ 58 + ((system.hex_column-1)/31*900) }}" y="{{ 56 + ((system.hex_row-1)/39*620) }}">{{ '%02d%02d'|format(system.hex_column,system.hex_row) }} {{ system.starport_code }}</text>
+        </a>
+        {% endfor %}
+      </svg>
+      {% else %}<div class="no-map"><p>No sector has been imported.</p><a href="/sector{{ campaign_query }}">Build the chart</a></div>{% endif %}
+    </div>
+  </section>
+
+  <aside class="bridge-panel">
+    <div class="tabs" role="tablist">
+      <button type="button" class="active" data-tab="crew">Crew</button>
+      <button type="button" data-tab="ships">Ships</button>
+      <button type="button" data-tab="worlds">Worlds</button>
+      <button type="button" data-tab="lore">Lore</button>
+    </div>
+    <div class="tab-panel active" data-panel="crew">
+      {% for actor in campaign.actors %}<article class="card"><strong>{{ actor.character_name }}</strong><small>{{ actor.lifepath_status|replace('_',' ')|title }} · {{ actor.skill_count }} skills</small><a href="/crew{{ campaign_query }}#builder-{{ actor.public_id }}">Open character</a></article>{% else %}<article class="card"><p>No characters yet.</p><a href="/crew{{ campaign_query }}">Build a character</a></article>{% endfor %}
+    </div>
+    <div class="tab-panel" data-panel="ships">
+      {% for ship in campaign.ships %}<article class="card"><strong>{{ ship.name }}</strong><small>{{ ship.class_code|replace('_',' ')|title }}{% if ship.location_name %} · {{ ship.location_name }}{% endif %}</small><a href="/ship{{ campaign_query }}">Open ship</a></article>{% else %}<article class="card"><p>No ship registered.</p><a href="/ship{{ campaign_query }}">Commission a ship</a></article>{% endfor %}
+    </div>
+    <div class="tab-panel" data-panel="worlds">
+      {% for system in campaign.systems[:30] %}<article class="card"><strong>{{ system.name }}</strong><small>{{ '%02d%02d'|format(system.hex_column,system.hex_row) }} · Starport {{ system.starport_code }}</small><a href="/sector?campaign={{ campaign.public_id }}&system={{ system.public_id }}">Survey</a></article>{% else %}<article class="card"><p>No charted worlds.</p></article>{% endfor %}
+    </div>
+    <div class="tab-panel" data-panel="lore">
+      <article class="card"><strong>Campaign library</strong><small>Uploaded adventures, sources, and spoiler-safe introductions.</small><a href="/library{{ campaign_query }}">Open library</a></article>
+      <article class="card"><strong>Session memory</strong><small>Notes and archived play text available to the referee.</small><a href="/journal{{ campaign_query }}">Open journal</a></article>
+    </div>
+  </aside>
+
+  <section class="feed">
+    <div class="feedgrip" data-feed-grip title="Drag to resize the story area"></div>
+    <div class="log" data-story-log>
+      {% for message in campaign.referee_messages %}<article class="msg {{ 'gm' if message.speaker_kind == 'referee' else 'player' }}"><span class="who">{{ 'Referee' if message.speaker_kind == 'referee' else 'You' }}</span><p>{{ message.message_text }}</p></article>{% else %}<article class="msg gm"><span class="who">Referee</span><p>The campaign is ready. Establish the opening scene or describe what your character does.</p></article>{% endfor %}
+      {% for action in campaign.referee_tool_requests %}<article class="msg system"><span class="who">Mechanical request</span><p>{{ action.request_summary }}</p><form method="post" action="/campaigns/{{ campaign.public_id }}/referee-actions/{{ action.public_id }}/confirm"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-confirm-{{ loop.index }}"><button type="submit">Confirm {{ action.tool_name|replace('_',' ') }}</button></form></article>{% endfor %}
+    </div>
+    <form class="inputbar" method="post" action="/campaigns/{{ campaign.public_id }}/referee-turns">
+      <input type="hidden" name="idempotency_key" value="{{ creation_key }}-referee">
+      <input type="hidden" name="return_to" value="play">
+      <input name="player_text" aria-label="Describe your action" placeholder="Describe your action… (Enter to send)" required autocomplete="off">
+      <button type="submit">Send</button>
+    </form>
+  </section>
+</main>
+
+<div class="modal" data-workspace-modal hidden><section class="modalcard"><button class="modal-close" type="button" data-modal-close>Close</button><div data-modal-body></div></section></div>
+{% endif %}
+<script src="/static/js/play.js?v=20260805" defer></script>
+</body>
+</html>

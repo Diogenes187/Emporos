@@ -30,10 +30,33 @@ def test_campaign_api_returns_a_list():
 
 
 def test_primary_pages_render():
-    for path in ("/", "/crew", "/psionics", "/contacts", "/operations", "/ship", "/sector", "/trade", "/journal", "/encounters", "/library"):
+    for path in ("/", "/play", "/crew", "/psionics", "/contacts", "/operations", "/ship", "/sector", "/trade", "/journal", "/encounters", "/library"):
         response = client.get(path)
         assert response.status_code == 200
         assert "Emporos" in response.text
+
+
+def test_play_referee_turn_returns_to_bridge(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module, "send_referee_message", lambda **kwargs: captured.update(kwargs)
+    )
+    response = client.post(
+        "/campaigns/campaign/referee-turns",
+        data={
+            "player_text": "I hail the port.",
+            "idempotency_key": "play-turn-test",
+            "return_to": "play",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"] == "/play?campaign=campaign"
+    assert captured == {
+        "campaign_public_id": "campaign",
+        "player_text": "I hail the port.",
+        "idempotency_key": "play-turn-test",
+    }
 
 
 def test_library_keeps_source_review_private():
