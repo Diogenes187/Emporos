@@ -16,8 +16,9 @@
   <link rel="stylesheet" href="/static/css/journal.css?v=20260804">
   <link rel="stylesheet" href="/static/css/theme-light.css?v=20260804">
   <link rel="stylesheet" href="/static/css/polish.css?v=20260804a">
+  <link rel="stylesheet" href="/static/css/cockpit.css?v=20260805">
 </head>
-<body>
+<body class="{{ 'cockpit-page' if active == 'dashboard' and campaign else '' }}">
   <aside class="rail">
     <a class="brand" href="/" aria-label="Emporos command">
       <img src="/logos/emporos_thumbnail_256.jpg" alt="">
@@ -48,7 +49,7 @@
     {% block content %}{% endblock %}
   </main>
 
-  <aside class="referee">
+  {% if active != 'dashboard' or not campaign %}<aside class="referee">
     <header>
       <div><span class="signal"></span><strong>Referee</strong></div>
       <small>Grounded narration</small>
@@ -75,6 +76,7 @@
       <textarea name="player_text" aria-label="Tell the referee what you do" placeholder="What do you do?" required {% if not campaign %}disabled{% endif %}></textarea>
       <div><button type="button" class="quiet">× Reject narration</button><button type="submit" {% if not campaign %}disabled{% endif %}>Send</button></div>
     </form>
-  </aside>
+  </aside>{% endif %}
+  <script src="/static/js/cockpit.js?v=20260805" defer></script>
 </body>
 </html>
