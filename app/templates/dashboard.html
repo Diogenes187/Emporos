@@ -1,110 +1,53 @@
 {% extends "base.html" %}
 {% block title %}Command · Emporos{% endblock %}
 {% block content %}
-{% if campaign %}
-<section class="cockpit-shell" data-cockpit data-layout-key="emporos-cockpit-{{ current_user.public_id }}">
-  <header class="cockpit-toolbar">
-    <div>
-      <small>LIVE CAMPAIGN</small>
-      <strong>{{ campaign.name }}</strong>
-      <span>Day {{ campaign.day_number }} · {{ campaign.play_mode|replace('_',' ')|title }}</span>
-    </div>
-    <div class="cockpit-presets" aria-label="Workspace layout">
-      <button type="button" data-layout="referee">Referee focus</button>
-      <button type="button" data-layout="split">Even split</button>
-      <button type="button" data-layout="map">Map focus</button>
-    </div>
-  </header>
-
-  <div class="cockpit-workspace">
-    <section class="cockpit-map" aria-label="Campaign star map">
-      <header>
-        <div><small>STAR MAP</small><strong>{{ campaign.systems[0].sector_name if campaign.systems else 'Uncharted sector' }}</strong></div>
-        <a href="/sector{{ campaign_query }}">Open navigation</a>
-      </header>
-      {% if campaign.systems %}
-      <div class="cockpit-hex-map">
-        {% for item in campaign.systems[:80] %}
-        <a class="system" href="/sector?campaign={{ campaign.public_id }}&system={{ item.public_id }}" style="left:{{ 4+((item.hex_column-1)/31*88) }}%;top:{{ 5+((item.hex_row-1)/39*86) }}%" title="{{ item.name }} · {{ '%02d%02d'|format(item.hex_column,item.hex_row) }}">
-          <i></i><strong>{{ item.name }}</strong><small>{{ '%02d%02d'|format(item.hex_column,item.hex_row) }} {{ item.starport_code }}</small>
-        </a>
-        {% endfor %}
-      </div>
-      <footer>
-        <span>{{ campaign.systems|length }} systems</span>
-        <span>{{ campaign.journeys|length }} active journey{{ '' if campaign.journeys|length == 1 else 's' }}</span>
-        {% if campaign.ships %}<span>{{ campaign.ships[0].name }}</span>{% endif %}
-      </footer>
-      {% else %}
-      <div class="cockpit-empty-map"><span>◇</span><strong>No chart loaded</strong><p>Import a sector to place systems on the campaign map.</p><a href="/sector{{ campaign_query }}">Import sector</a></div>
-      {% endif %}
-    </section>
-
-    <div class="cockpit-divider" role="separator" aria-label="Resize map and referee" aria-orientation="vertical" tabindex="0"><span></span></div>
-
-    <section class="cockpit-referee" aria-label="AI referee conversation">
-      <header>
-        <div><span class="signal"></span><div><strong>Referee</strong><small>Narration grounded in campaign state</small></div></div>
-        <a href="/journal{{ campaign_query }}">Session memory</a>
-      </header>
-      <div class="cockpit-transcript" data-transcript>
-        {% for message in campaign.referee_messages %}
-        <article class="{{ 'narration' if message.speaker_kind == 'referee' else 'player-message' }}">
-          <small>{{ 'REFEREE' if message.speaker_kind == 'referee' else 'YOU' }}</small>
-          <p>{{ message.message_text }}</p>
-        </article>
-        {% else %}
-        <article class="narration"><small>REFEREE</small><p>The campaign is ready. Establish a scene or describe your next action.</p></article>
-        {% endfor %}
-        {% for action in campaign.referee_tool_requests %}
-        <article class="receipt referee-request"><small>MECHANICAL ACTION · CONFIRMATION REQUIRED</small><strong>{{ action.request_summary }}</strong><span>{{ action.tool_name|replace('_',' ')|title }}</span><form method="post" action="/campaigns/{{ campaign.public_id }}/referee-actions/{{ action.public_id }}/confirm"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-confirm-{{ loop.index }}"><button type="submit">Confirm action</button></form></article>
-        {% endfor %}
-      </div>
-      <form id="referee-composer" class="cockpit-composer" method="post" action="/campaigns/{{ campaign.public_id }}/referee-turns">
-        <input type="hidden" name="idempotency_key" value="{{ creation_key }}-referee">
-        <label for="player-text">What do you do?</label>
-        <textarea id="player-text" name="player_text" placeholder="Speak, act, ask a question, or establish what your character attempts…" required></textarea>
-        <div><span>Enter sends · Shift+Enter adds a line</span><button type="submit">Send to referee</button></div>
-      </form>
-    </section>
-  </div>
-
-  <nav class="cockpit-dock" aria-label="Campaign workspaces">
-    <a href="/crew{{ campaign_query }}" data-workspace="Characters & Crew"><span>Characters</span><small>{{ campaign.actors|length }} aboard</small></a>
-    <a href="/ship{{ campaign_query }}" data-workspace="Ships"><span>Ships</span><small>{{ campaign.ships|length }} registered</small></a>
-    <a href="/trade{{ campaign_query }}" data-workspace="Trade"><span>Trade</span><small>Markets & cargo</small></a>
-    <a href="/encounters{{ campaign_query }}" data-workspace="Encounters"><span>Encounters</span><small>Conflict & scenes</small></a>
-    <a href="/library{{ campaign_query }}"><span>Library</span><small>Adventures & sources</small></a>
-    <a href="/psionics{{ campaign_query }}" data-workspace="Psionics"><span>Psionics</span><small>Character abilities</small></a>
-  </nav>
-  <dialog class="mechanics-workspace" data-mechanics-workspace>
-    <header><div><small>FOCUSED WORKSPACE</small><strong data-workspace-title>Campaign mechanics</strong></div><button type="button" data-workspace-close aria-label="Close workspace">Close</button></header>
-    <iframe title="Campaign mechanics workspace" data-workspace-frame></iframe>
-  </dialog>
+<section class="page-heading">
+  <div><small>SHIPBOARD COMMAND</small><h1>{{ campaign.name if campaign else 'Begin a campaign.' }}</h1><p>{% if campaign %}Authoritative state loaded from the Emporos relational database.{% else %}No active campaign is available in the connected database.{% endif %}</p></div>
+  <a class="primary primary-action" href="{{ '#referee-composer' if campaign else '#campaign-registry' }}">{{ 'Resume scene' if campaign else 'Create campaign' }}</a>
 </section>
 
-{% if campaign_role == 'owner' %}<details class="campaign-admin panel">
-  <summary>Campaign access and registry</summary>
-  <div class="campaign-admin-grid">
-    <form class="campaign-create" method="post" action="/campaigns/{{ campaign.public_id }}/invitations">
-      <label><span>Invite registered player</span><input type="email" name="email" required placeholder="player@example.com"></label>
-      <button type="submit">Create invitation</button>
-    </form>
-    <div class="campaign-list">{% for item in campaigns[:8] %}<a href="/?campaign={{ item.public_id }}"><strong>{{ item.name }}</strong><small>{{ item.actor_count }} characters · {{ item.ship_count }} ships · {{ item.system_count }} systems</small></a>{% endfor %}</div>
-  </div>
-  {% if invite_created %}<div class="receipt"><strong>Invitation ready</strong><input readonly value="{{ request.base_url }}join/{{ invite_created }}" aria-label="Invitation link"></div>{% endif %}
-</details>{% endif %}
+<section class="stat-grid">
+  <article><small>SHIPS</small><strong>{{ campaign.ships|length if campaign else 0 }}</strong><span>{{ campaign.ships[0].name if campaign and campaign.ships else 'No vessel instantiated' }}</span></article>
+  <article><small>CHARACTERS</small><strong>{{ campaign.actors|length if campaign else 0 }}</strong><span>Relational actor records</span></article>
+  <article><small>SYSTEMS</small><strong>{{ campaign.systems|length if campaign else 0 }}</strong><span>Charted in this campaign</span></article>
+  <article><small>CAMPAIGN DAY</small><strong>{{ campaign.day_number if campaign else 0 }}</strong><span>{{ campaign.status|title if campaign else 'Unavailable' }}</span></article>
+</section>
 
-{% else %}
-<section class="page-heading"><div><small>FREE TRADER REGISTRY</small><h1>Choose a campaign.</h1><p>Create a private campaign or return to an existing one.</p></div></section>
+<section class="dashboard-grid">
+  <article class="panel wide">
+    <header><div><small>CURRENT OPERATION</small><h2>{% if campaign and campaign.ships %}{{ campaign.ships[0].name }}{% else %}No active vessel{% endif %}</h2></div><span class="tag">{{ campaign.status|upper if campaign else 'IDLE' }}</span></header>
+    <div class="route-line"><span class="world current"></span><i></i><span class="world"></span><div><strong>{% if campaign and campaign.systems %}{{ campaign.systems[0].name }}{% else %}Sector awaiting import{% endif %}</strong><small>{% if campaign and campaign.ships %}{{ campaign.ships[0].class_code|replace('_',' ')|title }}{% else %}Create a ship or import campaign content{% endif %}</small></div></div>
+    <div class="actions"><a href="/trade{{ campaign_query }}">Review market</a><a href="/sector{{ campaign_query }}">Plot journey</a><a href="/ship{{ campaign_query }}">Inspect ship</a></div>
+  </article>
+  <article class="panel">
+    <header><div><small>WATCH LIST</small><h2>Needs attention</h2></div></header>
+    <ul class="alerts">
+      <li><span>01</span><div><strong>Vessel state</strong><small>{{ 'Ready for inspection' if campaign and campaign.ships else 'No ship instantiated' }}</small></div></li>
+      <li><span>02</span><div><strong>Sector state</strong><small>{{ (campaign.systems|length|string) + ' systems loaded' if campaign else 'No sector selected' }}</small></div></li>
+      <li><span>03</span><div><strong>Library import</strong><small>No active adventure module</small></div></li>
+    </ul>
+  </article>
+  <article class="panel wide">
+    <header><div><small>RECENT HISTORY</small><h2>Mechanical record</h2></div><button class="text-button">Open chronicle</button></header>
+    <table>{% if campaign and campaign.actors %}{% for actor in campaign.actors[:3] %}<tr><td>ACTOR</td><td>{{ actor.character_name }}</td><td>{{ actor.skill_count }} trained skills</td><td class="positive">Loaded</td></tr>{% endfor %}{% else %}<tr><td>—</td><td>No campaign events to display</td><td>State is not fabricated</td><td>Empty</td></tr>{% endif %}</table>
+  </article>
+</section>
+{% if campaign and campaign_role == 'owner' %}<section class="campaign-picker panel">
+  <header><div><small>CAMPAIGN ACCESS</small><h2>Invite a registered player</h2></div><span class="tag">OWNER</span></header>
+  <form class="campaign-create" method="post" action="/campaigns/{{ campaign.public_id }}/invitations">
+    <label><span>Player email</span><input type="email" name="email" required placeholder="player@example.com"></label>
+    <button type="submit">Create private invitation</button>
+  </form>
+  {% if invite_created %}<div class="receipt"><strong>Invitation ready</strong><span>Send this private link to the matching account:</span><input readonly value="{{ request.base_url }}join/{{ invite_created }}" aria-label="Invitation link"></div>{% endif %}
+</section>{% endif %}
 <section id="campaign-registry" class="campaign-picker panel">
+  <header><div><small>CAMPAIGN REGISTRY</small><h2>Select or create campaign</h2></div></header>
   <form class="campaign-create" method="post" action="/campaigns">
     <input type="hidden" name="idempotency_key" value="{{ creation_key }}">
     <label><span>Campaign name</span><input name="name" required maxlength="120" placeholder="The Long Account"></label>
     <label><span>Referee mode</span><select name="play_mode"><option value="ai_refereed">AI refereed</option><option value="ai_assisted">AI assisted</option><option value="player_directed">Player directed</option><option value="human_refereed">Human refereed</option></select></label>
     <button class="primary" type="submit">Create campaign</button>
   </form>
-  <div class="campaign-list">{% for item in campaigns[:8] %}<a href="/?campaign={{ item.public_id }}"><strong>{{ item.name }}</strong><small>{{ item.actor_count }} characters · {{ item.ship_count }} ships · {{ item.system_count }} systems</small></a>{% else %}<p>No campaigns found.</p>{% endfor %}</div>
+  <div class="campaign-list">{% for item in campaigns[:8] %}<a href="/?campaign={{ item.public_id }}"><strong>{{ item.name }}</strong><small>{{ item.actor_count }} actors · {{ item.ship_count }} ships · {{ item.system_count }} systems</small></a>{% else %}<p>No campaigns found.</p>{% endfor %}</div>
 </section>
-{% endif %}
 {% endblock %}
