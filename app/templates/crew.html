@@ -32,6 +32,12 @@
 <small>{{ actor.location_name or 'No established location' }} · {{ actor.lifepath_status or 'Lifepath not begun' }}</small>
 </div>
 </div>
+<div class="character-card-actions">
+<form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/delete" onsubmit="return confirm('Permanently delete {{ actor.character_name|e }}? This cannot be undone.')">
+<input type="hidden" name="idempotency_key" value="{{ creation_key }}-delete-header-{{ actor.public_id }}">
+<button class="quiet-danger" type="submit">Delete character</button>
+</form>
+</div>
         <div class="characteristics">{% for stat in actor.characteristics %}<div>
 <small>{{ stat.abbreviation }}</small>
 <strong>{{ stat.current }}</strong>
@@ -41,7 +47,7 @@
 <small>STEP 1 · CHARACTERISTICS</small>
 <h3>Keep these rolls or try another set</h3>
 <p>Total {{ actor.characteristics|sum(attribute='current') }}. As in the original creator, you may reroll all six as often as you like before entering a career. Every set remains audited.</p>
-<div class="button-row"><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/reroll-characteristics"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-reroll-{{ actor.public_id }}"><button type="submit">Reroll all six</button></form><a class="primary-link" href="#career-{{ actor.public_id }}">Keep rolls and choose career</a><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/delete" onsubmit="return confirm('Permanently delete this character?')"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-delete-{{ actor.public_id }}"><button class="quiet-danger" type="submit">Delete character</button></form></div>
+<div class="button-row"><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/reroll-characteristics"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-reroll-{{ actor.public_id }}"><button type="submit">Reroll all six</button></form><a class="primary-link" href="#career-{{ actor.public_id }}">Keep rolls and choose career</a></div>
 </section>
 {% endif %}
         <div class="crew-meta">
@@ -74,11 +80,6 @@
 <summary>Name and final details</summary>
 <form class="market-form" method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/final-details"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-details-{{ actor_index }}"><label><span>Character name</span><input name="character_name" value="{{ '' if actor.character_name == 'Unnamed Traveller' else actor.character_name }}" required maxlength="120" autofocus></label><label><span>Gender identity (optional)</span><input name="gender_identity" value="{{ actor.gender_identity or '' }}"></label><label><span>Appearance (optional)</span><textarea name="appearance">{{ actor.appearance or '' }}</textarea></label>{% for goal_number in range(3) %}<label><span>Personal goal {{ goal_number+1 }} (optional)</span><input name="personal_goals" value="{{ actor.personal_goals[goal_number] if goal_number < actor.personal_goals|length else '' }}"></label>{% endfor %}<button type="submit">Name character and save details</button></form>
 </details>{% endif %}
-<details>
-<summary>Delete character</summary>
-<p>This permanently removes the character from play and every active selector. Existing campaign history keeps a tombstone.</p>
-<form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/delete" onsubmit="return confirm('Permanently delete {{ actor.character_name|e }}?')"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-delete-card-{{ actor_index }}"><button class="quiet-danger" type="submit">Delete {{ actor.character_name }}</button></form>
-</details>
 <details class="creation-step" id="career-{{ actor.public_id }}"{% if actor.lifepath_status != 'completed' %} open{% endif %}>
 <summary>Career history</summary>
 <div class="station-list">{% for career in actor.careers %}<article>
