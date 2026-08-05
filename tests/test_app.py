@@ -179,6 +179,25 @@ def test_unfinished_character_discard_dispatches(monkeypatch):
     }
 
 
+def test_character_delete_dispatches(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(
+        main_module,
+        "delete_character",
+        lambda **kwargs: captured.update(kwargs),
+    )
+    response = client.post(
+        "/campaigns/campaign/characters/actor/delete",
+        data={"idempotency_key": "delete-test"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert captured == {
+        "actor_public_id": "actor",
+        "idempotency_key": "delete-test",
+    }
+
+
 def test_ship_requires_campaign_and_has_no_decorative_vessel():
     response=client.get("/ship")
     assert response.status_code == 200
