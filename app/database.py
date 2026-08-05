@@ -3,11 +3,49 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from itertools import permutations
 import os
 from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
+
+
+_PHYSICAL_CHARACTERISTICS = (
+    ("characteristic.strength", "STR"),
+    ("characteristic.dexterity", "DEX"),
+    ("characteristic.endurance", "END"),
+)
+_AGING_REDUCTIONS = {
+    "two_two_two": (2, 2, 2),
+    "two_two_one": (2, 2, 1),
+    "two_one_one": (2, 1, 1),
+    "one_one_one": (1, 1, 1),
+    "one_one": (1, 1),
+    "one": (1,),
+}
+
+
+def aging_allocation_options(pattern: str) -> list[dict[str, Any]]:
+    """Return every distinct legal physical-aging allocation for the UI."""
+    amounts = _AGING_REDUCTIONS.get(pattern, ())
+    if not amounts:
+        return []
+    names = dict(_PHYSICAL_CHARACTERISTICS)
+    options: list[dict[str, Any]] = []
+    seen: set[tuple[tuple[str, int], ...]] = set()
+    for codes in permutations(names, len(amounts)):
+        signature = tuple(sorted(zip(codes, amounts)))
+        if signature in seen:
+            continue
+        seen.add(signature)
+        options.append({
+            "physical_codes": codes,
+            "summary": " · ".join(
+                f"{names[code]} −{amount}" for code, amount in zip(codes, amounts)
+            ),
+        })
+    return options
 
 
 def database_url() -> str | None:
@@ -237,6 +275,9 @@ class CampaignReader:
                 if aging:
                     aging["stage"]="allocation" if aging["aging_status"]=="awaiting_allocation" else ("crisis_cost" if not aging["crisis_status"] else "crisis_decision")
                     aging["physical_target_count"]={"two_two_two":3,"two_two_one":3,"two_one_one":3,"one_one_one":3,"one_one":2,"one":1}.get(aging["physical_reduction_pattern"],0)
+                    aging["allocation_options"] = aging_allocation_options(
+                        aging["physical_reduction_pattern"]
+                    )
                 else:
                     stopping=connection.execute("""SELECT EXISTS(SELECT 1 FROM actor_career_anagathic_term use WHERE use.actor_id=%s AND use.declaration_status='shock_required' AND NOT EXISTS(SELECT 1 FROM actor_career_aging aging WHERE aging.career_anagathic_term_id=use.career_anagathic_term_id)) AS required""",(actor_id,)).fetchone()["required"]
                     term_aging=connection.execute("""SELECT EXISTS(SELECT 1 FROM actor_career_term term JOIN actor_career_stint stint USING(career_stint_id) JOIN actor_lifepath_state lifepath ON lifepath.actor_id=stint.actor_id WHERE stint.actor_id=%s AND term.term_status='completed' AND lifepath.age_years>=COALESCE((SELECT species.aging_start_age_years FROM actor_current_species current_species JOIN rule_species species USING(species_rule_id) WHERE current_species.actor_id=stint.actor_id),(SELECT starting_age_years+term_years*4 FROM rule_career_system)) AND NOT EXISTS(SELECT 1 FROM actor_career_aging aging WHERE aging.career_term_id=term.career_term_id)) AS required""",(actor_id,)).fetchone()["required"]
