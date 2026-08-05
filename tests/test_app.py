@@ -59,6 +59,18 @@ def test_play_referee_turn_returns_to_bridge(monkeypatch):
     }
 
 
+def test_play_without_campaign_opens_an_available_campaign(monkeypatch):
+    class Campaign:
+        public_id = "available-campaign"
+
+    monkeypatch.setattr(
+        main_module.reader, "campaigns", lambda user_id=None: [Campaign()]
+    )
+    response = client.get("/play", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/play?campaign=available-campaign"
+
+
 def test_library_keeps_source_review_private():
     response = client.get("/library")
     assert "Every page is accounted for" in response.text

@@ -1315,6 +1315,12 @@ def dashboard(request: Request, campaign: str | None = None, invite_created: str
 
 @app.get("/play", response_class=HTMLResponse)
 def play(request: Request, campaign: str | None = None):
+    if campaign is None:
+        available = reader.campaigns(user_id=request.state.user.user_id)
+        if available:
+            return RedirectResponse(
+                url=f"/play?campaign={available[0].public_id}", status_code=303
+            )
     current = selected_campaign(campaign)
     return templates.TemplateResponse(
         request=request,
