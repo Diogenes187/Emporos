@@ -77,8 +77,15 @@ def test_library_keeps_source_review_private():
     assert "PAGE TEXT" not in response.text
 
 
-def test_unselected_dashboard_does_not_invent_a_location():
+def test_front_door_serves_the_cockpit():
     response = client.get("/")
+    assert response.status_code == 200
+    assert 'id="mapWrap"' in response.text
+    assert "EMPOROS" in response.text
+
+
+def test_unselected_dashboard_does_not_invent_a_location():
+    response = client.get("/command")
     assert "Select or create a campaign" in response.text
     assert "Regina Highport" not in response.text
 
@@ -87,14 +94,15 @@ def test_selected_campaign_dashboard_renders_live_campaign():
     campaigns=main_module.reader.campaigns()
     if not campaigns:
         return
-    response=client.get(f"/?campaign={campaigns[0].public_id}")
+    response=client.get(f"/command?campaign={campaigns[0].public_id}")
     assert response.status_code==200
-    assert campaigns[0].name in response.text
+    import html
+    assert html.escape(campaigns[0].name) in response.text or campaigns[0].name in response.text
     assert "No campaign selected" not in response.text
 
 
 def test_campaign_creation_form_has_stable_idempotency_key():
-    response = client.get("/")
+    response = client.get("/command")
     assert 'name="idempotency_key"' in response.text
     assert 'action="/campaigns"' in response.text
 

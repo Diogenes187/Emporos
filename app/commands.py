@@ -29,7 +29,7 @@ from engine.campaigns import create_campaign_command  # noqa: E402
 from engine.character_creation import initialize_character_command  # noqa: E402
 from engine.ships import acquire_ship_command  # noqa: E402
 from engine.sectors import import_sector_command  # noqa: E402
-from engine.travel_planning import place_ship_command, plan_jump_journey_command  # noqa: E402
+from engine.travel_planning import cancel_jump_journey_command, place_ship_command, plan_jump_journey_command  # noqa: E402
 from engine.navigation import resolve_navigation_command  # noqa: E402
 from engine.jump_attempts import resolve_jump_attempt_command  # noqa: E402
 from engine.spacecraft_journeys import start_spacecraft_journey_leg_command, complete_spacecraft_journey_leg_command  # noqa: E402
@@ -234,6 +234,10 @@ def plot_jump(*,journey_public_id:str,actor_public_id:str,idempotency_key:str):
 def resolve_jump(*,journey_public_id:str,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return resolve_jump_attempt_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,journey_public_id=journey_public_id,engineer_actor_public_id=actor_public_id)
+
+def cancel_jump(*,journey_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return cancel_jump_journey_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,journey_public_id=journey_public_id)
 
 def run_jump(*,journey_public_id:str,idempotency_key:str,complete:bool):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

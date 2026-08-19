@@ -72,7 +72,7 @@ def plan_jump_journey_command(c:psycopg.Connection,*,initiator_reference:str,ide
   distance=_distance(state[5],state[6],state[8],state[9])
   if distance>state[4]:raise ValueError(f'Destination is {distance} parsecs away; ship is Jump-{state[4]}')
   fuel=(Decimal(state[3])*Decimal(distance)/Decimal(10)).quantize(Decimal('0.001')).normalize()
-  if Decimal(state[10])<fuel:raise ValueError(f'Jump requires {fuel} tons of refined fuel; only {state[10]} available')
+  if Decimal(state[10])<fuel:raise ValueError(f'Jump requires {fuel:f} tons of refined fuel; only {state[10]} available')
   cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('plan_jump_journey',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone()
   jid,jpub=c.execute("INSERT INTO journey_journey(campaign_id,journey_kind,name,ship_id,conveyance_item_instance_id) VALUES(%s,'jump',%s,%s,%s) RETURNING journey_id,public_id",(state[0],name,state[1],state[11])).fetchone()
   leg=c.execute("INSERT INTO journey_leg(journey_id,campaign_id,leg_order,origin_location_id,destination_location_id,travel_mode,distance_value,distance_unit) VALUES(%s,%s,1,%s,%s,'jump',%s,'parsec') RETURNING journey_leg_id",(jid,state[0],state[2],state[7],distance)).fetchone()[0]
@@ -84,3 +84,43 @@ def plan_jump_journey_command(c:psycopg.Connection,*,initiator_reference:str,ide
   c.execute("INSERT INTO cmd_jump_journey_planning_receipt VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",(cid,state[0],jid,leg,state[1],state[2],state[7],distance,state[4],fuel,crew))
   c.execute("INSERT INTO cmd_domain_event(command_id,event_order,event_type) VALUES(%s,1,'jump_journey_planned')",(cid,));c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,))
   return _load_plan(c,cid,pub,False)
+
+@dataclass(frozen=True)
+class JumpCancellationResult:
+ command_public_id:str;journey_public_id:str;journey_name:str
+ ship_name:str;released_resource_plans:int;relieved_crew:int;replayed:bool
+
+def _load_cancel(c,cid,pub,replayed):
+ row=c.execute("SELECT journey.public_id,journey.name,ship.name,receipt.released_resource_plans,receipt.relieved_crew_commitments FROM cmd_jump_journey_cancellation_receipt receipt JOIN journey_journey journey ON journey.journey_id=receipt.journey_id JOIN ship_ship ship ON ship.ship_id=receipt.ship_id WHERE receipt.command_id=%s",(cid,)).fetchone()
+ return JumpCancellationResult(str(pub),str(row[0]),row[1],row[2],row[3],row[4],replayed)
+
+def cancel_jump_journey_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,journey_public_id:str)->JumpCancellationResult:
+ """Stand down a drafted jump order.
+
+ Only a journey still in 'planning' can be cancelled: once the drive has
+ been resolved the outcome stands, so a resolved misjump cannot be dodged
+ by cancelling. Fuel was only reserved, never spent — the reservation is
+ released and the crew commitments are relieved.
+ """
+ with c.transaction():
+  old=c.execute("SELECT command_id,public_id,command_type,command_status FROM cmd_command WHERE initiator_reference=%s AND idempotency_key=%s FOR UPDATE",(initiator_reference,idempotency_key)).fetchone()
+  if old:
+   if old[2:]!=('cancel_jump_journey','completed'):raise RuntimeError('Idempotency key belongs to another command')
+   return _load_cancel(c,old[0],old[1],True)
+  state=c.execute("""SELECT journey.journey_id,journey.campaign_id,journey.ship_id,journey.journey_status,journey.concurrency_version
+  FROM journey_journey journey JOIN camp_campaign campaign USING(campaign_id)
+  WHERE journey.public_id=%s AND campaign.owner_reference=%s AND campaign.campaign_status='active'
+  FOR UPDATE OF journey""",(journey_public_id,initiator_reference)).fetchone()
+  if not state:raise ValueError('Journey is absent or not controlled by this player')
+  if state[3]!='planning':raise ValueError(f"Only a jump order still in planning can be stood down; this one is {state[3]}")
+  cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('cancel_jump_journey',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone()
+  released=c.execute("""UPDATE journey_ship_resource_plan SET plan_status='released'
+  WHERE plan_status IN ('planned','reserved') AND journey_leg_id IN
+  (SELECT journey_leg_id FROM journey_leg WHERE journey_id=%s)""",(state[0],)).rowcount
+  relieved=c.execute("""UPDATE journey_ship_crew_commitment SET commitment_status='relieved',ended_at=clock_timestamp()
+  WHERE journey_id=%s AND commitment_status='assigned'""",(state[0],)).rowcount
+  c.execute("UPDATE journey_journey SET journey_status='cancelled',ended_at=clock_timestamp(),concurrency_version=concurrency_version+1 WHERE journey_id=%s",(state[0],))
+  c.execute("INSERT INTO cmd_jump_journey_cancellation_receipt VALUES(%s,%s,%s,%s,'planning',%s,%s)",(cid,state[1],state[0],state[2],released,relieved))
+  c.execute("INSERT INTO cmd_domain_event(command_id,event_order,event_type) VALUES(%s,1,'jump_journey_cancelled')",(cid,))
+  c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,))
+  return _load_cancel(c,cid,pub,False)

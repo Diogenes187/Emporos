@@ -252,7 +252,65 @@ def parse_markdown_skills(
     return sorted(skills, key=lambda item: item.code), cascades
 
 
+_OFFLINE_URL_SOURCES = {
+    "cepheus-engine-character-creation": "book1/character-creation.md",
+    "cepheus-engine-skills": "book1/skills.md",
+    "cepheus-engine-personal-combat": "book1/personal-combat.md",
+    "cepheus-engine-trade-and-commerce": "book2/trade-and-commerce.md",
+    "cepheus-engine-off-world-travel": "book2/off-world-travel.md",
+    "cepheus-engine-social-encounters": "book3/social-encounters.md",
+    "psionics": "book1/psionics.md",
+    "cepheus-engine-psionics": "book1/psionics.md",
+    "cepheus-engine-introduction-2": "vds/introduction.md",
+    "cepheus-engine-equipment": "book1/equipment.md",
+    "cepheus-engine-space-combat": "book2/space-combat.md",
+    "cepheus-engine-ship-design-and-construction": "book2/ship-design-and-construction.md",
+    "cepheus-engine-common-vessels": "book2/common-vessels.md",
+    "cepheus-engine-worlds": "book3/worlds.md",
+    "cepheus-engine-adventures": "book3/adventures.md",
+    "cepheus-engine-environments-and-hazards": "book3/environments-and-hazards.md",
+    "cepheus-engine-planetary-wilderness-encounters": "book3/planetary-wilderness-encounters.md",
+    "cepheus-engine-starship-encounters": "book3/starship-encounters.md",
+    "cepheus-engine-refereeing-the-game": "book3/refereeing-the-game.md",
+    "cepheus-engine-srd": "introduction.md",
+    "cepheus-srd.opengamingnetwork.com": "introduction.md",
+}
+
+
+def _offline_fetch(url: str) -> tuple[bytes, BeautifulSoup]:
+    """Render the local SRD markdown mirror of an OGN page to HTML.
+
+    Used when EMPOROS_OFFLINE_BOOTSTRAP=1 so the bootstrap can run without
+    network access. The local markdown carries the same SRD text the website
+    does, so the cross-verification still checks something real.
+    """
+    import markdown  # local dependency, only needed offline
+
+    if "traveller-srd.com" in url:
+        cache = Path(__file__).resolve().parent / "offline_cache" / "traveller-srd-psionics.html"
+        data = cache.read_bytes()
+        return data, BeautifulSoup(data, "html.parser")
+
+    root = Path(__file__).resolve().parents[1] / "sources" / "cepheus-srd" / "src"
+    slug = url.rstrip("/").rsplit("/", 1)[-1]
+    rel = _OFFLINE_URL_SOURCES.get(slug)
+    candidates = [root / rel] if rel else []
+    if not candidates:
+        # Fall back to the VDS introduction for the site root / SRD index.
+        candidates = [root / "vds" / "introduction.md", root / "introduction.md"]
+    for path in candidates:
+        if path.exists():
+            html = markdown.markdown(
+                path.read_text(encoding="utf-8"), extensions=["tables"]
+            )
+            data = html.encode("utf-8")
+            return data, BeautifulSoup(data, "html.parser")
+    raise FileNotFoundError(f"No offline source mapped for {url}")
+
+
 def fetch(session: requests.Session, url: str) -> tuple[bytes, BeautifulSoup]:
+    if os.environ.get("EMPOROS_OFFLINE_BOOTSTRAP") == "1":
+        return _offline_fetch(url)
     response = session.get(url, timeout=45)
     response.raise_for_status()
     return response.content, BeautifulSoup(response.content, "html.parser")

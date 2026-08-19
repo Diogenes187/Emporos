@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The Exchange — Emporos</title>
+<style>
+ :root{--bg:#06070c;--panel:#0d1019;--panel2:#11151f;--line:#222c45;
+       --ink:#e8ecf5;--dim:#93a0c2;--accent:#49c0b8;--gold:#ffd351;
+       --red:#ef4146;--good:#7ef9c4}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--ink);
+      font-family:Helvetica,Arial,sans-serif;font-size:14px}
+ header{display:flex;align-items:center;gap:12px;padding:10px 16px;
+        background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+ header h1{font-size:16px;margin:0;letter-spacing:2px}
+ .spacer{flex:1}
+ a{color:var(--accent)}
+ select,button,input{background:var(--panel2);color:var(--ink);
+   border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:13px}
+ button{cursor:pointer} button:hover{border-color:var(--accent)}
+ button:disabled{opacity:.4;cursor:not-allowed}
+ .pill{font-size:11px;color:var(--dim);border:1px solid var(--line);
+       border-radius:10px;padding:1px 7px}
+ main{padding:14px;max-width:1180px;margin:0 auto}
+ h2{font-size:13px;letter-spacing:1px;color:var(--dim);margin:22px 0 8px;
+    text-transform:uppercase}
+ .sub{color:var(--dim);font-size:12px}
+ table{width:100%;border-collapse:collapse;font-size:13px}
+ th{text-align:left;color:var(--dim);font-weight:600;font-size:11px;
+    text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;
+    border-bottom:1px solid var(--line)}
+ td{padding:7px 8px;border-bottom:1px solid #161c2b;vertical-align:top}
+ tr:hover td{background:#0e1220}
+ .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+ .cheap{color:var(--good);font-weight:600}
+ .dear{color:var(--red);font-weight:600}
+ .why{color:var(--dim);font-size:11px}
+ .banner{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+         padding:12px 14px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+ .banner b{color:var(--ink)}
+ .empty{color:var(--dim);padding:26px 4px}
+ .profit{color:var(--good);font-weight:600} .loss{color:var(--red);font-weight:600}
+ .err{color:var(--red);font-size:12px;margin:6px 0}
+ #log{margin-top:26px;border-top:1px solid var(--line);padding-top:8px;
+      font-size:12px;color:var(--dim);max-height:140px;overflow:auto;
+      font-variant-numeric:tabular-nums}
+ #log .bad{color:var(--red)}
+ #log .ok{color:var(--good)}
+ .deal{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+       padding:10px 12px;margin:8px 0;display:flex;gap:12px;flex-wrap:wrap;
+       align-items:center}
+ .deal b{color:var(--gold)}
+ @media (max-width:760px){ th:nth-child(4),td:nth-child(4){display:none} }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚖ THE EXCHANGE</h1>
+  <span id="where" class="pill"></span>
+  <span class="spacer"></span>
+  <a href="/battle">⚔ field desk</a>
+  <a href="/">← bridge</a>
+</header>
+
+<main>
+  <div class="banner" id="banner"><span class="sub">reading the port…</span></div>
+  <div id="setup"></div>
+
+  <h2>On offer here today</h2>
+  <div class="sub">Asking prices come from the broker's negotiation — request a
+    quote, then commit tons against it. The percentage is against base price.</div>
+  <div id="offerErr"></div>
+  <div id="offer"></div>
+
+  <h2>Your hold, valued here</h2>
+  <div class="sub">What this port would pay for what you're carrying, against
+    what you paid for it.</div>
+  <div id="holdErr"></div>
+  <div id="hold"></div>
+
+  <h2>The purse</h2>
+  <div class="sub">Who is holding what. Every purchase and sale settles here,
+    one receipted motion on the tape.</div>
+  <div id="purses"></div>
+
+  <div id="log"></div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let CID = null, C = null, ACTOR = "", SHIP = "";
+const cr = n => "Cr" + (n||0).toLocaleString();
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,
+  ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch])); }
+function log(msg, cls){
+  const d = document.createElement("div");
+  d.className = cls||""; d.textContent = `[day ${C?C.day_number:"?"}] ` + msg;
+  $("#log").prepend(d);
+}
+
+async function getJSON(path){
+  const r = await fetch(path);
+  if(r.status===401){ location.href="/login?next=/market"; throw new Error("not logged in"); }
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// form-urlencoded POST; the backend answers 303 (opaqueredirect) on success,
+// 400 {"detail": ...} on refusal. The sentence goes next to the acting
+// section and onto the tape -- never a serialized error object.
+async function post(path, fields, errSlot){
+  fields.idempotency_key = crypto.randomUUID();
+  const r = await fetch(path, {method:"POST", redirect:"manual",
+    body: new URLSearchParams(fields)});
+  if(r.type === "opaqueredirect" || (r.status >= 300 && r.status < 400)){
+    if(errSlot) errSlot.innerHTML = "";
+    return true;
+  }
+  if(r.status===401){ location.href="/login?next=/market"; return false; }
+  let msg = await r.text();
+  try{ msg = JSON.parse(msg).detail || msg; }catch(_){}
+  if(errSlot) errSlot.innerHTML = `<div class="err">${esc(msg)}</div>`;
+  log(msg, "bad");
+  return false;
+}
+
+async function boot(){
+  const want = new URLSearchParams(location.search).get("campaign");
+  let cs;
+  try{ cs = await getJSON("/api/campaigns"); }
+  catch(e){ $("#banner").innerHTML =
+    `<span class="sub">can't reach the server — ${esc(e.message)}</span>`; return; }
+  const c = cs.find(x=>x.public_id===want) || cs[0];
+  if(!c){ $("#where").textContent = "no campaign"; return; }
+  CID = c.public_id; $("#where").textContent = c.name;
+  await refresh();
+}
+
+async function refresh(){
+  C = await getJSON(`/api/campaigns/${CID}/full`);
+  const acct = (C.trading_accounts||[])[0];
+  if(!ACTOR) ACTOR = acct ? acct.actor_public_id : (C.actors[0]||{}).public_id || "";
+  if(!SHIP)  SHIP  = acct ? acct.ship_public_id  : (C.ships[0]||{}).public_id || "";
+  draw();
+}
+
+function actorOpts(){ return C.actors.map(a=>
+  `<option value="${a.public_id}" ${a.public_id===ACTOR?"selected":""}>${esc(a.character_name)}</option>`).join(""); }
+function shipOpts(){ return C.ships.map(s=>
+  `<option value="${s.public_id}" ${s.public_id===SHIP?"selected":""}>${esc(s.name)}</option>`).join(""); }
+
+function draw(){ drawBanner(); drawSetup(); drawOffer(); drawHold(); drawPurses(); }
+
+function drawBanner(){
+  const ship = C.ships.find(s=>s.public_id===SHIP);
+  const here = ship && ship.location_name ? ship.location_name : "adrift — no port";
+  const sys = ship && C.systems.find(x=>x.public_id===ship.location_public_id);
+  $("#banner").innerHTML = `
+    <div><b>${esc(here)}</b>
+      ${sys?`<span class="pill">class ${esc(sys.starport_code)}</span>
+             <span class="pill">TL ${sys.technology_level}</span>`:""}</div>
+    <div class="sub">day ${C.day_number}</div>
+    <div><label class="sub">Trading:&nbsp;</label>
+      <select id="who">${actorOpts()}</select></div>
+    <div><label class="sub">Hold:&nbsp;</label>
+      <select id="ship">${shipOpts()}</select></div>`;
+  $("#who").onchange = () => { ACTOR = $("#who").value; draw(); };
+  $("#ship").onchange = () => { SHIP = $("#ship").value; draw(); };
+}
+
+// The trading foundation and the market session gate everything downstream:
+// no ledger, no purchase; no session, no prices.
+function drawSetup(){
+  const bits = [];
+  if(!(C.trading_accounts||[]).length && C.actors.length && C.ships.length){
+    bits.push(`<div class="deal"><b>No ledger yet.</b>
+      <span class="sub">Open a trading account for the chosen trader and hold.</span>
+      <input id="open0" type="number" min="0" value="100000" style="width:110px">
+      <button id="doSetup">Create ledger and hold</button></div>`);
+  }
+  if(!(C.markets||[]).length){
+    const ship = C.ships.find(s=>s.public_id===SHIP);
+    const sysOpts = C.systems.map(s=>
+      `<option value="${s.public_id}" ${ship&&s.public_id===ship.location_public_id?"selected":""}>${esc(s.name)}</option>`).join("");
+    bits.push(C.systems.length
+      ? `<div class="deal"><b>No market open.</b>
+          <span class="sub">Survey the market at</span>
+          <select id="mktSys">${sysOpts}</select>
+          <button id="doMarket">Survey the market</button></div>`
+      : `<div class="deal"><span class="sub">No charted systems — import a sector first.</span></div>`);
+  }
+  $("#setup").innerHTML = bits.join("") + `<div id="setupErr"></div>`;
+  const err = $("#setupErr");
+  if($("#doSetup")) $("#doSetup").onclick = async () => {
+    if(await post(`/campaigns/${CID}/trading-setup`,
+        {actor_public_id:ACTOR, ship_public_id:SHIP,
+         opening_balance:$("#open0").value||"0"}, err)){
+      log("Ledger opened.", "ok"); await refresh();
+    }
+  };
+  if($("#doMarket")) $("#doMarket").onclick = async () => {
+    if(await post(`/campaigns/${CID}/markets`,
+        {system_public_id:$("#mktSys").value, market_name:"Starport Exchange"}, err)){
+      log("Market surveyed.", "ok"); await refresh();
+    }
+  };
+}
+
+function pct(p){
+  const cls = p < 100 ? "cheap" : (p > 100 ? "dear" : "");
+  return `<span class="${cls}">${p}%</span>`;
+}
+
+function drawOffer(){
+  const m = (C.markets||[])[0];
+  if(!m){ $("#offer").innerHTML =
+    '<div class="empty">No market session open — survey the market above.</div>'; return; }
+  const quotes = C.broker_quotes||[];
+  const rows = m.stock.map((o,i)=>{
+    const q = quotes.find(x=>x.stock_id===o.stock_id && x.actor_public_id===ACTOR);
+    const askc = q ? Math.round(o.base_price*q.price_percent/100) : null;
+    return `<tr>
+      <td>${esc(o.name)} <span class="pill">${esc(o.kind)}</span></td>
+      <td class="num sub">${cr(o.base_price)}</td>
+      <td class="num">${q?cr(askc):'<span class="sub">—</span>'}</td>
+      <td class="num">${q?pct(q.price_percent):'<span class="sub">—</span>'}</td>
+      <td class="num">${o.quantity}</td>
+      <td>${ q
+        ? `<input type="number" min="1" max="${o.quantity}" value="1" style="width:64px" data-tons="${i}">
+           <button data-buy="${i}">buy</button>`
+        : `<button data-quote="${i}">quote</button>` }</td>
+    </tr>`; }).join("");
+  $("#offer").innerHTML = `
+    <div class="sub" style="margin-bottom:6px"><b style="color:var(--ink)">${esc(m.name)} · ${esc(m.world_name)}</b>
+      — open until day ${m.expires_day}</div>
+    <table><tr><th>Good</th><th class="num">Base / ton</th>
+      <th class="num">Quoted / ton</th><th class="num">vs base</th>
+      <th class="num">Tons</th><th></th></tr>${rows}</table>`;
+  const err = $("#offerErr");
+  $("#offer").querySelectorAll("[data-quote]").forEach(b => b.onclick = async () => {
+    const o = m.stock[+b.dataset.quote];
+    if(await post(`/campaigns/${CID}/markets/${m.market_session_id}/quotes`,
+        {actor_public_id:ACTOR, trade_good_code:o.code}, err)){
+      log(`Quote requested on ${o.name}.`, "ok"); await refresh();
+    }
+  });
+  $("#offer").querySelectorAll("[data-buy]").forEach(b => b.onclick = async () => {
+    const i = +b.dataset.buy, o = m.stock[i];
+    const q = quotes.find(x=>x.stock_id===o.stock_id && x.actor_public_id===ACTOR);
+    const tons = $(`[data-tons="${i}"]`).value;
+    if(await post(`/campaigns/${CID}/purchases`,
+        {actor_public_id:ACTOR, ship_public_id:SHIP, stock_id:o.stock_id,
+         broker_command_public_id:q.command_public_id, quantity_tons:tons}, err)){
+      log(`Bought ${tons}t ${o.name}.`, "ok"); await refresh();
+    }
+  });
+}
+
+function drawHold(){
+  const lots = C.cargo_lots||[];
+  if(!lots.length){ $("#hold").innerHTML = '<div class="empty">The hold is empty.</div>'; return; }
+  const m = (C.markets||[])[0];
+  const buys = C.purchases||[];
+  const rows = lots.map((h,i)=>{
+    const buy = buys.filter(p=>p.good_name===h.good_name).slice(-1)[0];
+    const paid = buy && buy.quantity_tons ? Math.round(buy.total_price_minor/buy.quantity_tons) : null;
+    const sq = (C.sale_quotes||[]).find(q=>q.good_code===h.good_code
+                 && q.actor_public_id===h.actor_public_id);
+    let deal = "";
+    if(sq && m){
+      const base = (m.stock.find(s=>s.code===h.good_code)||{}).base_price;
+      const offer = base!=null ? Math.round(base*sq.price_percent/100) : null;
+      const prof = (offer!=null && paid!=null) ? (offer-paid)*h.quantity : null;
+      deal = `${offer!=null?`<span class="num">${cr(offer)}/t</span> `:""}${pct(sq.price_percent)}
+        ${prof!=null?` <span class="${prof>=0?"profit":"loss"}">${prof>=0?"+":"−"}${cr(Math.abs(prof))}</span>`:""}
+        <input type="number" min="1" max="${h.quantity}" value="${h.quantity}" style="width:64px" data-stons="${i}">
+        <button data-sell="${i}">sell</button>`;
+    }else if(m){
+      deal = `<button data-squote="${i}">sale quote</button>`;
+    }else{
+      deal = `<span class="sub">no market to value it</span>`;
+    }
+    return `<tr>
+      <td>${h.quantity}t ${esc(h.good_name)}</td>
+      <td class="sub">${esc(h.ship_name)}</td>
+      <td class="num sub">${paid!=null?cr(paid)+"/t":"—"}</td>
+      <td>${deal}</td></tr>`;
+  }).join("");
+  $("#hold").innerHTML = `<table><tr><th>Lot</th><th>Aboard</th>
+    <th class="num">Paid / ton</th><th>This port pays</th></tr>${rows}</table>`;
+  const err = $("#holdErr");
+  $("#hold").querySelectorAll("[data-squote]").forEach(b => b.onclick = async () => {
+    const h = lots[+b.dataset.squote];
+    if(await post(`/campaigns/${CID}/sale-quotes`,
+        {actor_public_id:h.actor_public_id, market_session_id:m.market_session_id,
+         trade_good_code:h.good_code}, err)){
+      log(`Sale quote requested on ${h.good_name}.`, "ok"); await refresh();
+    }
+  });
+  $("#hold").querySelectorAll("[data-sell]").forEach(b => b.onclick = async () => {
+    const i = +b.dataset.sell, h = lots[i];
+    const sq = (C.sale_quotes||[]).find(q=>q.good_code===h.good_code
+                 && q.actor_public_id===h.actor_public_id);
+    const tons = $(`[data-stons="${i}"]`).value;
+    if(await post(`/campaigns/${CID}/sales`,
+        {actor_public_id:h.actor_public_id, ship_public_id:h.ship_public_id,
+         lot_id:h.lot_id, market_session_id:sq.market_session_id,
+         broker_command_public_id:sq.command_public_id, quantity_tons:tons}, err)){
+      log(`Sold ${tons}t ${h.good_name}.`, "ok"); await refresh();
+    }
+  });
+}
+
+function drawPurses(){
+  const accts = C.trading_accounts||[];
+  const held = accts.map(a=>`<tr><td>${esc(a.actor_name)}</td>
+    <td class="sub">${esc(a.ship_name)}</td>
+    <td class="num"><b>${cr(a.balance_minor)}</b></td></tr>`).join("");
+  const idle = C.actors.filter(a=>!accts.some(x=>x.actor_public_id===a.public_id))
+    .map(a=>`<tr><td>${esc(a.character_name)}</td>
+      <td class="sub">no ledger</td><td class="num sub">—</td></tr>`).join("");
+  $("#purses").innerHTML = (held||idle)
+    ? `<table><tr><th>Whose</th><th>Hold</th><th class="num">Credits</th></tr>${held}${idle}</table>`
+    : '<div class="empty">No crew on the books.</div>';
+  const tape = [
+    ...(C.purchases||[]).map(p=>`Bought ${p.quantity_tons}t ${p.good_name} · ${cr(p.total_price_minor)}`),
+    ...(C.sales||[]).map(s=>`Sold ${s.quantity_tons}t ${s.good_name} · ${cr(s.total_price_minor)}`)];
+  if(tape.length && !$("#log").dataset.seeded){
+    $("#log").dataset.seeded = "1";
+    tape.forEach(t=>log(t));
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

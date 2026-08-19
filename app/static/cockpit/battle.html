@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The Field Desk — Emporos</title>
+<style>
+ :root{--bg:#06070c;--panel:#0d1019;--panel2:#11151f;--line:#222c45;
+       --ink:#e8ecf5;--dim:#93a0c2;--accent:#49c0b8;--gold:#ffd351;
+       --red:#ef4146;--ship:#7ef9c4}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--ink);
+      font-family:Helvetica,Arial,sans-serif;font-size:14px}
+ header{display:flex;align-items:center;gap:12px;padding:10px 16px;
+        background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+ header h1{font-size:16px;margin:0;letter-spacing:2px}
+ .spacer{flex:1}
+ a{color:var(--accent)}
+ select,button,input{background:var(--panel2);color:var(--ink);
+   border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:13px}
+ button{cursor:pointer} button:hover{border-color:var(--accent)}
+ button:disabled{opacity:.4;cursor:not-allowed}
+ .pill{font-size:11px;color:var(--dim);border:1px solid var(--line);
+       border-radius:10px;padding:1px 7px}
+ main{display:grid;grid-template-columns:1fr 380px;gap:1px;background:var(--line);
+      min-height:calc(100vh - 52px)}
+ .board,.side{background:var(--bg);padding:14px;overflow:auto}
+ .side{background:var(--panel)}
+ h2{font-size:13px;letter-spacing:1px;color:var(--dim);margin:0 0 8px;
+    text-transform:uppercase}
+ .row{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+      padding:9px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+ .row.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+ .row.down{opacity:.45}
+ .row.foe .nm{color:#ffb4a8}
+ .row .nm{font-weight:600;flex:1}
+ .init{font-size:20px;font-weight:700;color:var(--gold);min-width:32px;
+       text-align:center}
+ .wound{height:5px;background:#2a1418;border-radius:3px;margin-top:4px;overflow:hidden}
+ .wound span{display:block;height:100%;background:var(--red)}
+ .sub{color:var(--dim);font-size:12px}
+ .need{background:#101a18;border:1px solid var(--accent);border-radius:8px;
+       padding:8px 11px;margin:8px 0;color:var(--accent);font-size:13px}
+ .warn{background:#1a1012;border:1px solid var(--red);border-radius:8px;
+       padding:8px 11px;margin:8px 0;color:#ffb4a8;font-size:13px}
+ .log{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+      padding:10px;height:230px;overflow:auto;font-size:13px;line-height:1.5}
+ .log div{margin-bottom:5px}
+ .log .hit{color:var(--ship)} .log .miss{color:var(--dim)}
+ .log .down{color:var(--red);font-weight:600}
+ .log .err{color:var(--red);opacity:.75}
+ .intent{border-left:2px solid var(--gold);padding-left:10px;color:#e7d9a8;
+         font-style:italic;margin:8px 0}
+ .empty{color:var(--dim);text-align:center;padding:40px 10px;line-height:1.7}
+ .act{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+ .act select{max-width:170px}
+ .act input[type=number]{width:64px}
+ .turncard{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+           padding:10px 12px;margin-bottom:8px}
+ label.ck{display:block;margin:3px 0;color:var(--dim);font-size:13px}
+ @media (max-width:860px){ main{grid-template-columns:1fr} .side{max-height:none} }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚔ THE FIELD DESK</h1>
+  <span id="where" class="pill"></span>
+  <span class="spacer"></span>
+  <span class="pill" title="Every wound, action and round is engine state.">engine keeps time · engine rolls</span>
+  <a href="/">← bridge</a>
+</header>
+
+<main>
+ <div class="board">
+   <h2>Initiative <span id="roundLbl" class="pill"></span> <span id="modeLbl" class="pill"></span></h2>
+   <div id="order"><div class="empty">Loading…</div></div>
+
+   <h2 style="margin-top:18px">Start a fight</h2>
+   <div id="setup" class="sub">loading…</div>
+ </div>
+
+ <div class="side">
+   <h2>Your move</h2>
+   <div id="turn"><div class="sub">Nothing to resolve.</div></div>
+
+   <h2 style="margin-top:18px">What the enemy does</h2>
+   <div class="sub">The engine only takes turns it is asked to — referee-controlled combatants wait here.</div>
+   <div id="intent"></div>
+
+   <h2 style="margin-top:18px">Blow by blow</h2>
+   <div class="log" id="log"></div>
+   <div style="display:flex;gap:8px;margin-top:8px">
+     <button id="roundBtn" style="flex:1" disabled>↷ Advance round</button>
+     <button id="endBtn" disabled>⛔ End fight</button>
+   </div>
+   <div id="endForm"></div>
+ </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+let CID = null, FULL = null, ENC = null, seenAttacks = 0, seenLogInit = false;
+
+function log(html, cls){
+  const d = document.createElement("div");
+  if(cls) d.className = cls;
+  d.innerHTML = html; $("#log").appendChild(d);
+  $("#log").scrollTop = $("#log").scrollHeight;
+}
+
+async function getJSON(path){
+  const r = await fetch(path);
+  if(r.status===401){ location.href="/login?next=/battle"; throw new Error("not logged in"); }
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+/* form-urlencoded POST; 303/opaqueredirect = success, 400 = engine refusal */
+async function post(path, data){
+  const body = new URLSearchParams(data || {});
+  body.set("idempotency_key", crypto.randomUUID());
+  const r = await fetch(path, {method:"POST", body, redirect:"manual"});
+  if(r.type==="opaqueredirect" || (r.status>=300 && r.status<400) || r.ok) return true;
+  if(r.status===401){ location.href="/login?next=/battle"; return false; }
+  let detail = "request failed ("+r.status+")";
+  try{ detail = (await r.json()).detail || detail; }catch(e){}
+  log("✋ " + esc(typeof detail==="string"?detail:JSON.stringify(detail)), "err");
+  return false;
+}
+
+async function act(path, data){
+  if(await post(path, data)) await refresh();
+}
+
+const E = p => `/campaigns/${CID}/encounters/${ENC.public_id}${p}`;
+
+async function boot(){
+  const cs = await getJSON("/api/campaigns");
+  const want = new URLSearchParams(location.search).get("campaign");
+  const c = cs.find(x=>x.public_id===want) || cs[0];
+  if(!c){ $("#where").textContent = "no campaign"; $("#order").innerHTML =
+    '<div class="empty">No campaign. Create one on the bridge first.</div>'; return; }
+  CID = c.public_id; $("#where").textContent = c.name;
+  await refresh();
+}
+
+async function refresh(){
+  FULL = await getJSON(`/api/campaigns/${CID}/full`);
+  ENC = (FULL.encounters||[]).find(e =>
+    e.encounter_status==="active" && e.current_mode==="personal_combat") || null;
+  drawBoard(); drawTurn(); drawIntent(); drawSetup(); drawControls(); drainLog();
+}
+
+/* ---------- initiative board ---------- */
+function woundPct(c){
+  const actor = (FULL.actors||[]).find(a=>a.public_id===c.actor_public_id);
+  let max = 0;
+  if(actor) for(const ch of actor.characteristics||[])
+    if(["characteristic.strength","characteristic.dexterity","characteristic.endurance"].includes(ch.code))
+      max += ch.maximum;
+  const cur = (c.strength||0)+(c.dexterity||0)+(c.endurance||0);
+  if(!max) return 0;
+  return Math.max(0, Math.min(100, Math.round(100*(max-cur)/max)));
+}
+
+function drawBoard(){
+  const o = $("#order");
+  if(!ENC || !ENC.current_round){
+    o.innerHTML = '<div class="empty">No fight in progress.<br>Start one below, or let the referee call it at the table.</div>';
+    $("#roundLbl").textContent = ""; $("#modeLbl").textContent = "";
+    return;
+  }
+  $("#roundLbl").textContent = "round " + ENC.current_round;
+  $("#modeLbl").textContent = ENC.round_complete ? "round complete"
+    : (ENC.round_started ? "round underway" : "round opening");
+  o.innerHTML = (ENC.combatants||[]).map(c=>{
+    const activeRow = c.actor_public_id===ENC.next_actor_public_id && !ENC.round_complete;
+    const down = c.unconscious || c.injury_status==="dead";
+    const pct = woundPct(c);
+    const foe = c.side_code!=="crew";
+    return `<div class="row ${activeRow?'active':''} ${down?'down':''} ${foe?'foe':''}">
+      <div class="init">${c.initiative_current}</div>
+      <div style="flex:1">
+        <div class="nm">${esc(c.name)} <span class="pill">${esc(c.side_code)}</span>
+          ${c.acted_this_round?'<span class="pill">acted</span>':''}
+          ${c.delayed_this_round?'<span class="pill">delayed</span>':''}
+          ${down?'<span class="pill" style="color:var(--red)">down</span>':''}</div>
+        <div class="sub">STR ${c.strength} · DEX ${c.dexterity} · END ${c.endurance}
+          · ${esc(c.stance_code)}${c.cover_code?' · '+esc(c.cover_code)+' cover':''}
+          · ${c.significant_actions_remaining} sig / ${c.minor_actions_remaining} minor
+          · ${c.metres_moved_this_round}m · ${esc((c.injury_status||'').replace(/_/g,' '))}</div>
+        ${pct?`<div class="wound"><span style="width:${pct}%"></span></div>`:''}
+      </div></div>`;
+  }).join("");
+}
+
+/* ---------- side panel: your move ---------- */
+function drawTurn(){
+  const t = $("#turn");
+  if(!ENC || !ENC.current_round){ t.innerHTML = '<div class="sub">Nothing to resolve.</div>'; return; }
+  let html = "";
+
+  /* 1. pending damage allocations always come first */
+  for(const dmg of FULL.pending_damage||[]){
+    const endDefault = dmg.damage_sequence_started ? 0 : Math.min(dmg.penetrating_damage, dmg.endurance);
+    html += `<div class="turncard">
+      <div class="need"><b>${esc(dmg.actor_name)}</b> takes <b>${dmg.penetrating_damage}</b> penetrating damage.
+        <div class="sub" style="color:inherit">STR ${dmg.strength} · DEX ${dmg.dexterity} · END ${dmg.endurance}${dmg.damage_sequence_started?'':' — first damage must fill Endurance first'}</div></div>
+      <div class="act">
+        END <input type="number" id="dmg-end" min="0" max="${dmg.endurance}" value="${endDefault}">
+        STR <input type="number" id="dmg-str" min="0" max="${dmg.strength}" value="0">
+        DEX <input type="number" id="dmg-dex" min="0" max="${dmg.dexterity}" value="0">
+        <button onclick="allocate('${dmg.public_id}')">Apply damage</button>
+      </div></div>`;
+  }
+
+  /* 2. pending attacks: reaction window + resolution */
+  for(const atk of ENC.pending_attacks||[]){
+    html += `<div class="turncard">
+      <div><b>${esc(atk.attacker_name)}</b> attacks <b>${esc(atk.target_name)}</b> — ${esc(atk.weapon_name)}
+        <span class="sub">${esc(atk.attack_profile_code.replace(/-/g,' '))} · ${esc(atk.range_rule_code.replace('combat.range.',''))}${atk.target_has_cover?' · cover declared':''}</span></div>`;
+    if(atk.turn_started_this_round && !atk.reaction_declared){
+      html += `<div class="act">
+        <button onclick="react('${atk.public_id}','${atk.target_public_id}','dodge')">Dodge</button>
+        ${atk.target_has_cover?`<button onclick="react('${atk.public_id}','${atk.target_public_id}','dodge_with_cover')">Dodge into cover</button>`:''}
+        <span class="sub">reaction window</span></div>`;
+    } else if(atk.reaction_declared){
+      html += `<div class="sub">Reaction recorded by engine.</div>`;
+    }
+    const armors = (atk.equipped_armors&&atk.equipped_armors.length)
+      ? atk.equipped_armors.map(a=>`<option value="${esc(a.armor_rule_code)}">Layer ${a.layer_order} · ${esc(a.armor_name)}</option>`).join("")
+      : (FULL.armor_options||[]).map(a=>`<option value="${esc(a.armor_rule_code)}">${esc(a.armor_name)}</option>`).join("");
+    html += `<div class="act">
+      <select id="armor-${atk.public_id}">${armors}</select>
+      <button onclick="resolveAttack('${atk.public_id}')">🎲 Resolve attack</button></div>
+      ${atk.equipped_armors&&atk.equipped_armors.length?'':'<div class="sub">No equipped armor recorded — pick an adjudicated profile.</div>'}
+    </div>`;
+  }
+
+  /* 3. the active combatant's turn */
+  const me = (ENC.combatants||[]).find(c=>c.actor_public_id===ENC.next_actor_public_id);
+  if(me && !ENC.round_complete && !me.acted_this_round){
+    if(!me.player_controlled){
+      html += `<div class="sub">Awaiting referee-controlled turn for <b>${esc(me.name)}</b>.</div>`;
+    } else if(!me.turn_started_this_round){
+      html += `<div class="turncard"><div><b>${esc(me.name)}</b> is up.</div>
+        <div class="act"><button onclick="act(E('/turns/${me.actor_public_id}/begin'))">▶ Begin turn</button>
+        ${me.delayed_this_round&&me.forfeit_available?`<button onclick="act(E('/turns/${me.actor_public_id}/forfeit'))">Forfeit for first next round</button>`:''}
+        </div></div>`;
+    } else {
+      html += turnActions(me);
+    }
+  } else if(ENC.round_complete){
+    html += `<div class="need">Everyone has acted. Advance the round below.</div>`;
+  }
+
+  t.innerHTML = html || '<div class="sub">Nothing to resolve.</div>';
+}
+
+function turnActions(me){
+  const A = me.actor_public_id;
+  const foes = (ENC.combatants||[]).filter(c=>c.actor_public_id!==A);
+  const tgtOpts = foes.map(f=>`<option value="${f.actor_public_id}">${esc(f.name)}</option>`).join("");
+  const stanceOpts = (ENC.stance_options||[]).filter(s=>s.stance_code!==me.stance_code)
+    .map(s=>`<option value="${esc(s.stance_code)}">${esc(s.stance_code)}</option>`).join("");
+  const coverOpts = '<option value="">no cover</option>'+(ENC.cover_options||[])
+    .map(cv=>`<option value="${esc(cv.cover_code)}">${esc(cv.cover_code.replace(/_/g,' '))}</option>`).join("");
+  const unready = (me.weapons||[]).filter(w=>w.ready===false);
+  const myAttacks = (FULL.weapon_options||[]).filter(w=>w.holder_actor_public_id===A);
+  const atkOpts = myAttacks.map(w=>`<option value="${esc(w.weapon_rule_code)}||${esc(w.attack_profile_code)}||${esc(w.range_rule_code)}">
+      ${esc(w.weapon_name.split(' — ')[0])} · ${esc(w.attack_profile_code.replace(/-/g,' '))} · ${esc(w.range_name.replace(/-/g,' '))}</option>`).join("");
+
+  let h = `<div class="turncard"><div><b>${esc(me.name)}</b> acts —
+      ${me.significant_actions_remaining} significant · ${me.minor_actions_remaining} minor</div>`;
+  for(const w of unready)
+    h += `<div class="act"><button onclick="act(E('/turns/${A}/weapons/ready'),{weapon_rule_code:'${esc(w.weapon_rule_code)}'})">
+        Ready ${esc(w.weapon_name)}${w.ready_progress?` (${w.ready_progress}/${w.ready_required_actions})`:''}</button></div>`;
+  h += `
+    <div class="act"><select id="stanceSel">${stanceOpts}</select>
+      <button onclick="act(E('/turns/${A}/stance'),{stance_code:$('#stanceSel').value})">Stance</button>
+      <select id="coverSel">${coverOpts}</select>
+      <button onclick="act(E('/turns/${A}/cover'),{cover_code:$('#coverSel').value})">Cover</button></div>
+    <div class="act"><input type="number" id="moveM" min="0.1" step="0.1" value="6"> m
+      <button onclick="act(E('/turns/${A}/move'),{metres:$('#moveM').value})">Move</button>
+      <select id="aimSel">${tgtOpts}</select>
+      <button onclick="act(E('/turns/${A}/aim'),{target_actor_public_id:$('#aimSel').value})">Aim</button></div>`;
+  if(myAttacks.length && foes.length){
+    h += `<div class="need"><b>Declare an attack</b> — the engine rolls, armour subtracts, wounds allocate.
+      <div class="act" style="margin-bottom:0">
+        <select id="atkTgt">${tgtOpts}</select>
+        <select id="atkSel" style="max-width:230px">${atkOpts}</select>
+        <label class="ck" style="margin:0"><input type="checkbox" id="atkCover"> target in cover</label>
+        <button onclick="declareAttack('${A}')">⚔ Attack</button></div></div>`;
+  } else {
+    h += `<div class="warn">⚠ No held, ready weapon can attack.
+      <div class="sub" style="color:inherit">Ready a weapon above, or complete the turn.</div></div>`;
+  }
+  h += `<div class="act">
+      ${me.significant_actions_remaining>0?`<button onclick="act(E('/turns/${A}/actions'),{operation:'convert_significant'})">Convert significant → minors</button>`:''}
+      <button onclick="act(E('/turns/${A}/complete'))">✔ Complete turn</button></div>
+    </div>`;
+  return h;
+}
+
+/* ---------- actions ---------- */
+async function declareAttack(attacker){
+  const ok = await post(E('/attacks'), {
+    attacker_actor_public_id: attacker,
+    target_actor_public_id: $('#atkTgt').value,
+    attack_selection: $('#atkSel').value,
+    ...($('#atkCover').checked ? {target_has_cover:'true'} : {})
+  });
+  if(ok){
+    log(`⚔ attack declared — reaction window open`, "miss");
+    await refresh();
+  }
+}
+async function resolveAttack(attackId){
+  const atk = (ENC.pending_attacks||[]).find(a=>a.public_id===attackId);
+  if(!atk) return;
+  const ok = await post(E(`/attacks/${attackId}/resolve`), {
+    item_rule_code: atk.weapon_rule_code,
+    attack_profile_code: atk.attack_profile_code,
+    range_rule_code: atk.range_rule_code,
+    target_actor_public_id: atk.target_public_id,
+    armor_rule_code: $(`#armor-${attackId}`).value,
+  });
+  if(ok) await refresh();
+}
+async function react(attackId, actorId, kind){
+  await act(E(`/attacks/${attackId}/reactions`), {actor_public_id:actorId, reaction_kind:kind});
+}
+async function allocate(damageId){
+  const ok = await post(`/campaigns/${CID}/damage/${damageId}/allocate`, {
+    endurance_damage: $('#dmg-end').value || 0,
+    strength_damage: $('#dmg-str').value || 0,
+    dexterity_damage: $('#dmg-dex').value || 0,
+  });
+  if(ok){ log("🩸 wounds allocated", "down"); await refresh(); }
+}
+
+/* ---------- enemy intent ---------- */
+function drawIntent(){
+  const box = $("#intent");
+  if(!ENC || !ENC.current_round){ box.innerHTML = ""; return; }
+  const waiting = (ENC.combatants||[]).filter(c=>!c.player_controlled && !c.acted_this_round);
+  if(!waiting.length){ box.innerHTML = '<div class="sub" style="margin-top:6px">No referee-controlled combatants waiting.</div>'; return; }
+  box.innerHTML = waiting.map(c=>{
+    const up = c.actor_public_id===ENC.next_actor_public_id;
+    return `<div class="intent">${esc(c.name)} ${up?'is up — the referee moves next.':'waits on initiative '+c.initiative_current+'.'}</div>`;
+  }).join("");
+}
+
+/* ---------- start a fight ---------- */
+function drawSetup(){
+  const s = $("#setup");
+  if(ENC){
+    s.innerHTML = '<div class="sub">A fight is already running. End it before starting another.</div>';
+    return;
+  }
+  const ready = (FULL.actors||[]).filter(a=>a.lifepath_status==="completed");
+  if(ready.length < 2){
+    s.innerHTML = '<div class="sub">A fight needs at least two finished characters. Roll them up on the bridge first.</div>';
+    return;
+  }
+  s.innerHTML = `<div class="sub">Pick who is in it. Everyone must already exist as a record.</div>
+    ${ready.map((a,i)=>`<label class="ck">
+       <input type="checkbox" class="fighter" value="${a.public_id}" checked>
+       ${esc(a.name)}
+       <select class="fside" data-for="${a.public_id}">
+         <option value="crew" ${i===0?'selected':''}>crew</option>
+         <option value="foe" ${i>0?'selected':''}>foe</option></select>
+     </label>`).join("")}
+    <div class="act">
+      <span class="sub">context</span>
+      <select id="ctxSel"><option value="tight_quarters">tight quarters</option>
+        <option value="outdoors">outdoors</option><option value="open_area">open area</option></select>
+      <span class="sub">light</span>
+      <select id="lightSel"><option value="normal">normal</option>
+        <option value="partial_darkness">partial darkness</option>
+        <option value="total_darkness">total darkness</option></select>
+      <button id="startBtn">⚔ Begin</button></div>`;
+  $("#startBtn").onclick = startFight;
+}
+
+async function startFight(){
+  const picked = [...document.querySelectorAll(".fighter:checked")].map(el=>({
+    id: el.value,
+    side: document.querySelector(`.fside[data-for="${el.value}"]`).value,
+  }));
+  if(picked.length < 2){ log("✋ A fight needs at least two.", "err"); return; }
+  $("#startBtn").disabled = true;
+  try{
+    if(!await post(`/campaigns/${CID}/encounters`, {encounter_type_code:"random"})) return;
+    FULL = await getJSON(`/api/campaigns/${CID}/full`);
+    const enc = (FULL.encounters||[]).find(e=>e.encounter_status==="active" && !e.participant_count);
+    const encId = enc ? enc.public_id :
+      ((FULL.encounters||[]).find(e=>e.encounter_status==="active")||{}).public_id;
+    if(!encId){ log("✋ encounter did not appear in the projection", "err"); return; }
+    for(const p of picked)
+      if(!await post(`/campaigns/${CID}/encounters/${encId}/participants`,
+        {actor_public_id:p.id, participant_role: p.side==="crew"?"player_character":"non_player_character",
+         side_code:p.side})) return;
+    if(!await post(`/campaigns/${CID}/encounters/${encId}/personal-combat`,
+        {reason:"Hostilities declared by the player"})) return;
+    const aware = new URLSearchParams();
+    for(const p of picked) aware.append("aware_actor_public_ids", p.id);
+    aware.set("starting_context_code", $("#ctxSel").value);
+    aware.set("light_condition", $("#lightSel").value);
+    aware.set("starting_range_rule_code", "");
+    if(!await post(`/campaigns/${CID}/encounters/${encId}/personal-combat/initialize`,
+        aware)) return;
+    log("⚔ Combat begins — initiative rolled by the engine.", "down");
+    await refresh();
+  } finally { const b=$("#startBtn"); if(b) b.disabled=false; }
+}
+
+/* ---------- round + end controls ---------- */
+function drawControls(){
+  const active = !!(ENC && ENC.current_round);
+  $("#roundBtn").disabled = !(active && ENC.round_complete);
+  $("#endBtn").disabled = !active;
+  $("#roundBtn").onclick = async ()=>{
+    if(await post(E('/rounds/advance'))){
+      log(`— round ${ENC.current_round+1} —`, "down");
+      await refresh();
+    }
+  };
+  $("#endBtn").onclick = ()=>{
+    const f = $("#endForm");
+    if(f.innerHTML){ f.innerHTML=""; return; }
+    const sides = (ENC.sides||[]).map(s=>`<option value="${esc(s.side_code)}">${esc(s.side_name||s.side_code)}</option>`).join("");
+    f.innerHTML = `<div class="turncard" style="margin-top:8px">
+      <div class="act"><select id="outSel">
+        <option value="decisive">decisive</option><option value="withdrawal">withdrawal</option>
+        <option value="escape">escape</option><option value="surrender">surrender</option>
+        <option value="negotiated">negotiated</option><option value="inconclusive">inconclusive</option>
+        <option value="other">other</option></select>
+        <select id="winSel"><option value="">no winner</option>${sides}</select></div>
+      <div class="act"><input id="resSum" placeholder="resolution summary" style="flex:1">
+        <button onclick="endFight()">⛔ Confirm end</button></div></div>`;
+  };
+}
+async function endFight(){
+  const ok = await post(E('/resolve'), {
+    outcome_kind: $('#outSel').value,
+    winning_side_code: $('#winSel').value,
+    resolution_summary: $('#resSum').value || "Resolved from the field desk",
+  });
+  if(ok){ log("⛔ Combat ends.", "down"); $("#endForm").innerHTML=""; await refresh(); }
+}
+
+/* ---------- blow-by-blow from projection deltas ---------- */
+function drainLog(){
+  const hist = (ENC && ENC.attack_history) || [];
+  if(!seenLogInit){ seenAttacks = Math.max(0, hist.length - 8); seenLogInit = true; }
+  if(hist.length < seenAttacks) seenAttacks = 0;   /* new fight */
+  for(const a of hist.slice(seenAttacks)){
+    log(`<b>${esc(a.attacker_name)}</b> → ${esc(a.target_name)} · ${esc(a.weapon_name)}: `
+      + `${a.attack_total} vs ${a.target_number} — `
+      + (a.hit
+          ? `<b>HIT</b> (Effect ${a.effect}) · raw ${a.raw_damage} − armour ${a.armor_rating} = <b>${a.penetrating_damage}</b> through`
+            + (a.exceptional_minimum_applied ? ' · exceptional minimum' : '')
+          : "miss"),
+      a.hit ? "hit" : "miss");
+    if(a.hit && a.damage_public_id)
+      log(`🩸 wound record for ${esc(a.target_name)} · allocation ${esc(a.allocation_status||'pending')}`, "down");
+  }
+  seenAttacks = hist.length;
+  if(ENC) for(const c of ENC.combatants||[])
+    if(c.unconscious && !drainLog.downSeen?.[c.actor_public_id]){
+      (drainLog.downSeen ??= {})[c.actor_public_id] = true;
+      log(`💀 ${esc(c.name)} is down.`, "down");
+    }
+}
+
+boot().catch(e=>{ if(!String(e).includes("not logged in")) log("✋ "+esc(e.message||e), "err"); });
+</script>
+</body>
+</html>

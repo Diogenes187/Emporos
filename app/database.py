@@ -377,7 +377,7 @@ class CampaignReader:
                 """,
                 (campaign_id,),
             ).fetchall()
-            journeys=connection.execute("""SELECT journey.public_id::text AS public_id,journey.name,journey.journey_status,ship.name AS ship_name,origin.name AS origin_name,destination.name AS destination_name,leg.distance_value AS distance_parsecs,navigation.succeeded AS route_succeeded,attempt.jump_outcome,attempt.duration_hours,execution.execution_status FROM journey_journey journey JOIN ship_ship ship ON ship.ship_id=journey.ship_id LEFT JOIN journey_leg leg ON leg.journey_id=journey.journey_id AND leg.leg_order=1 LEFT JOIN loc_location origin ON origin.location_id=leg.origin_location_id LEFT JOIN loc_location destination ON destination.location_id=leg.destination_location_id LEFT JOIN LATERAL (SELECT succeeded FROM journey_navigation_solution WHERE journey_leg_id=leg.journey_leg_id AND operation_kind='jump_route' ORDER BY navigation_solution_id DESC LIMIT 1) navigation ON true LEFT JOIN journey_jump_attempt attempt ON attempt.journey_leg_id=leg.journey_leg_id LEFT JOIN journey_leg_execution execution ON execution.journey_leg_id=leg.journey_leg_id WHERE journey.campaign_id=%s ORDER BY journey.created_at DESC LIMIT 20""",(campaign_id,)).fetchall()
+            journeys=connection.execute("""SELECT journey.public_id::text AS public_id,journey.name,journey.journey_status,ship.name AS ship_name,ship.public_id::text AS ship_public_id,origin.name AS origin_name,destination.name AS destination_name,leg.distance_value AS distance_parsecs,navigation.succeeded AS route_succeeded,attempt.jump_outcome,attempt.duration_hours,execution.execution_status FROM journey_journey journey JOIN ship_ship ship ON ship.ship_id=journey.ship_id LEFT JOIN journey_leg leg ON leg.journey_id=journey.journey_id AND leg.leg_order=1 LEFT JOIN loc_location origin ON origin.location_id=leg.origin_location_id LEFT JOIN loc_location destination ON destination.location_id=leg.destination_location_id LEFT JOIN LATERAL (SELECT succeeded FROM journey_navigation_solution WHERE journey_leg_id=leg.journey_leg_id AND operation_kind='jump_route' ORDER BY navigation_solution_id DESC LIMIT 1) navigation ON true LEFT JOIN journey_jump_attempt attempt ON attempt.journey_leg_id=leg.journey_leg_id LEFT JOIN journey_leg_execution execution ON execution.journey_leg_id=leg.journey_leg_id WHERE journey.campaign_id=%s ORDER BY journey.created_at DESC LIMIT 20""",(campaign_id,)).fetchall()
             markets=connection.execute("""SELECT market.public_id::text AS public_id,market.name,market.market_kind,world.name AS world_name,system_location.public_id::text AS system_public_id,session.market_session_id,session.expires_day,COALESCE((SELECT jsonb_agg(jsonb_build_object('stock_id',stock.stock_id,'code',good.good_code,'name',rule.name,'kind',good.good_kind,'quantity',stock.quantity_tons,'base_price',good.base_price_credits) ORDER BY good.good_kind,good.good_code) FROM mkt_stock stock JOIN rule_trade_good good ON good.trade_good_rule_id=stock.trade_good_rule_id JOIN rule_rule rule ON rule.rule_id=good.trade_good_rule_id WHERE stock.market_session_id=session.market_session_id AND stock.stock_status='available'),'[]'::jsonb) AS stock FROM mkt_market market JOIN loc_location world ON world.location_id=market.location_id JOIN loc_celestial_body body ON body.location_id=world.location_id JOIN loc_location system_location ON system_location.location_id=body.system_location_id LEFT JOIN LATERAL (SELECT current.* FROM mkt_session current WHERE current.market_id=market.market_id AND current.session_status='open' ORDER BY current.opened_day DESC,current.market_session_id DESC LIMIT 1) session ON true WHERE market.campaign_id=%s AND market.market_status='active' ORDER BY market.name""",(campaign_id,)).fetchall()
             broker_quotes=connection.execute("""SELECT command.public_id::text AS command_public_id,actor.public_id::text AS actor_public_id,actor.name AS actor_name,good.good_code,rule.name AS good_name,receipt.check_total,receipt.price_percent,command.completed_at,stock.stock_id FROM cmd_broker_operation_receipt receipt JOIN cmd_command command USING(command_id) JOIN actor_actor actor ON actor.actor_id=receipt.actor_id JOIN rule_trade_good good ON good.trade_good_rule_id=receipt.trade_good_rule_id JOIN rule_rule rule ON rule.rule_id=good.trade_good_rule_id LEFT JOIN mkt_stock stock ON stock.market_session_id=receipt.market_session_id AND stock.trade_good_rule_id=receipt.trade_good_rule_id AND stock.stock_status='available' WHERE receipt.campaign_id=%s AND receipt.operation_code='determine-purchase-price' ORDER BY command.completed_at DESC LIMIT 20""",(campaign_id,)).fetchall()
             purchases=connection.execute("""SELECT actor.name AS actor_name,ship.name AS ship_name,rule.name AS good_name,receipt.quantity_tons,receipt.unit_price_minor,receipt.total_price_minor FROM cmd_trade_goods_purchase_receipt receipt JOIN actor_actor actor USING(actor_id) JOIN ship_ship ship USING(ship_id) JOIN rule_rule rule ON rule.rule_id=receipt.trade_good_rule_id WHERE receipt.campaign_id=%s ORDER BY receipt.command_id DESC""",(campaign_id,)).fetchall()
@@ -538,6 +538,50 @@ class CampaignReader:
             "weapon_options": weapon_options,
             "armor_options": armor_options,
         }
+
+    def pulse(self, public_id: str) -> dict | None:
+        """A cheap change signature: the cockpit polls this and refetches the
+        full projection only when it moves."""
+        if not self.url:
+            return None
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT campaign.campaign_id,
+                       COALESCE(clock.day_number,0) AS day_number
+                FROM camp_campaign campaign
+                LEFT JOIN camp_clock clock USING (campaign_id)
+                WHERE campaign.public_id=%s
+                """,
+                (public_id,),
+            ).fetchone()
+            if row is None:
+                return None
+            campaign_id = row["campaign_id"]
+            sig = connection.execute(
+                """
+                SELECT
+                  (SELECT COALESCE(max(referee_message_id),0)
+                   FROM camp_referee_message WHERE campaign_id=%s) AS last_message,
+                  (SELECT count(*) FROM camp_referee_turn
+                   WHERE campaign_id=%s AND turn_status<>'completed') AS open_turns,
+                  (SELECT COALESCE(sum(concurrency_version),0)
+                   FROM journey_journey WHERE campaign_id=%s) AS journey_version,
+                  (SELECT COALESCE(sum(concurrency_version),0)
+                   FROM ship_ship WHERE campaign_id=%s) AS ship_version,
+                  (SELECT COALESCE(sum(concurrency_version),0)
+                   FROM actor_actor WHERE campaign_id=%s) AS actor_version,
+                  (SELECT count(*) FROM loc_star_system
+                   WHERE campaign_id=%s) AS system_count,
+                  (SELECT count(*) FROM camp_journal_note
+                   WHERE campaign_id=%s) AS note_count
+                """,
+                (campaign_id,)*7,
+            ).fetchone()
+            token = "-".join(str(sig[k]) for k in
+                             ("last_message","open_turns","journey_version",
+                              "ship_version","actor_version","system_count","note_count"))
+            return {"day_number": row["day_number"], "token": token}
 
     def ship_classes(self) -> list[dict[str, Any]]:
         if not self.url: return []

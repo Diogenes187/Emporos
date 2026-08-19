@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Emporos</title>
+<style>
+  :root{
+    --bg:#06070c; --panel:#0d1019; --panel2:#11151f; --line:#222c45;
+    --ink:#e8ecf5; --dim:#93a0c2; --accent:#49c0b8; --gold:#ffd351;
+    --water:#3f80df; --amber:#f6c343; --red:#ef4146;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:Helvetica,Arial,sans-serif;font-size:14px}
+  header{display:flex;align-items:center;gap:12px;padding:10px 16px;
+         background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  header h1{font-size:16px;margin:0;letter-spacing:1px;color:var(--ink)}
+  header .spacer{flex:1}
+  select,button,input,textarea{background:var(--panel2);color:var(--ink);
+    border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:13px;font-family:inherit}
+  button{cursor:pointer} button:hover{border-color:var(--accent)}
+  a.pill{text-decoration:none;color:var(--ink)}
+  .pill{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:10px;padding:3px 9px;background:var(--panel2)}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
+  .on{background:#4ade80}.off{background:#777}
+  main{display:grid;grid-template-columns:1fr 330px;
+       grid-template-rows:1fr var(--feedH,320px);
+       height:calc(100vh - 53px);gap:1px;background:var(--line)}
+  /* ------- map ------- */
+  .mapwrap{background:var(--bg);overflow:auto;position:relative;padding:8px;min-width:0}
+  .mapctl{position:sticky;top:0;left:0;z-index:5;display:flex;gap:8px;flex-wrap:wrap;
+          align-items:center;padding:6px 8px;background:rgba(13,16,25,.94);
+          border:1px solid var(--line);border-radius:8px;width:max-content;max-width:100%;
+          margin-bottom:6px}
+  .mapctl label{color:var(--dim);font-size:12px}
+  .zoomgrp{display:flex;align-items:center;gap:4px}
+  #zoomLbl{cursor:pointer;color:var(--dim);font-size:12px;min-width:40px;text-align:center}
+  #map{position:relative;cursor:grab}
+  #map.dragging{cursor:grabbing}
+  #map svg{display:block}
+  .hexline{fill:none;stroke:rgba(73,192,184,.10);stroke-width:1}
+  .sublines{stroke:rgba(73,192,184,.28);stroke-width:1}
+  .subletter{fill:rgba(147,160,194,.4);font-size:26px;font-weight:700}
+  .w-name{fill:#c5cde4;font-size:10px;text-anchor:middle}
+  .w-port{fill:var(--accent);font-size:9px;font-weight:700;text-anchor:middle}
+  .w-hex{fill:#5b688f;font-size:8px;text-anchor:middle}
+  .w-uwp{fill:#5b688f;font-size:7.5px;text-anchor:middle}
+  g.world{cursor:pointer}
+  g.world:hover circle.disc{stroke:var(--gold);stroke-width:2}
+  circle.disc{stroke:#0b1020;stroke-width:1.5}
+  .jumphex{fill:rgba(255,211,81,.07);stroke:rgba(255,211,81,.35);stroke-width:1}
+  .shipring{fill:none;stroke:var(--gold);stroke-width:2}
+  .hl{fill:none;stroke:var(--red);stroke-width:2}
+  /* ------- side panel ------- */
+  aside{background:var(--panel);overflow:auto;padding:8px;min-width:0}
+  .tabs{display:flex;gap:4px;margin-bottom:8px;position:sticky;top:0;background:var(--panel);z-index:2;padding-bottom:2px}
+  .tabs button{flex:1;padding:6px 4px}
+  .tabs button.active{border-color:var(--accent);color:var(--accent)}
+  .card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:7px}
+  .card .nm{font-weight:700}
+  .card .sub{color:var(--dim);font-size:12px;margin-top:3px;line-height:1.45}
+  .upp{font-family:ui-monospace,Consolas,monospace;color:var(--gold)}
+  .goldbtn{border-color:#6b5a22;color:var(--gold)}
+  .rowform{display:flex;gap:5px;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .rowform select,.rowform input{max-width:150px}
+  /* ------- feed ------- */
+  .feed{grid-column:1 / span 2;background:var(--panel);display:flex;flex-direction:column;min-height:0}
+  .feedgrip{flex:0 0 8px;height:8px;cursor:row-resize;background:var(--panel);position:relative}
+  .feedgrip:hover{background:var(--accent)}
+  .feedgrip::after{content:"";position:absolute;left:50%;top:3px;width:38px;height:3px;
+    transform:translateX(-50%);border-radius:2px;background:var(--dim)}
+  .log{flex:1;overflow:auto;padding:8px 14px}
+  .msg{margin:0 0 9px;line-height:1.5;white-space:pre-wrap}
+  .msg .who{color:var(--accent);font-weight:700;margin-right:7px}
+  .msg.gm .who{color:var(--gold)}
+  .msg.sys{color:var(--dim);font-size:12px}
+  .msg.err{color:var(--red);font-size:12px}
+  .msg .t{color:#556;font-size:10px;margin-right:6px}
+  .inputbar{display:flex;gap:8px;padding:9px 14px;border-top:1px solid var(--line)}
+  .inputbar input{flex:1;min-width:0}
+  /* ------- modals ------- */
+  .modal{position:fixed;inset:0;background:rgba(3,5,10,.72);display:flex;
+         align-items:center;justify-content:center;z-index:50}
+  .modalcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+             max-width:640px;width:92%;max-height:88vh;overflow:auto;padding:18px}
+  .modalcard h3{margin-top:0}
+  .modalcard label{display:block;margin:8px 0;color:var(--dim);font-size:13px}
+  .modalcard label input,.modalcard label select{width:100%;margin-top:3px}
+  .cgstep{border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:10px;background:var(--panel2)}
+  .cgstep small{color:var(--gold);letter-spacing:.12em;font-size:9px;display:block}
+  .cgstep b{display:block;margin:4px 0}
+  .cgbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .cgfeed{max-height:130px;overflow:auto;background:var(--bg);border:1px solid var(--line);
+          border-radius:6px;padding:7px;font-size:12px;color:var(--dim);margin:8px 0}
+  .dossier dl{margin:8px 0}
+  .dossier dl div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:5px 0}
+  .dossier dt{color:var(--dim)} .dossier dd{margin:0;text-align:right}
+  .wstep{display:flex;gap:10px;margin:9px 0}
+  .wich{font-size:19px;flex:0 0 26px;text-align:center}
+  @media(max-width:900px){
+    main{display:flex;flex-direction:column;height:auto}
+    .mapwrap{height:48vh;min-height:280px}
+    aside{max-height:40vh}
+    .feed{height:46vh}
+    .feedgrip{display:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>EMPOROS</h1>
+  <select id="campaignSel" title="Campaign"></select>
+  <button id="newBtn">New Campaign</button>
+  <button id="helpBtn" title="How to play, in four steps">?</button>
+  <a class="pill" href="/market" id="exchLink" target="_blank" rel="noopener"
+     title="The Exchange — today's prices, your hold's worth, and the purse">&#9878; Exchange</a>
+  <a class="pill" href="/battle" id="deskLink" target="_blank" rel="noopener"
+     title="The Field Desk — the engine keeps the schedule, you roll the dice">&#9876; Field Desk</a>
+  <span id="dayPill" class="pill" title="Campaign clock"></span>
+  <span id="modePill" class="pill" title="Referee mode"></span>
+  <span class="spacer"></span>
+  <a class="pill" href="/command" title="The registry console — every engine control as a plain form" style="opacity:.65">🛠 Console</a>
+  <span id="userpill" class="pill" title="Signed in">&#9679; signed in</span>
+  <button id="logoutBtn">Logout</button>
+</header>
+
+<main>
+  <div class="mapwrap" id="mapWrap">
+    <div class="mapctl">
+      <label>Jump</label>
+      <select id="jumpSel"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+      <label>Highlight hex</label>
+      <input id="hlIn" size="5" placeholder="0101"/>
+      <button id="findShipBtn" title="Centre the map on your ship">◎ My ship</button>
+      <button id="jumpBtn" title="Plot a jump — the engine runs the navigation, the fuel and the dice">◈ Jump</button>
+      <span id="posPill" class="pill" title="Where your ship is right now"></span>
+      <span id="jrnPill" class="pill" style="display:none" title="The active jump order"></span>
+      <button id="mapBtn">Refresh map</button>
+      <span class="zoomgrp">
+        <button id="zoomOut" title="Zoom out">&minus;</button>
+        <span id="zoomLbl" title="Reset zoom">100%</span>
+        <button id="zoomIn" title="Zoom in">+</button>
+      </span>
+      <a class="pill" href="/market" id="tradeLink">Trade</a>
+      <a class="pill" href="/battle" id="combatLink">Combat</a>
+    </div>
+    <div id="map" title="Click a world for its survey dossier — drag to pan"></div>
+  </div>
+
+  <aside>
+    <div class="tabs">
+      <button data-tab="crew" class="active">Crew</button>
+      <button data-tab="ships">Ships</button>
+      <button data-tab="worlds">Worlds</button>
+      <button data-tab="journal">Journal</button>
+    </div>
+    <div id="panel"></div>
+  </aside>
+
+  <div class="feed">
+    <div class="feedgrip" id="feedGrip" title="Drag to resize the story area"></div>
+    <div class="log" id="log"></div>
+    <div class="inputbar">
+      <input id="actionIn" placeholder="Describe your action…  (Enter to send)"/>
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+</main>
+
+<div id="cgModal" class="modal" style="display:none"><div class="modalcard"><div id="cgBody"></div></div></div>
+<div id="genModal" class="modal" style="display:none"><div class="modalcard" id="genBody"></div></div>
+<div id="wdModal" class="modal" style="display:none"><div class="modalcard dossier" id="wdBody" style="max-width:540px"></div></div>
+<div id="wModal" class="modal" style="display:none"><div class="modalcard" style="max-width:520px">
+  <h3 style="margin-top:0">Welcome aboard, spacer</h3>
+  <div class="sub" style="color:var(--dim)">Four steps from here to the stars:</div>
+  <div class="wstep"><div class="wich">⚓</div><div><b>A world.</b> Pick a campaign up top — or hit <b>New Campaign</b> to open a fresh ledger.</div></div>
+  <div class="wstep"><div class="wich">👤</div><div><b>A life.</b> Open the <b>Crew</b> tab and roll a Traveller — the full lifepath, term by term, every roll audited by the rules engine.</div></div>
+  <div class="wstep"><div class="wich">🌌</div><div><b>The map.</b> Import a sector, then click any world for its survey dossier — starport, air, law, distance. <b>Set Course</b> drafts your jump order and <b>◈ Jump</b> runs it: navigation, fuel, and the dice.</div></div>
+  <div class="wstep"><div class="wich">🗣</div><div><b>The referee.</b> Type plain words in the box at the bottom: <i>“I look for cargo work at the docks.”</i> Mechanics stay outside narration — travel, trade and combat change only when the engine commits them.</div></div>
+  <div style="margin-top:12px;display:flex;justify-content:flex-end"><button onclick="document.getElementById('wModal').style.display='none'">To the stars</button></div>
+</div></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uuid=()=>crypto.randomUUID();
+
+const S={campaigns:[],cid:null,full:null,shipClasses:[],tab:'crew',local:[],
+         cgActor:null,cgLog:[],kept:{},zoom:1,selShip:null,selWorld:null,poll:null};
+
+function log(text,cls){S.local.push({t:new Date(),text,cls:cls||'sys'});renderLog();}
+function renderLog(){
+  const el=$('#log');let h='';
+  const msgs=(S.full&&S.full.referee_messages)||[];
+  for(const m of msgs){
+    const gm=m.speaker_kind!=='player';
+    h+=`<div class="msg${gm?' gm':''}"><span class="who">${gm?'Referee':'You'}</span>${esc(m.message_text)}</div>`;
+  }
+  for(const e of S.local){
+    h+=`<div class="msg ${e.cls}"><span class="t">${e.t.toLocaleTimeString()}</span>${esc(e.text)}</div>`;
+  }
+  el.innerHTML=h||'<div class="msg sys">The feed is quiet. Narration and rule outcomes will appear here.</div>';
+  el.scrollTop=el.scrollHeight;
+}
+
+async function api(path){
+  const r=await fetch(path,{headers:{'Accept':'application/json'}});
+  if(r.status===401){location.href='/login?next=/';throw new Error('unauthenticated');}
+  if(!r.ok)throw new Error('GET '+path+' -> '+r.status);
+  return r.json();
+}
+function postOk(r){return r.type==='opaqueredirect'||r.status===303||r.status===0||(r.status>=200&&r.status<400);}
+async function post(path,fields,okMsg){
+  const body=new URLSearchParams();
+  for(const[k,v]of Object.entries(fields||{})){
+    if(Array.isArray(v)){for(const item of v)body.append(k,item);}
+    else if(v!==undefined&&v!==null)body.append(k,v);
+  }
+  if(!body.has('idempotency_key'))body.append('idempotency_key',uuid());
+  return submit(path,{method:'POST',body,redirect:'manual'},okMsg);
+}
+async function postMultipart(path,formData,okMsg){
+  if(!formData.has('idempotency_key'))formData.append('idempotency_key',uuid());
+  return submit(path,{method:'POST',body:formData,redirect:'manual'},okMsg);
+}
+async function submit(path,opts,okMsg){
+  let r;
+  try{r=await fetch(path,opts);}catch(e){log('Comms failure: '+e.message,'err');return false;}
+  if(r.status===401){location.href='/login?next=/';return false;}
+  if([400,403,404,409,413,422,500].includes(r.status)){
+    let detail='HTTP '+r.status;
+    try{const j=await r.json();detail=typeof j.detail==='string'?j.detail:JSON.stringify(j.detail);}catch(e){}
+    log('Rule check: '+detail,'err');
+    if(S.cgActor)S.cgLog.push('✗ '+detail);
+    return false;
+  }
+  if(postOk(r)){
+    if(okMsg){log(okMsg,'sys');if(S.cgActor)S.cgLog.push('✓ '+okMsg);}
+    await refresh();
+    return true;
+  }
+  log('Unexpected response '+r.status,'err');return false;
+}
+
+async function refresh(){
+  if(!S.cid){render();return;}
+  S.full=await api('/api/campaigns/'+S.cid+'/full');
+  render();
+}
+let firstCentre=true;
+function render(){
+  renderHeaderPills();renderMap();renderPanel();renderLog();
+  if(firstCentre&&shipSystem()){firstCentre=false;centreOnShip();
+    const j=shipSystem();if(j&&j.ship.jump_rating>0)$('#jumpSel').value=String(Math.min(6,j.ship.jump_rating));}
+  if(S.cgActor)renderChargen();
+}
+function renderHeaderPills(){
+  const f=S.full;
+  $('#dayPill').textContent=f?('Day '+f.day_number):'';
+  $('#modePill').textContent=f?String(f.play_mode||'').replace(/_/g,' '):'';
+  const q=S.cid?('?campaign='+S.cid):'';
+  for(const id of['exchLink','deskLink','tradeLink','combatLink']){
+    const a=$('#'+id);a.href=(id==='exchLink'||id==='tradeLink'?'/market':'/battle')+q;
+  }
+}
+
+/* ---------- header / campaigns ---------- */
+async function loadCampaigns(){
+  S.campaigns=await api('/api/campaigns');
+  const sel=$('#campaignSel');
+  sel.innerHTML=S.campaigns.map(c=>`<option value="${c.public_id}">${esc(c.name)} · day ${c.day_number}</option>`).join('')||'<option value="">— no campaigns —</option>';
+  const want=new URLSearchParams(location.search).get('campaign');
+  if(want&&S.campaigns.some(c=>c.public_id===want))S.cid=want;
+  else S.cid=S.campaigns.length?S.campaigns[0].public_id:null;
+  if(S.cid)sel.value=S.cid;
+  if(!S.campaigns.length)$('#wModal').style.display='flex';
+}
+$('#campaignSel').addEventListener('change',async e=>{
+  S.cid=e.target.value||null;S.full=null;S.local=[];S.selWorld=null;S.selShip=null;
+  history.replaceState(null,'','/'+(S.cid?'?campaign='+S.cid:''));
+  await refresh();
+});
+$('#logoutBtn').onclick=async()=>{await fetch('/logout',{method:'POST',redirect:'manual'});location.href='/login';};
+$('#helpBtn').onclick=()=>{$('#wModal').style.display='flex';};
+$('#newBtn').onclick=()=>{
+  openGen(`<h3>New Campaign</h3>
+    <label>Name <input id="ncName" maxlength="120" placeholder="The Long Account"></label>
+    <label>Referee mode <select id="ncMode">
+      <option value="ai_refereed" selected>AI referee</option>
+      <option value="ai_assisted">AI assist (human GM)</option>
+      <option value="human_refereed">Human referee (tools only)</option>
+      <option value="player_directed">Player directed</option>
+    </select></label>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeGen()">Cancel</button>
+      <button id="ncGo" class="goldbtn">Open the ledger</button></div>`);
+  $('#ncGo').onclick=async()=>{
+    const name=$('#ncName').value.trim();if(!name)return;
+    const ok=await post('/campaigns',{name,play_mode:$('#ncMode').value},'Campaign "'+name+'" begins.');
+    if(ok){closeGen();await loadCampaigns();
+      const mine=S.campaigns.find(c=>c.name===name);if(mine){S.cid=mine.public_id;$('#campaignSel').value=S.cid;}
+      await refresh();}
+  };
+};
+function openGen(html){$('#genBody').innerHTML=html;$('#genModal').style.display='flex';}
+function closeGen(){$('#genModal').style.display='none';}
+window.closeGen=closeGen;
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');S.tab=b.dataset.tab;renderPanel();
+});
+
+const CHAR_ORDER=['characteristic.strength','characteristic.dexterity','characteristic.endurance','characteristic.intelligence','characteristic.education','characteristic.social-standing'];
+function uppOf(a){
+  const by={};for(const c of a.characteristics||[])by[c.code]=c.current;
+  return CHAR_ORDER.map(c=>{const v=by[c];return v==null?'-':v.toString(16).toUpperCase();}).join('');
+}
+function cashOf(a){let t=0;for(const acc of a.accounts||[])t+=acc.balance_minor||0;return t;}
+function actorOpts(f){return f.actors.map(a=>`<option value="${a.public_id}">${esc(a.character_name)}</option>`).join('');}
+</script>
+<script>
+/* =============== THE MAP =============== */
+const HEXR=26, HEXH=Math.sqrt(3)*HEXR;         /* flat-top hexes, Traveller layout */
+function hexCenter(col,row){
+  return {x:HEXR*1.5*(col-1)+HEXR+6,
+          y:HEXH*(row-1)+(col%2===0?HEXH/2:0)+HEXH/2+6};
+}
+function hexPoints(cx,cy,r){
+  const p=[];for(let i=0;i<6;i++){const a=Math.PI/180*(60*i);
+    p.push((cx+r*Math.cos(a)).toFixed(1)+','+(cy+r*Math.sin(a)).toFixed(1));}
+  return p.join(' ');
+}
+/* offset-hex distance in parsecs (Traveller even-q offset) */
+function hexDist(c1,r1,c2,r2){
+  function cube(col,row){const x=col,z=row-(col+(col&1))/2|0;
+    return {x, z:row - ((col + (col&1))>>1), get y(){return -this.x-this.z}};}
+  const a=cube(c1,r1),b=cube(c2,r2);
+  return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y),Math.abs(a.z-b.z));
+}
+function shipSystem(){
+  const f=S.full;if(!f)return null;
+  const ship=f.ships.find(s=>s.public_id===S.selShip)||f.ships.find(s=>s.location_public_id)||null;
+  if(!ship||!ship.location_public_id)return null;
+  const sys=f.systems.find(y=>y.public_id===ship.location_public_id)||null;
+  return sys?{ship,sys}:null;
+}
+function hexLabel(y){return String(y.hex_column).padStart(2,'0')+String(y.hex_row).padStart(2,'0');}
+function uwpOf(y){
+  const hx=v=>v==null?'?':Number(v).toString(16).toUpperCase();
+  return (y.starport_code??'?')+hx(y.size_code)+hx(y.atmosphere_code)+hx(y.hydrographics_code)
+        +hx(y.population_code)+hx(y.government_code)+hx(y.law_level_code)
+        +(y.technology_level!=null?'-'+Number(y.technology_level).toString(16).toUpperCase():'');
+}
+
+function renderMap(){
+  const el=$('#map'),f=S.full;
+  const pos=shipSystem();
+  $('#posPill').textContent=pos?('✈ '+pos.ship.name+' — '+pos.sys.name+' ('+hexLabel(pos.sys)+')'):'no ship placed';
+  const jrn=activeJourney();
+  const jp=$('#jrnPill');
+  if(jrn){jp.style.display='';jp.textContent='◈ '+jrn.name+' · '+jrn.journey_status;}
+  else jp.style.display='none';
+  if(!f||!f.systems.length){
+    el.innerHTML='<div class="card" style="max-width:430px;margin:60px auto"><div class="nm">Uncharted space</div><div class="sub">'+(f?'No star systems yet. Open the <b>Worlds</b> tab and import a sector file, and the chart will light up.':'Create or select a campaign to begin.')+'</div></div>';
+    return;
+  }
+  const maxCol=Math.max(8,...f.systems.map(y=>y.hex_column));
+  const maxRow=Math.max(10,...f.systems.map(y=>y.hex_row));
+  const COLS=maxCol>8?32:8, ROWS=maxRow>10?40:10;
+  const W=HEXR*1.5*(COLS-1)+HEXR*2+12, H=HEXH*ROWS+HEXH/2+12;
+  let out=[];
+  /* faint grid */
+  for(let c=1;c<=COLS;c++)for(let r=1;r<=ROWS;r++){
+    const {x,y}=hexCenter(c,r);
+    out.push(`<polygon class="hexline" points="${hexPoints(x,y,HEXR-.6)}"/>`);
+  }
+  /* subsector partitions + letters */
+  if(COLS>8){
+    let letter=0;
+    for(let sr=0;sr<4;sr++)for(let sc=0;sc<4;sc++){
+      const {x,y}=hexCenter(sc*8+1,sr*10+1);
+      out.push(`<text class="subletter" x="${x+2}" y="${y+16}">${'ABCDEFGHIJKLMNOP'[sr*4+sc]}</text>`);
+    }
+    for(let i=1;i<4;i++){
+      const gx=hexCenter(i*8+1,1).x-HEXR*1.25;
+      out.push(`<line class="sublines" x1="${gx}" y1="0" x2="${gx}" y2="${H}"/>`);
+      const gy=HEXH*i*10+6-HEXH/2;
+      out.push(`<line class="sublines" x1="0" y1="${gy}" x2="${W}" y2="${gy}"/>`);
+    }
+  }
+  /* jump range shading around the ship */
+  const jumpN=parseInt($('#jumpSel').value,10)||0;
+  if(pos&&jumpN>0){
+    for(let c=Math.max(1,pos.sys.hex_column-jumpN);c<=Math.min(COLS,pos.sys.hex_column+jumpN);c++)
+      for(let r=Math.max(1,pos.sys.hex_row-jumpN);r<=Math.min(ROWS,pos.sys.hex_row+jumpN);r++){
+        if(hexDist(pos.sys.hex_column,pos.sys.hex_row,c,r)<=jumpN){
+          const {x,y}=hexCenter(c,r);
+          out.push(`<polygon class="jumphex" points="${hexPoints(x,y,HEXR-1.5)}"/>`);
+        }
+      }
+  }
+  /* worlds */
+  for(const y of f.systems){
+    const {x,y:cy}=hexCenter(y.hex_column,y.hex_row);
+    const water=(y.hydrographics_code??0)>0;
+    const fill=water?'var(--water)':'var(--amber)';
+    const dim=y.discovery_status&&y.discovery_status!=='known'&&y.discovery_status!=='surveyed';
+    out.push(`<g class="world" data-id="${y.public_id}" opacity="${dim?.55:1}">
+      <text class="w-hex" x="${x}" y="${cy-HEXH/2+9}">${hexLabel(y)}</text>
+      <text class="w-port" x="${x}" y="${cy-9}">${esc(y.starport_code??'?')}</text>
+      <circle class="disc" cx="${x}" cy="${cy}" r="7" fill="${fill}"/>
+      <text class="w-name" x="${x}" y="${cy+16}">${esc(y.name)}</text>
+      <text class="w-uwp" x="${x}" y="${cy+25}">${uwpOf(y)}</text>
+    </g>`);
+  }
+  /* ship ring */
+  if(pos){
+    const {x,y}=hexCenter(pos.sys.hex_column,pos.sys.hex_row);
+    out.push(`<circle class="shipring" cx="${x}" cy="${y}" r="${HEXR-4}"/>`);
+    out.push(`<text x="${x+HEXR-9}" y="${y-HEXR+16}" fill="var(--gold)" font-size="11">✦</text>`);
+  }
+  /* highlight hex */
+  const hl=($('#hlIn').value||'').trim();
+  if(/^\d{4}$/.test(hl)){
+    const {x,y}=hexCenter(parseInt(hl.slice(0,2),10),parseInt(hl.slice(2),10));
+    out.push(`<circle class="hl" cx="${x}" cy="${y}" r="${HEXR-2}"/>`);
+  }
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:${W*S.zoom}px;height:${H*S.zoom}px" xmlns="http://www.w3.org/2000/svg">${out.join('')}</svg>`;
+  el.querySelectorAll('g.world').forEach(g=>{
+    g.addEventListener('click',e=>{e.stopPropagation();showWorldDossier(g.dataset.id);});
+  });
+}
+
+/* pan by dragging, zoom controls */
+(function(){
+  const wrap=$('#mapWrap'),map=$('#map');
+  let drag=null;
+  map.addEventListener('pointerdown',e=>{
+    if(e.target.closest('g.world'))return;
+    drag={x:e.clientX,y:e.clientY,sl:wrap.scrollLeft,st:wrap.scrollTop};
+    map.classList.add('dragging');map.setPointerCapture(e.pointerId);
+  });
+  map.addEventListener('pointermove',e=>{
+    if(!drag)return;
+    wrap.scrollLeft=drag.sl-(e.clientX-drag.x);
+    wrap.scrollTop=drag.st-(e.clientY-drag.y);
+  });
+  map.addEventListener('pointerup',e=>{drag=null;map.classList.remove('dragging');});
+})();
+function setZoom(z){S.zoom=Math.min(3,Math.max(.4,z));$('#zoomLbl').textContent=Math.round(S.zoom*100)+'%';renderMap();}
+$('#zoomIn').onclick=()=>setZoom(S.zoom*1.25);
+$('#zoomOut').onclick=()=>setZoom(S.zoom/1.25);
+$('#zoomLbl').onclick=()=>setZoom(1);
+$('#mapBtn').onclick=()=>refresh();
+$('#jumpSel').onchange=()=>renderMap();
+$('#hlIn').oninput=()=>renderMap();
+function centreOnShip(){
+  const pos=shipSystem();if(!pos){log('No ship is placed on the chart yet.','sys');return;}
+  const {x,y}=hexCenter(pos.sys.hex_column,pos.sys.hex_row);
+  const wrap=$('#mapWrap');
+  wrap.scrollLeft=x*S.zoom-wrap.clientWidth/2;
+  wrap.scrollTop=y*S.zoom-wrap.clientHeight/2;
+}
+$('#findShipBtn').onclick=centreOnShip;
+
+/* ---------- world dossier ---------- */
+const T_STARPORT={A:'Excellent — refined fuel, full shipyard',B:'Good — refined fuel, spacecraft yard',C:'Routine — unrefined fuel, repairs',D:'Poor — unrefined fuel only',E:'Frontier — a cleared field',X:'None'};
+const T_SIZE=['Asteroid / planetoid','1,600 km','3,200 km','4,800 km','6,400 km','8,000 km','9,600 km','11,200 km','12,800 km','14,400 km','16,000 km'];
+const T_ATMO=['None — vacc suit','Trace','Very thin, tainted','Very thin','Thin, tainted','Thin','Standard','Standard, tainted','Dense','Dense, tainted','Exotic','Corrosive','Insidious','Dense, high','Thin, low','Unusual'];
+const T_HYDRO=['Desert world','10% water','20% water','30% water','40% water','50% water','60% water','70% water','80% water','90% water','Water world'];
+const T_GOV=['None','Company / corporation','Participating democracy','Self-perpetuating oligarchy','Representative democracy','Feudal technocracy','Captive government','Balkanised','Civil service bureaucracy','Impersonal bureaucracy','Charismatic dictator','Non-charismatic leader','Charismatic oligarchy','Religious dictatorship','Religious autocracy','Totalitarian oligarchy'];
+function popText(p){if(p==null)return '?';if(p===0)return 'Uninhabited';const n=Math.pow(10,p);return n>=1e9?(n/1e9)+' billion+':n>=1e6?(n/1e6)+' million+':n.toLocaleString()+'+';}
+function lawText(l){if(l==null)return '?';return l<=0?'No restrictions':l<=3?'Light arms restrictions':l<=6?'Most weapons controlled':l<=8?'Strict — open carry forbidden':'Total control';}
+
+function showWorldDossier(id){
+  const f=S.full,y=f.systems.find(x=>x.public_id===id);if(!y)return;
+  S.selWorld=id;
+  const pos=shipSystem();
+  const d=pos?hexDist(pos.sys.hex_column,pos.sys.hex_row,y.hex_column,y.hex_row):null;
+  const rows=[
+    ['Starport',(y.starport_code??'?')+' — '+(T_STARPORT[y.starport_code]||'Unknown')],
+    ['Size',y.size_code!=null?(T_SIZE[y.size_code]||y.size_code):'?'],
+    ['Atmosphere',y.atmosphere_code!=null?(T_ATMO[y.atmosphere_code]||y.atmosphere_code):'?'],
+    ['Hydrographics',y.hydrographics_code!=null?(T_HYDRO[y.hydrographics_code]||y.hydrographics_code):'?'],
+    ['Population',popText(y.population_code)],
+    ['Government',y.government_code!=null?(T_GOV[y.government_code]||y.government_code):'?'],
+    ['Law',lawText(y.law_level_code)],
+    ['Tech level',y.technology_level??'?'],
+    ['Survey status',String(y.discovery_status||'known')],
+  ];
+  const canCourse=pos&&pos.sys.public_id!==y.public_id&&pos.ship.journey_available;
+  $('#wdBody').innerHTML=`
+    <h3 style="margin:0">${esc(y.name)} <span class="upp" style="font-size:13px">${uwpOf(y)}</span></h3>
+    <div class="sub" style="color:var(--dim)">Hex ${hexLabel(y)} · ${esc(y.sector_name)}${d!=null?' · '+d+' parsec'+(d===1?'':'s')+' from '+esc(pos.ship.name):''}</div>
+    <dl>${rows.map(r=>`<div><dt>${r[0]}</dt><dd>${esc(String(r[1]))}</dd></div>`).join('')}</dl>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button onclick="wdClose()">Close</button>
+      ${pos&&!pos.ship.journey_available?'<span class="pill">a jump order is already open for '+esc(pos.ship.name)+'</span>':''}
+      ${canCourse?`<button class="goldbtn" onclick="wdSetCourse('${y.public_id}')">Set Course — draft the jump order</button>`:''}
+    </div>`;
+  $('#wdModal').style.display='flex';
+}
+function wdClose(){$('#wdModal').style.display='none';}
+window.wdClose=wdClose;window.showWorldDossier=showWorldDossier;
+
+async function wdSetCourse(destId){
+  const f=S.full,pos=shipSystem();if(!pos)return;
+  const dest=f.systems.find(x=>x.public_id===destId);
+  const name='Jump to '+dest.name;
+  const ok=await post('/campaigns/'+S.cid+'/jumps',
+    {ship_public_id:pos.ship.public_id,destination_system_public_id:destId,journey_name:name},
+    'Jump order drafted: '+name+'. Press ◈ Jump to run it.');
+  if(ok)wdClose();
+}
+window.wdSetCourse=wdSetCourse;
+
+/* ---------- ◈ Jump: run the whole order ---------- */
+function openJourneys(){
+  const f=S.full;if(!f)return[];
+  return (f.journeys||[]).filter(j=>!['completed','failed','cancelled'].includes(j.journey_status));
+}
+function activeJourney(){
+  const pos=shipSystem();
+  const open=openJourneys();
+  if(pos){const mine=open.find(j=>(j.ship_public_id||j.ship_name)===(j.ship_public_id?pos.ship.public_id:pos.ship.name));if(mine)return mine;}
+  return open[0]||null;
+}
+$('#jumpBtn').onclick=()=>{
+  const f=S.full;if(!f)return;
+  const j=activeJourney();
+  if(!j){log('No jump order is drafted. Click a world on the map and Set Course first.','sys');return;}
+  openGen(`<h3>◈ ${esc(j.name)}</h3>
+    <div class="sub" style="color:var(--dim)">${esc(j.ship_name)} · ${esc(j.origin_name||'?')} → ${esc(j.destination_name||'?')} · ${j.distance_parsecs??'?'} pc · status: ${esc(j.journey_status)}</div>
+    <label>Who runs navigation and engineering? <select id="jNav">${actorOpts(f)}</select></label>
+    <div class="sub" style="color:var(--dim);margin-top:6px">The engine plots the route, resolves the drive, spends the fuel and keeps the clock. Every roll is audited; a bad route or a misjump stops the run and tells you why.</div>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeGen()">Not yet</button>
+      ${j.journey_status==='planning'?`<button id="jCancel" title="Stand the order down and release the fuel reservation">✕ Stand down</button>`:''}
+      <button id="jGo" class="goldbtn">◈ Run the jump</button></div>`);
+  $('#jGo').onclick=async()=>{closeGen();await runJumpChain($('#jNav').value);};
+  const jc=$('#jCancel');
+  if(jc)jc.onclick=async()=>{closeGen();await post('/campaigns/'+S.cid+'/journeys/'+j.public_id+'/cancel',{},'Jump order stood down. Reservations released.');};
+};
+
+async function runJumpChain(actorId){
+  const pinned=activeJourney();if(!pinned)return;
+  const pid=pinned.public_id;
+  let routeTries=0;
+  for(let guard=0;guard<10;guard++){
+    await refresh();
+    const j=(S.full.journeys||[]).find(x=>x.public_id===pid);
+    if(!j||['completed','failed','cancelled'].includes(j.journey_status)){
+      log(j&&j.journey_status==='completed'?'The jump order is finished.':'The jump order is closed.','sys');return;}
+    const base='/campaigns/'+S.cid+'/journeys/'+j.public_id;
+    if(j.route_succeeded==null){
+      if(!await post(base+'/navigation',{actor_public_id:actorId},'Route plotted for '+j.name+'.'))return;
+    }else if(j.route_succeeded===false){
+      if(routeTries>=2){log('The route will not resolve today. The ship stays put; press ◈ Jump to try again.','err');return;}
+      routeTries++;
+      log('Route plotting failed — no fuel spent. Trying a fresh solution…','err');
+      if(!await post(base+'/navigation',{actor_public_id:actorId},'Route replotted for '+j.name+'.'))return;
+    }else if(!j.jump_outcome){
+      if(!await post(base+'/attempt',{actor_public_id:actorId},'Drive resolved.'))return;
+    }else if(j.journey_status==='ready'){
+      if(!await post(base+'/depart',{},'The ship enters jump space.'))return;
+    }else if(j.journey_status==='underway'){
+      if(!await post(base+'/arrive',{},'Emergence. '+(j.destination_name?'Welcome to '+j.destination_name+'.':'')))return;
+    }else{
+      return;
+    }
+  }
+}
+</script>
+<script>
+/* ---------- chargen wizard ---------- */
+function openChargen(actorId){S.cgActor=actorId;S.cgLog=[];renderChargen();$('#cgModal').style.display='flex';}
+function closeChargen(){S.cgActor=null;$('#cgModal').style.display='none';}
+window.closeChargen=closeChargen;
+
+function cgPost(path,fields,okMsg){return post(path,fields,okMsg);}
+window.cgPost=cgPost;
+
+function renderChargen(){
+  const f=S.full,a=f&&f.actors.find(x=>x.public_id===S.cgActor);
+  if(!a){closeChargen();return;}
+  const base=`/campaigns/${S.cid}/characters/${a.public_id}`;
+  let step=chargenStep(a,base,f);
+  const chars=(a.characteristics||[]).map(c=>`${c.abbreviation} ${c.current}`).join(' · ');
+  $('#cgBody').innerHTML=`
+    <h3>Create a Traveller <span class="pill">${esc(a.lifepath_status||'in progress')}</span></h3>
+    <div class="sub" style="color:var(--dim)">${esc(a.character_name)} · <span class="upp">${uppOf(a)}</span> · ${chars}${a.age_years?' · age '+a.age_years:''}</div>
+    <div class="cgfeed">${S.cgLog.map(x=>`<div>${esc(x)}</div>`).join('')||'<div>Every roll is audited by the rules engine.</div>'}</div>
+    ${!a.species?speciesStep(a,base,f):''}
+    ${step}
+    <div style="margin-top:12px;display:flex;justify-content:flex-end"><button onclick="closeChargen()">Save and return later</button></div>`;
+  wireChargen();
+}
+
+function speciesStep(a,base,f){
+  return `<div class="cgstep"><small>SPECIES</small><b>Choose a species (optional)</b>
+    <div class="rowform"><select id="cgSpecies">${(f.species_options||[]).map(s=>`<option value="${s.species_code}">${esc(s.name)}</option>`).join('')}</select>
+    <button data-cga="species">Assign species</button></div></div>`;
+}
+
+function chargenStep(a,base,f){
+  const cid=S.cid;
+  /* career entry fallback */
+  if(a.career_entry_pending){
+    const p=a.career_entry_pending;
+    return `<div class="cgstep"><small>CAREER ENTRY FAILED</small>
+      <b>${esc(p.career_name)} qualification failed</b>
+      <p>Result ${p.check_total} vs target ${p.target_number}. Choose a fallback.</p>
+      <div class="cgbtns">
+        <button data-cga="fallback" data-arg="draft">Submit to the draft</button>
+        <button data-cga="fallback" data-arg="drifter">Enter the Drifter career</button>
+      </div></div>`;
+  }
+  /* aging */
+  if(a.career_aging){
+    const g=a.career_aging;
+    if(g.stage==='roll')return `<div class="cgstep"><small>AGING</small><b>${g.aging_kind==='anagathic_stopping_shock'?'Anagathic stopping shock':'Aging check required'}</b>
+      <p>Roll the aging table before career progression continues.</p>
+      <button data-cga="aging-roll" data-arg="${esc(g.aging_kind)}">Roll aging check</button></div>`;
+    if(g.stage==='allocation'){
+      const mental=[['characteristic.intelligence','Intelligence'],['characteristic.education','Education'],['characteristic.social-standing','Social Standing']];
+      let h=`<div class="cgstep"><small>AGING</small><b>${esc((g.aging_effect_code||'').replace(/_/g,' '))}</b>
+        <p>2d6 ${g.natural_total} ${g.term_modifier>=0?'+':''}${g.term_modifier} → ${g.table_result}. ${esc(g.source_effect_text||'')}</p>`;
+      (g.allocation_options||[]).forEach((o,i)=>{
+        h+=`<div class="rowform">${g.mental_reduction_amount?`<select class="agMental" data-i="${i}">${mental.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('')}</select>`:''}
+          <button data-cga="aging-apply" data-arg="${i}" data-codes="${o.physical_codes.join(',')}">${esc(o.summary)}</button></div>`;
+      });
+      return h+'</div>';
+    }
+    if(g.stage==='crisis_cost')return `<div class="cgstep"><small>AGING CRISIS</small><b>Aging medical crisis</b>
+      <p>A characteristic reached zero. Determine the emergency treatment price.</p>
+      <button data-cga="aging-crisis-cost">Determine treatment cost</button></div>`;
+    return `<div class="cgstep"><small>AGING CRISIS</small><b>Aging treatment: Cr${g.medical_cost_credits}</b>
+      <p>Available cash Cr${g.cash_credits}. Paying restores zero characteristics to 1 but bars further qualification.</p>
+      <div class="cgbtns">${g.cash_credits>=g.medical_cost_credits?'<button data-cga="aging-crisis" data-arg="pay">Pay and survive</button>':''}
+      <button data-cga="aging-crisis" data-arg="accept_death">Accept character death</button></div></div>`;
+  }
+  /* basic training */
+  if(a.basic_training){
+    const bt=a.basic_training;
+    if(bt.first_career){
+      let h=`<div class="cgstep"><small>BASIC TRAINING</small><b>${esc(bt.career_name)} basic training</b>
+        <p>Your first career grants every Service-table skill at level 0. Choose required specialties.</p>`;
+      (bt.entries||[]).forEach((e,i)=>{
+        if(e.cascade_skill)h+=`<label>${e.roll_value} · ${esc(e.skill_name)} specialty
+          <select class="btSpec">${(e.specializations||[]).map(s=>`<option value="${esc(e.skill_rule_code)}||${s.rule_code}">${esc(s.name)}</option>`).join('')}</select></label>`;
+        else h+=`<div class="sub" style="color:var(--dim)">${e.roll_value} · ${esc(e.source_outcome_text)}</div>`;
+      });
+      return h+'<div style="margin-top:8px"><button data-cga="basic-first">Apply all Service skills</button></div></div>';
+    }
+    let h=`<div class="cgstep"><small>BASIC TRAINING</small><b>${esc(bt.career_name)}: choose one Service result</b>`;
+    (bt.entries||[]).forEach(e=>{
+      h+=`<div class="rowform"><span class="sub" style="color:var(--dim)">${e.roll_value} · ${esc(e.source_outcome_text)}</span>
+        ${e.cascade_skill?`<select class="btSel" data-roll="${e.roll_value}">${(e.specializations||[]).map(s=>`<option value="${esc(e.skill_rule_code)}||${s.rule_code}">${esc(s.name)}</option>`).join('')}</select>`:''}
+        <button data-cga="basic-one" data-arg="${e.roll_value}">Choose</button></div>`;
+    });
+    return h+'</div>';
+  }
+  /* rank zero award */
+  if(a.rank_zero_award){
+    const r0=a.rank_zero_award;
+    return `<div class="cgstep"><small>RANK 0</small><b>Enter at Rank 0${r0.title?': '+esc(r0.title):''}</b>
+      <p>${esc(r0.source_grant_text||'')}</p>
+      ${r0.cascade_skill?`<label>${esc(r0.skill_name)} specialty <select id="r0Spec">${(r0.specializations||[]).map(s=>`<option value="${s.rule_code}">${esc(s.name)}</option>`).join('')}</select></label>`:''}
+      <button data-cga="rank-zero">Apply Rank 0 award</button></div>`;
+  }
+  /* term step */
+  if(a.career_term_step){
+    const t=a.career_term_step;
+    if(t.stage==='anagathics_choice')return `<div class="cgstep"><small>TERM ${t.term_number}</small><b>${esc(t.career_name)}: declare anagathics</b>
+      <p>Use adds a random Cr2,500–15,000 debt and a second survival check.</p>
+      <div class="cgbtns"><button data-cga="anagathics" data-arg="false">Proceed without anagathics</button>
+      <button data-cga="anagathics" data-arg="true">Use anagathics</button></div></div>`;
+    if(t.stage==='survival_ready')return `<div class="cgstep"><small>TERM ${t.term_number}</small><b>Survival check</b>
+      <p>${t.uses_anagathics?'Anagathics active · Cr'+t.cost_credits+' debt · two checks':'No anagathics · one survival check'}</p>
+      <button data-cga="survival">Roll survival</button></div>`;
+    if(t.stage==='survival_result'){
+      let h=`<div class="cgstep"><small>TERM ${t.term_number}</small><b>Survival ${t.survived?'passed':'failed'}</b>
+        <p>${esc(t.characteristic_name||'')} ${t.survival_characteristic_value} · total ${t.survival_check_total} vs ${t.survival_target}</p>`;
+      if(!t.survived)h+='<button data-cga="mishap">Roll career mishap</button>';
+      else h+='<p class="sub" style="color:var(--dim)">Rank resolution is next; it will appear automatically.</p>';
+      return h+'</div>';
+    }
+    if(t.stage==='rank_decision'){
+      const r=t.rank_attempt,label=r.attempt_kind==='commission'?'Commission':'Promotion';
+      return `<div class="cgstep"><small>RANK</small><b>${label} decision</b>
+        <p>Target ${r.target_number}. Success reaches Rank ${r.resulting_rank}${r.award&&r.award.title?', '+esc(r.award.title):''} and adds a training roll.</p>
+        ${r.award&&r.award.cascade_skill?`<label>${esc(r.award.skill_name)} specialty on success <select id="rkSpec">${(r.award.specializations||[]).map(s=>`<option value="${s.rule_code}">${esc(s.name)}</option>`).join('')}</select></label>`:''}
+        <div class="cgbtns"><button data-cga="rank" data-arg="attempt" data-kind="${r.attempt_kind}">Attempt ${label.toLowerCase()}</button>
+        <button data-cga="rank" data-arg="decline" data-kind="${r.attempt_kind}">Decline</button></div></div>`;
+    }
+    if(t.stage==='term_training_pending'){
+      let h=`<div class="cgstep"><small>TRAINING</small><b>Term training · ${t.training_rolls_completed}/${t.allowed_training_rolls} rolls used</b>`;
+      for(const r of t.training_results||[])h+=`<p class="sub" style="color:var(--dim)">Training ${r.training_roll_order}: ${esc(r.training_table_code)} ${r.roll_value} · ${esc(r.result_name)} → ${r.resulting_value}</p>`;
+      for(const tb of t.training_tables||[]){
+        h+=`<div class="rowform" data-table="${esc(tb.code)}"><span>${esc(tb.name)}</span>`;
+        for(const c of tb.cascades||[])h+=`<select class="ttSpec">${(c.specializations||[]).map(s=>`<option value="${esc(c.rule_code)}||${s.rule_code}">${esc(s.name)}</option>`).join('')}</select>`;
+        h+=`<button data-cga="term-train" data-arg="${esc(tb.code)}">Roll ${esc(tb.name)}</button></div>`;
+      }
+      return h+'</div>';
+    }
+    if(t.stage==='term_completion_pending'){
+      let h=`<div class="cgstep"><small>TERM</small><b>Term training complete</b>`;
+      for(const r of t.training_results||[])h+=`<p class="sub" style="color:var(--dim)">Training ${r.training_roll_order}: ${esc(r.training_table_code)} ${r.roll_value} · ${esc(r.result_name)} → ${r.resulting_value}</p>`;
+      return h+'<button data-cga="term-complete">Complete four-year term</button></div>';
+    }
+    if(t.stage==='reenlistment_roll')return `<div class="cgstep"><small>REENLISTMENT</small><b>Term ${t.completed_term_number} complete</b>
+      <p>Age ${a.age_years}. Roll the reenlistment check.</p><button data-cga="reenlist">Roll reenlistment</button></div>`;
+    if(t.stage==='reenlistment_choice')return `<div class="cgstep"><small>REENLISTMENT</small><b>Reenlistment available</b>
+      <p>Natural ${t.natural_total} vs ${t.target_number}. Continue this career or muster out.</p>
+      <div class="cgbtns"><button data-cga="reenlist-decide" data-arg="continue">Continue career</button>
+      <button data-cga="reenlist-decide" data-arg="leave">Leave career</button></div></div>`;
+  }
+  /* departure + injury + crisis + medical + muster */
+  let extra='';
+  if(a.career_departure){
+    const d=a.career_departure;
+    extra+=`<div class="cgstep"><small>DEPARTURE</small><b>Career ended: ${esc((d.outcome_code||'').replace(/_/g,' '))}</b>
+      <p>${esc(d.outcome_text||'')}</p><p class="sub" style="color:var(--dim)">${d.elapsed_years} elapsed years · Cr${d.debt_credits} debt</p></div>`;
+  }
+  if(a.career_injury&&!a.career_injury.determination_kind){
+    const inj=a.career_injury;
+    if(inj.injury_mode==='result_two_or_twice_lower')
+      return extra+`<div class="cgstep"><small>INJURY</small><b>Determine career injury</b>
+        <div class="cgbtns"><button data-cga="injury" data-arg="fixed_two">Take result 2</button>
+        <button data-cga="injury" data-arg="roll_twice_lower">Roll twice, keep lower</button></div></div>`;
+    return extra+`<div class="cgstep"><small>INJURY</small><b>Determine career injury</b>
+      <button data-cga="injury" data-arg="">Roll injury result</button></div>`;
+  }
+  if(a.career_injury&&a.career_injury.consequence_status==='awaiting_application'){
+    const inj=a.career_injury,phys=[['characteristic.strength','Strength'],['characteristic.dexterity','Dexterity'],['characteristic.endurance','Endurance']];
+    let h=extra+`<div class="cgstep"><small>INJURY</small><b>${esc((inj.outcome_code||'').replace(/_/g,' '))}</b><p>${esc(inj.outcome_text||'')}</p>`;
+    if(inj.reduction_kind==='one_physical_d6_and_others'){
+      h+=`<div class="rowform"><select id="injSplit">${phys.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('')}</select>
+        <button data-cga="injury-apply" data-arg="split">Apply 1d6 and split remaining</button></div>`;
+    }else{
+      const opts=phys.filter(p=>inj.reduction_kind!=='strength_or_dexterity_two'||p[0]!=='characteristic.endurance');
+      h+=`<div class="rowform"><select id="injOne">${opts.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('')}</select>
+        <button data-cga="injury-apply" data-arg="one">Apply injury loss</button></div>`;
+    }
+    return h+'</div>';
+  }
+  if(a.injury_crisis&&!a.injury_crisis.crisis_status)
+    return extra+`<div class="cgstep"><small>CRISIS</small><b>Life-threatening injury crisis</b>
+      <button data-cga="crisis-cost">Determine crisis care cost</button></div>`;
+  if(a.injury_crisis&&a.injury_crisis.crisis_status==='awaiting_decision'){
+    const c=a.injury_crisis;
+    return extra+`<div class="cgstep"><small>CRISIS</small><b>Emergency care: Cr${c.medical_cost_credits}</b>
+      <p>Available cash Cr${c.cash_credits}.</p>
+      <div class="cgbtns">${c.cash_credits>=c.medical_cost_credits?'<button data-cga="crisis" data-arg="pay">Pay and survive</button>':''}
+      <button data-cga="crisis" data-arg="accept_death">Accept character death</button></div></div>`;
+  }
+  if(a.medical_care){
+    const m=a.medical_care;
+    let h=extra+`<div class="cgstep"><small>MEDICAL CARE</small><b>Post-injury medical care</b>
+      <p>Cr5,000 per restored point before ${esc(m.career_name)} coverage (Rank ${m.rank_number}).</p>`;
+    for(const r of m.reductions||[])h+=`<label>${esc(r.name)} points (max ${r.restorable_points})
+      <input type="number" class="medPts" data-code="${r.rule_code}" min="0" max="${r.restorable_points}" value="${r.restorable_points}"></label>`;
+    return h+`<div class="cgbtns"><button data-cga="medical" data-arg="purchase">Purchase restoration</button>
+      <button data-cga="medical" data-arg="decline">Decline medical care</button></div></div>`;
+  }
+  if(a.career_muster&&!a.career_injury&&!a.medical_care&&!a.injury_crisis){
+    const m=a.career_muster;
+    if(!m.muster_status)return extra+`<div class="cgstep"><small>MUSTER</small><b>Muster out of ${esc(m.career_name)}</b>
+      <p>${m.terms_completed} terms · Rank ${m.rank_number}.</p>
+      <button data-cga="muster">Calculate benefits and pension</button></div>`;
+    let h=extra+`<div class="cgstep"><small>MUSTER</small><b>${esc(m.career_name)} mustering out · ${m.rolls_completed}/${m.total_benefit_rolls}</b>`;
+    for(const r of m.benefit_rolls||[])h+=`<p class="sub" style="color:var(--dim)">Roll ${r.roll_order} · ${esc(r.benefit_table_code)} ${r.natural_roll} → ${r.table_result}: ${esc(r.source_outcome_text||'')}${r.cash_awarded?' · Cr'+r.cash_awarded:''}</p>`;
+    if(m.muster_status==='rolling'){
+      h+=`<div class="cgbtns"><button data-cga="benefit" data-arg="material">Roll Material benefit</button>
+        ${m.cash_rolls_taken<3?'<button data-cga="benefit" data-arg="cash">Roll Cash benefit</button>':''}</div>`;
+    }else if(m.muster_status==='awaiting_weapon_choice'){
+      h+='<p>Choose any weapon, or improve an associated skill for a held weapon.</p>';
+      for(const w of m.weapons||[]){
+        h+=`<div class="rowform"><span>${esc(w.name)}${w.quantity?' (held '+w.quantity+')':''}</span>
+          <button data-cga="weapon" data-arg="item" data-w="${esc(w.rule_code)}">Take weapon</button>
+          ${(w.skills||[]).map(sk=>`<button data-cga="weapon" data-arg="skill" data-w="${esc(w.rule_code)}" data-sk="${esc(sk.rule_code)}">Improve ${esc(sk.name)}</button>`).join('')}</div>`;
+      }
+    }
+    return h+'</div>';
+  }
+  if(extra)return extra;
+  /* no active career: entry or finish */
+  const active=(a.careers||[]).filter(c=>c.stint_status==='active');
+  if(!active.length&&a.lifepath_status!=='completed'){
+    let h='';
+    if(!(a.careers||[]).length&&!S.kept[a.public_id]){
+      h+=`<div class="cgstep"><small>STEP 1 · CHARACTERISTICS</small><b>Keep these rolls or try another set</b>
+        <p>Total ${(a.characteristics||[]).reduce((s,c)=>s+c.current,0)}. Reroll all six as often as you like before entering a career.</p>
+        <div class="cgbtns"><button data-cga="reroll">Reroll all six</button>
+        <button data-cga="keep" class="goldbtn">Keep rolls and choose career</button></div></div>`;
+      return h;
+    }
+    h+=`<div class="cgstep"><small>CAREER ENTRY</small><b>Attempt qualification</b>
+      <div class="rowform"><select id="cgCareer">${(f.career_options||[]).map(o=>`<option value="${esc(o.career_code)}||${esc(o.assignment_code||'')}">${esc(o.career_name)}${o.assignment_name?' · '+esc(o.assignment_name):''}</option>`).join('')}</select>
+      <button data-cga="career-entry">Attempt qualification</button></div>
+      <div style="margin-top:8px"><button data-cga="finish">Finish prior experience and begin play</button></div></div>`;
+    return h;
+  }
+  /* completed → final details */
+  if(a.lifepath_status==='completed'){
+    return `<div class="cgstep"><small>FINAL DETAILS</small><b>Name your Traveller</b>
+      <label>Character name <input id="fdName" value="${a.character_name==='Unnamed Traveller'?'':esc(a.character_name)}" maxlength="120"></label>
+      <label>Gender identity (optional) <input id="fdGender" value="${esc(a.gender_identity||'')}"></label>
+      <label>Appearance (optional) <textarea id="fdApp" style="width:100%">${esc(a.appearance||'')}</textarea></label>
+      <label>Personal goal 1 <input class="fdGoal" value="${esc((a.personal_goals||[])[0]||'')}"></label>
+      <label>Personal goal 2 <input class="fdGoal" value="${esc((a.personal_goals||[])[1]||'')}"></label>
+      <label>Personal goal 3 <input class="fdGoal" value="${esc((a.personal_goals||[])[2]||'')}"></label>
+      <div style="margin-top:8px"><button data-cga="final-details" class="goldbtn">Save details</button></div></div>`;
+  }
+  return '<div class="cgstep"><b>Waiting on engine state…</b><p class="sub" style="color:var(--dim)">No pending chargen decision was found for this actor.</p></div>';
+}
+
+function wireChargen(){
+  const f=S.full,a=f.actors.find(x=>x.public_id===S.cgActor);if(!a)return;
+  const base=`/campaigns/${S.cid}/characters/${a.public_id}`;
+  document.querySelectorAll('#cgBody [data-cga]').forEach(b=>b.onclick=()=>{
+    const act=b.dataset.cga,arg=b.dataset.arg;
+    switch(act){
+      case 'species':return cgPost(base+'/species',{species_code:$('#cgSpecies').value},'Species assigned.');
+      case 'reroll':return cgPost(base+'/reroll-characteristics',{},'Characteristics rerolled.');
+      case 'keep':S.kept[a.public_id]=true;renderChargen();return;
+      case 'career-entry':{const[cc,ac]=$('#cgCareer').value.split('||');
+        return cgPost(base+'/career-entry',{career_selection:cc+'||'+(ac||'')},'Career qualification attempted: '+cc);}
+      case 'fallback':return cgPost(`/campaigns/${S.cid}/career-entry-fallbacks`,{attempt_command_public_id:a.career_entry_pending.command_public_id,fallback_kind:arg},'Fallback: '+arg);
+      case 'basic-first':{
+        const spec=[...document.querySelectorAll('.btSpec')].map(s=>s.value);
+        return cgPost(base+'/basic-training',{specialization:spec},'Basic training applied (all Service skills).');}
+      case 'basic-one':{
+        const sel=document.querySelector(`.btSel[data-roll="${arg}"]`);
+        const fields={selected_roll_value:arg};if(sel)fields.specialization=[sel.value];
+        return cgPost(base+'/basic-training',fields,'Basic training result '+arg+' chosen.');}
+      case 'rank-zero':{const fields={};const s=$('#r0Spec');if(s)fields.cascade_specialization=s.value;
+        return cgPost(base+'/rank-zero-award',fields,'Rank 0 award applied.');}
+      case 'anagathics':return cgPost(base+'/anagathics',{uses_anagathics:arg},'Anagathics declared: '+arg);
+      case 'survival':return cgPost(base+'/career-survival',{},'Survival rolled.');
+      case 'mishap':return cgPost(base+'/survival-mishap',{},'Mishap resolved.');
+      case 'rank':{const fields={attempt_kind:b.dataset.kind,decision:arg};const s=$('#rkSpec');if(s&&arg==='attempt')fields.cascade_specialization=s.value;
+        return cgPost(base+'/career-rank-attempt',fields,(arg==='attempt'?'Attempted ':'Declined ')+b.dataset.kind+'.');}
+      case 'term-train':{
+        const row=b.closest('[data-table]');
+        const spec=[...row.querySelectorAll('.ttSpec')].map(s=>s.value);
+        return cgPost(base+'/career-term-training',{training_table_code:arg,specialization:spec},'Training rolled on '+arg+'.');}
+      case 'term-complete':return cgPost(base+'/career-term-completion',{},'Four-year term completed.');
+      case 'reenlist':return cgPost(base+'/career-reenlistment',{},'Reenlistment rolled.');
+      case 'reenlist-decide':return cgPost(base+'/career-reenlistment-decision',{decision:arg},'Reenlistment decision: '+arg+'.');
+      case 'aging-roll':return cgPost(base+'/career-aging',{aging_kind:arg||'term'},'Aging check rolled.');
+      case 'aging-apply':{
+        const codes=b.dataset.codes?b.dataset.codes.split(','):[];
+        const fields={physical_characteristic_codes:codes};
+        const m=document.querySelector(`.agMental[data-i="${arg}"]`);if(m)fields.mental_characteristic_code=m.value;
+        return cgPost(base+'/career-aging-application',fields,'Aging losses applied.');}
+      case 'aging-crisis-cost':return cgPost(base+'/aging-crisis-cost',{},'Aging crisis cost determined.');
+      case 'aging-crisis':return cgPost(base+'/aging-crisis-resolution',{resolution_kind:arg},'Aging crisis: '+arg+'.');
+      case 'injury':{const fields={};if(arg)fields.result_two_choice=arg;
+        return cgPost(base+'/career-injury',fields,'Injury determined.');}
+      case 'injury-apply':{
+        let fields;
+        if(arg==='split')fields={primary_characteristic_code:$('#injSplit').value,other_reduction_mode:'split_two_each'};
+        else fields={primary_characteristic_code:$('#injOne').value};
+        return cgPost(base+'/career-injury-application',fields,'Injury applied.');}
+      case 'crisis-cost':return cgPost(base+'/injury-crisis-cost',{},'Crisis care cost determined.');
+      case 'crisis':return cgPost(base+'/injury-crisis-resolution',{resolution_kind:arg},'Injury crisis: '+arg+'.');
+      case 'medical':{
+        const fields={decision:arg};
+        if(arg==='purchase')for(const inp of document.querySelectorAll('.medPts')){
+          const code=inp.dataset.code;
+          if(code==='characteristic.strength')fields.strength_points=inp.value;
+          else if(code==='characteristic.dexterity')fields.dexterity_points=inp.value;
+          else fields.endurance_points=inp.value;}
+        return cgPost(base+'/career-medical-care',fields,'Medical care: '+arg+'.');}
+      case 'muster':return cgPost(base+'/career-muster',{},'Muster benefits calculated.');
+      case 'benefit':return cgPost(base+'/career-benefit',{benefit_table_code:arg},'Benefit rolled ('+arg+').');
+      case 'weapon':{const fields={weapon_rule_code:b.dataset.w,resolution_kind:arg};if(arg==='skill')fields.skill_rule_code=b.dataset.sk;
+        return cgPost(base+'/career-weapon-benefit',fields,'Weapon benefit resolved.');}
+      case 'finish':return cgPost(base+'/finish-creation',{},'Prior experience finished — beginning play.');
+      case 'final-details':{
+        const goals=[...document.querySelectorAll('.fdGoal')].map(g=>g.value).filter(v=>v.trim());
+        const name=$('#fdName').value.trim();if(!name)return;
+        return cgPost(base+'/final-details',{character_name:name,gender_identity:$('#fdGender').value,appearance:$('#fdApp').value,personal_goals:goals},'Final details saved for '+name+'.')
+          .then(ok=>{if(ok)closeChargen();});}
+    }
+  });
+}
+
+
+</script>
+
+<script>
+/* =============== SIDE PANELS =============== */
+function renderPanel(){
+  const el=$('#panel'),f=S.full;
+  if(!f){el.innerHTML='<div class="card"><div class="sub">No campaign selected.</div></div>';return;}
+  if(S.tab==='crew')el.innerHTML=crewPanel(f);
+  else if(S.tab==='ships')el.innerHTML=shipsPanel(f);
+  else if(S.tab==='worlds')el.innerHTML=worldsPanel(f);
+  else el.innerHTML=journalPanel(f);
+  wirePanel();
+}
+
+function crewPanel(f){
+  let h='';
+  for(const a of f.actors){
+    const careers=(a.careers||[]).map(c=>`${esc(c.career_name)} (${c.terms_completed} terms, rank ${c.rank_number})`).join('; ');
+    const skills=(a.skills||[]).map(s=>`${esc(s.name)}-${s.skill_level}`).join(', ');
+    h+=`<div class="card">
+      <div class="nm">${esc(a.character_name)} <span class="upp">${uppOf(a)}</span></div>
+      <div class="sub">${esc(a.species?a.species.name:'Species unassigned')} · ${a.age_years?'Age '+a.age_years:'no age'} · Cr${cashOf(a)}${a.lifepath_status!=='completed'?' · '+esc(a.lifepath_status||'lifepath not begun'):''}</div>
+      ${skills?`<div class="sub">Skills: ${skills}</div>`:''}
+      ${careers?`<div class="sub">Careers: ${careers}</div>`:''}
+      ${a.injury&&!['healthy','uninjured'].includes(a.injury.injury_status)?`<div class="sub" style="color:var(--red)">${esc(a.injury.injury_status.replace(/_/g,' '))}</div>`:''}
+      ${a.lifepath_status!=='completed'?`<button class="goldbtn" data-cg="${a.public_id}">Continue the lifepath</button>`:
+        (a.character_name==='Unnamed Traveller'?`<button class="goldbtn" data-cg="${a.public_id}">Name this Traveller</button>`:'')}
+    </div>`;
+  }
+  if(!f.actors.length)h+='<div class="card"><div class="sub">No Travellers yet. Roll one — the full lifepath if you want a story.</div></div>';
+  h+=`<button id="newChar" style="width:100%">+ New Traveller (roll characteristics)</button>`;
+  return h;
+}
+
+function shipsPanel(f){
+  let h='';
+  const j=activeJourney();
+  if(j){
+    h+=`<div class="card"><div class="nm">◈ ${esc(j.name)} <span class="pill">${esc(j.journey_status)}</span></div>
+      <div class="sub">${esc(j.ship_name)} · ${esc(j.origin_name||'?')} → ${esc(j.destination_name||'?')} · ${j.distance_parsecs??'?'} pc${j.route_succeeded!=null?' · route '+(j.route_succeeded?'plotted':'failed'):''}${j.jump_outcome?' · '+esc(j.jump_outcome):''}</div>
+      <div class="sub">Press <b>◈ Jump</b> up on the chart to run it.</div>
+      ${j.journey_status==='planning'?`<div class="rowform"><button data-cancel="${j.public_id}" title="Stand the order down — the fuel was only reserved, and the reservation is released">✕ Stand down</button></div>`:''}</div>`;
+  }
+  const activeId=(shipSystem()||{}).ship?.public_id;
+  for(const s of f.ships){
+    const fuel=(s.resources||[]).filter(r=>/fuel/.test(r.code)).map(r=>`${r.code.replace(/^resource\./,'')}: ${r.current}/${r.capacity}`).join(' · ');
+    const active=s.public_id===activeId;
+    h+=`<div class="card" data-shipsel="${s.public_id}" style="cursor:pointer${active?';border-color:var(--gold)':''}">
+      <div class="nm">${esc(s.name)}${active?' <span class="pill" style="color:var(--gold)">◎ active</span>':''}</div>
+      <div class="sub">${esc(s.class_code)} · ${s.hull_tons}t · J-${s.jump_rating} · cargo ${s.cargo_capacity_tons}t${s.owner_name?' · owner '+esc(s.owner_name):''}</div>
+      <div class="sub">${esc(s.location_name||'Unplaced — set her down somewhere')}</div>
+      ${fuel?`<div class="sub">${esc(fuel)}</div>`:''}
+      ${!s.location_public_id?`<form class="rowform" data-place="${s.public_id}">
+        <select name="system_public_id">${f.systems.map(y=>`<option value="${y.public_id}">${esc(y.name)}</option>`).join('')}</select>
+        <button type="submit">Place</button></form>`:''}
+      <form class="rowform" data-refuel="${s.public_id}">
+        <select name="actor_public_id">${actorOpts(f)}</select>
+        <select name="fuel_type_code"><option value="refined">Refined</option><option value="unrefined">Unrefined</option></select>
+        <input name="tons" size="4" value="1" title="tons">
+        <button type="submit">Refuel</button>
+      </form>
+    </div>`;
+  }
+  if(!f.ships.length)h+='<div class="card"><div class="sub">No ships. A Traveller needs a hull under her.</div></div>';
+  h+=`<button id="acqShip" style="width:100%">+ Acquire ship</button>`;
+  return h;
+}
+
+function worldsPanel(f){
+  let h='';
+  for(const y of f.systems){
+    h+=`<div class="card" data-world="${y.public_id}" style="cursor:pointer">
+      <div class="nm">${esc(y.name)} <span class="upp" style="font-size:12px">${uwpOf(y)}</span></div>
+      <div class="sub">Hex ${hexLabel(y)} · ${esc(y.sector_name)} · ${esc(String(y.discovery_status||'known'))}</div></div>`;
+  }
+  if(!f.systems.length)h+='<div class="card"><div class="sub">No star systems. Import a sector and the chart lights up.</div></div>';
+  h+=`<button id="impSector" style="width:100%">+ Import sector (.tab file)</button>`;
+  return h;
+}
+
+function journalPanel(f){
+  let h='';
+  for(const n of (f.journal_notes||[])){
+    h+=`<div class="card"><div class="nm">${esc(n.title||'Untitled')}</div>
+      <div class="sub">${esc((n.note_kind||'').toUpperCase())}</div>
+      <div class="sub">${esc(n.note_text||n.body||'')}</div></div>`;
+  }
+  if(!(f.journal_notes||[]).length)h+='<div class="card"><div class="sub">The log is empty. Write what the ship remembers.</div></div>';
+  h+=`<form id="noteForm" class="card">
+    <label>Title <input name="title" required style="width:100%"></label>
+    <label>Kind <select name="note_kind"><option>player</option><option>plot</option><option>world</option><option>referee</option><option>rules</option><option>other</option></select></label>
+    <label>Note <textarea name="note_text" required style="width:100%;min-height:60px"></textarea></label>
+    <button type="submit" style="margin-top:6px">Add note</button>
+  </form>`;
+  return h;
+}
+
+function wirePanel(){
+  const f=S.full;if(!f)return;
+  const nc=$('#newChar');
+  if(nc)nc.onclick=async()=>{
+    const ok=await post('/campaigns/'+S.cid+'/characters',{},'Characteristics rolled for a new Traveller.');
+    if(ok){const un=S.full.actors.filter(a=>a.lifepath_status!=='completed');if(un.length)openChargen(un[un.length-1].public_id);}
+  };
+  document.querySelectorAll('[data-cg]').forEach(b=>b.onclick=()=>openChargen(b.dataset.cg));
+  document.querySelectorAll('[data-world]').forEach(c=>c.onclick=()=>showWorldDossier(c.dataset.world));
+  document.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>post('/campaigns/'+S.cid+'/journeys/'+b.dataset.cancel+'/cancel',{},'Jump order stood down. Reservations released.'));
+  document.querySelectorAll('[data-shipsel]').forEach(c=>c.addEventListener('click',e=>{
+    if(e.target.closest('form,button,select,input'))return;
+    S.selShip=c.dataset.shipsel;renderMap();renderPanel();
+  }));
+  document.querySelectorAll('[data-place]').forEach(fm=>fm.onsubmit=e=>{e.preventDefault();
+    post('/campaigns/'+S.cid+'/ships/'+fm.dataset.place+'/placement',{system_public_id:fm.system_public_id.value},'Ship placed.');});
+  document.querySelectorAll('[data-refuel]').forEach(fm=>fm.onsubmit=e=>{e.preventDefault();
+    post('/campaigns/'+S.cid+'/ships/'+fm.dataset.refuel+'/refuel',{actor_public_id:fm.actor_public_id.value,fuel_type_code:fm.fuel_type_code.value,tons:fm.tons.value},'Refueling complete.');});
+  const acq=$('#acqShip');
+  if(acq)acq.onclick=()=>{
+    openGen(`<h3>Acquire ship</h3>
+      <label>Owner <select id="asOwner">${actorOpts(f)}</select></label>
+      <label>Class <select id="asClass">${S.shipClasses.map(c=>`<option value="${c.class_code}">${esc(c.class_code)} · ${c.hull_tons}t · J-${c.jump_rating}</option>`).join('')}</select></label>
+      <label>Name <input id="asName"></label>
+      <label>Registration (optional) <input id="asReg"></label>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="closeGen()">Cancel</button><button id="asGo" class="goldbtn">Acquire</button></div>`);
+    $('#asGo').onclick=async()=>{
+      const ok=await post('/campaigns/'+S.cid+'/ships',{owner_actor_public_id:$('#asOwner').value,class_code:$('#asClass').value,name:$('#asName').value,registration_identifier:$('#asReg').value},'Ship acquired.');
+      if(ok)closeGen();
+    };
+  };
+  const imp=$('#impSector');
+  if(imp)imp.onclick=()=>{
+    openGen(`<h3>Import sector</h3>
+      <label>Sector name <input id="isName"></label>
+      <label>Sector X <input id="isX" value="0" size="4"></label>
+      <label>Sector Y <input id="isY" value="0" size="4"></label>
+      <label>Sector file (.tab) <input id="isFile" type="file"></label>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="closeGen()">Cancel</button><button id="isGo" class="goldbtn">Import</button></div>`);
+    $('#isGo').onclick=async()=>{
+      const file=$('#isFile').files[0];if(!file||!$('#isName').value.trim())return;
+      const fd=new FormData();
+      fd.append('sector_name',$('#isName').value.trim());
+      fd.append('sector_x',$('#isX').value||'0');fd.append('sector_y',$('#isY').value||'0');
+      fd.append('source',file);
+      const ok=await postMultipart('/campaigns/'+S.cid+'/sectors',fd,'Sector imported. The chart is live.');
+      if(ok)closeGen();
+    };
+  };
+  const nf=$('#noteForm');
+  if(nf)nf.onsubmit=e=>{e.preventDefault();
+    post('/campaigns/'+S.cid+'/notes',{title:nf.title.value,note_kind:nf.note_kind.value,note_text:nf.note_text.value},'Journal note added.').then(ok=>{if(ok)nf.reset();});};
+}
+</script>
+
+<script>
+/* ---------- referee feed input ---------- */
+async function sendAction(){
+  const inp=$('#actionIn'),text=inp.value.trim();if(!text||!S.cid)return;
+  inp.value='';
+  await post('/campaigns/'+S.cid+'/referee-turns',{player_text:text},null);
+}
+$('#sendBtn').onclick=sendAction;
+$('#actionIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendAction();});
+$('#genModal').addEventListener('click',e=>{if(e.target.id==='genModal')closeGen();});
+$('#cgModal').addEventListener('click',e=>{if(e.target.id==='cgModal')closeChargen();});
+$('#wdModal').addEventListener('click',e=>{if(e.target.id==='wdModal')wdClose();});
+
+/* ---------- feed grip ---------- */
+(function(){
+  const grip=$('#feedGrip'),root=document.documentElement;
+  const clamp=v=>Math.max(140,Math.min(innerHeight*.8,v));
+  let drag=false;
+  grip.addEventListener('pointerdown',e=>{drag=true;grip.setPointerCapture(e.pointerId);});
+  grip.addEventListener('pointermove',e=>{if(drag)root.style.setProperty('--feedH',clamp(innerHeight-e.clientY)+'px');});
+  grip.addEventListener('pointerup',e=>{drag=false;grip.releasePointerCapture(e.pointerId);});
+})();
+
+/* ---------- boot + gentle poll ---------- */
+(async function(){
+  try{
+    await loadCampaigns();
+    try{S.shipClasses=await api('/api/catalog/ship-classes');}catch(e){}
+    await refresh();
+    let lastPulse=null;
+    setInterval(async()=>{
+      if(!S.cid)return;
+      try{
+        const p=await api('/api/campaigns/'+S.cid+'/pulse');
+        const tok=p.token+':'+p.day_number;
+        if(lastPulse===null){lastPulse=tok;return;}
+        if(tok!==lastPulse){lastPulse=tok;if(!S.cgActor)await refresh();}
+      }catch(e){}
+    },4000);
+  }catch(e){/* redirected to login */}
+})();
+</script>
+</body>
+</html>
