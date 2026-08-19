@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 
 ROOT = Path(__file__).resolve().parent
 COCKPIT_DIR = ROOT / "static" / "cockpit"
@@ -24,6 +24,14 @@ def _page(name: str) -> FileResponse:
     if not path.exists():
         raise HTTPException(status_code=404, detail="Page not found")
     return FileResponse(path, headers={"Cache-Control": "no-store"})
+
+
+@router.get("/api/whoami")
+def whoami(request: Request) -> JSONResponse:
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return JSONResponse({"display_name": user.display_name, "email": user.email})
 
 
 @router.get("/market")

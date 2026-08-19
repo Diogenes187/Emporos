@@ -121,6 +121,7 @@
   <span id="modePill" class="pill" title="Referee mode"></span>
   <span class="spacer"></span>
   <a class="pill" href="/command" title="The registry console — every engine control as a plain form" style="opacity:.65">🛠 Console</a>
+  <button id="inviteBtn" title="Invite a registered player to this campaign — they get a private join link">👥 Invite</button>
   <span id="userpill" class="pill" title="Signed in">&#9679; signed in</span>
   <button id="logoutBtn">Logout</button>
 </header>
@@ -282,6 +283,38 @@ $('#campaignSel').addEventListener('change',async e=>{
 });
 $('#logoutBtn').onclick=async()=>{await fetch('/logout',{method:'POST',redirect:'manual'});location.href='/login';};
 $('#helpBtn').onclick=()=>{$('#wModal').style.display='flex';};
+$('#inviteBtn').onclick=()=>{
+  if(!S.cid){log('Select a campaign first.','sys');return;}
+  openGen(`<h3>👥 Invite a crewmate</h3>
+    <div class="sub" style="color:var(--dim)">They need an Emporos account with this exact email. The link is private to that account — no passwords change hands.</div>
+    <label>Their account email <input id="invEmail" type="email" placeholder="crewmate@example.com"></label>
+    <div id="invOut"></div>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeGen()">Close</button>
+      <button id="invGo" class="goldbtn">Create private invitation</button></div>`);
+  $('#invGo').onclick=async()=>{
+    const email=$('#invEmail').value.trim();if(!email)return;
+    const body=new URLSearchParams({email});
+    let r;
+    try{r=await fetch('/campaigns/'+S.cid+'/invitations',{method:'POST',body,redirect:'follow'});}
+    catch(e){log('Comms failure: '+e.message,'err');return;}
+    if(r.status===400||r.status===403||r.status===404){
+      let detail='HTTP '+r.status;
+      try{const j=await r.json();detail=typeof j.detail==='string'?j.detail:JSON.stringify(j.detail);}catch(e){}
+      $('#invOut').innerHTML='<div class="sub" style="color:var(--red);margin-top:8px">'+esc(detail)+'</div>';return;
+    }
+    const token=new URL(r.url).searchParams.get('invite_created');
+    if(token){
+      const link=location.origin+'/join/'+token;
+      $('#invOut').innerHTML=`<div class="cgstep"><small>PRIVATE LINK</small><b>Send this to ${esc(email)}</b>
+        <input readonly value="${esc(link)}" style="width:100%" onclick="this.select()">
+        <div class="sub" style="color:var(--dim);margin-top:4px">It only works for the account with that email.</div></div>`;
+      log('Invitation created for '+email+'.','sys');
+    }else{
+      $('#invOut').innerHTML='<div class="sub" style="color:var(--red);margin-top:8px">The invitation did not come back with a link. Are you the campaign owner?</div>';
+    }
+  };
+};
 $('#newBtn').onclick=()=>{
   openGen(`<h3>New Campaign</h3>
     <label>Name <input id="ncName" maxlength="120" placeholder="The Long Account"></label>
@@ -1072,6 +1105,7 @@ $('#wdModal').addEventListener('click',e=>{if(e.target.id==='wdModal')wdClose();
   try{
     await loadCampaigns();
     try{S.shipClasses=await api('/api/catalog/ship-classes');}catch(e){}
+    try{const me=await api('/api/whoami');$('#userpill').textContent='● '+me.display_name;}catch(e){}
     await refresh();
     let lastPulse=null;
     setInterval(async()=>{
