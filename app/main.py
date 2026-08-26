@@ -18,6 +18,7 @@ from app.commands import acquire_ship, create_campaign, import_sector, initializ
 from app.commands import select_social_content,create_patron_brief,authorize_extreme_range
 from app.commands import cancel_jump
 from app.commands import reroll_characteristics, abandon_unfinished_character, delete_character
+from app.commands import record_human_narration, request_gm_assistance
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -990,6 +991,19 @@ def referee_turn(campaign_id:str,player_text:str=Form(...),idempotency_key:str=F
     destination = "/play" if return_to == "play" else "/"
     return RedirectResponse(url=f"{destination}?campaign={campaign_id}",status_code=303)
 
+@app.post("/campaigns/{campaign_id}/gm-assistance")
+def gm_assistance(request:Request,campaign_id:str,prompt_text:str=Form(...),idempotency_key:str=Form(...),return_to:str=Form("")):
+    if campaign_role(request.state.user.user_id,campaign_id)!='owner':raise HTTPException(status_code=403,detail='Only the campaign owner can request private GM assistance')
+    try:request_gm_assistance(campaign_public_id=campaign_id,prompt_text=prompt_text,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    destination="/play" if return_to=="play" else "/"
+    return RedirectResponse(url=f"{destination}?campaign={campaign_id}",status_code=303)
+
+@app.get("/api/campaigns/{campaign_id}/gm-assistance")
+def gm_assistance_list(request:Request,campaign_id:str):
+    if campaign_role(request.state.user.user_id,campaign_id)!='owner':raise HTTPException(status_code=403,detail='Private GM assistance belongs to the campaign owner')
+    return reader.gm_assistance(campaign_id)
+
 @app.post("/campaigns/{campaign_id}/referee-actions/{request_id}/confirm")
 def referee_action_confirm(campaign_id:str,request_id:str,idempotency_key:str=Form(...)):
     try:confirm_referee_action(request_public_id=request_id,idempotency_key=idempotency_key)
@@ -1325,6 +1339,7 @@ def cockpit_index():
 @app.get("/command", response_class=HTMLResponse)
 def dashboard(request: Request, campaign: str | None = None, invite_created: str | None = None):
     current = selected_campaign(campaign)
+    role=(campaign_role(request.state.user.user_id,current["public_id"]) if current else None)
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
@@ -1333,6 +1348,7 @@ def dashboard(request: Request, campaign: str | None = None, invite_created: str
             campaigns=reader.campaigns(user_id=request.state.user.user_id),
             creation_key=str(uuid.uuid4()),
             invite_created=invite_created,
+            gm_assistance=(reader.gm_assistance(current["public_id"]) if current and current["play_mode"]=="ai_assisted" and role=="owner" else []),
         ),
     )
 
@@ -1346,12 +1362,14 @@ def play(request: Request, campaign: str | None = None):
                 url=f"/play?campaign={available[0].public_id}", status_code=303
             )
     current = selected_campaign(campaign)
+    role=(campaign_role(request.state.user.user_id,current["public_id"]) if current else None)
     return templates.TemplateResponse(
         request=request,
         name="play.html",
         context=page_context(
             request, "dashboard", campaign=current,
             creation_key=str(uuid.uuid4()),
+            gm_assistance=(reader.gm_assistance(current["public_id"]) if current and current["play_mode"]=="ai_assisted" and role=="owner" else []),
         ),
     )
 

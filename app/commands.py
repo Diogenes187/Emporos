@@ -30,6 +30,7 @@ from engine.character_creation import initialize_character_command  # noqa: E402
 from engine.ships import acquire_ship_command  # noqa: E402
 from engine.sectors import import_sector_command  # noqa: E402
 from engine.settings import initialize_campaign_setting_command  # noqa: E402
+from engine.referee_modes import record_human_referee_turn_command,request_gm_assistance_command  # noqa: E402
 from engine.travel_planning import cancel_jump_journey_command, place_ship_command, plan_jump_journey_command  # noqa: E402
 from engine.navigation import resolve_navigation_command  # noqa: E402
 from engine.jump_attempts import resolve_jump_attempt_command  # noqa: E402
@@ -373,7 +374,22 @@ def review_campaign_source(*,document_public_id:str,idempotency_key:str):
 def send_referee_message(*,campaign_public_id:str,player_text:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     if not url:raise RuntimeError("No Emporos database URL is configured")
-    with psycopg.connect(url) as connection:return submit_referee_turn(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,player_text=player_text)
+    with psycopg.connect(url) as connection:
+        mode=connection.execute("SELECT play_mode FROM camp_campaign WHERE public_id=%s AND owner_reference=%s",(campaign_public_id,authority)).fetchone()
+        if not mode:raise PermissionError("Campaign is outside this authority")
+        if mode[0] in ("human_refereed","ai_assisted"):
+            return record_human_referee_turn_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,narration=player_text)
+        return submit_referee_turn(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,player_text=player_text)
+
+def record_human_narration(*,campaign_public_id:str,narration:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    if not url:raise RuntimeError("No Emporos database URL is configured")
+    with psycopg.connect(url) as connection:return record_human_referee_turn_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,narration=narration)
+
+def request_gm_assistance(*,campaign_public_id:str,prompt_text:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    if not url:raise RuntimeError("No Emporos database URL is configured")
+    with psycopg.connect(url) as connection:return request_gm_assistance_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,prompt_text=prompt_text)
 
 def confirm_referee_action(*,request_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

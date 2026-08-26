@@ -551,6 +551,17 @@ class CampaignReader:
             "armor_options": armor_options,
         }
 
+    def gm_assistance(self, public_id: str) -> list[dict[str, Any]]:
+        if not self.url:return []
+        with self._connect() as connection:
+            return connection.execute("""SELECT help.public_id::text AS public_id,
+              help.prompt_text,help.suggestion_text,help.created_at,
+              invocation.provider_code,invocation.model_name
+              FROM camp_gm_assistance help
+              JOIN camp_campaign campaign USING(campaign_id)
+              JOIN ai_model_invocation invocation USING(model_invocation_id)
+              WHERE campaign.public_id=%s ORDER BY help.created_at DESC LIMIT 12""",(public_id,)).fetchall()
+
     def pulse(self, public_id: str) -> dict | None:
         """A cheap change signature: the cockpit polls this and refetches the
         full projection only when it moves."""
