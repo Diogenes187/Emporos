@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Information · Emporos{% endblock %}
+{% block content %}
+<section class="page-heading compact"><div><small>LOCAL PLAY &amp; CONNECTIONS</small><h1>Information</h1><p>Everything needed to run Emporos locally and connect your preferred desktop AI client.</p></div></section>
+<section class="info-grid">
+  <article class="panel info-card"><small>PLAY WITHOUT AI</small><h2>Standalone game</h2><p>Run <strong>Start Emporos.bat</strong>, then use a Human Referee campaign. Emporos handles rules, records, maps, characters, trade, travel, and combat without contacting any AI service.</p></article>
+  <article class="panel info-card"><small>PLAY WITH AI</small><h2>Desktop MCP client</h2><p>Your ChatGPT, Claude, SillyTavern, or other MCP-capable desktop client supplies the model. Emporos supplies private campaign state and deterministic game tools. Your client account owns model choice and cost.</p></article>
+</section>
+<section class="panel mcp-setup"><header><div><small>MCP CONNECTION</small><h2>Connect your desktop client</h2></div><span class="tag">LOCAL STDIO</span></header>
+  <ol class="setup-steps"><li>Make sure Emporos has a working <code>.env</code> database configuration.</li><li>Open your desktop client's MCP server settings.</li><li>Add a local standard-input/output server using the configuration below.</li><li>Restart or reconnect the desktop client, then ask it to call <code>emporos_status</code>.</li></ol>
+  <p class="muted">Different clients place MCP settings in different menus, but the command and arguments are the same.</p>
+  <pre class="config-block"><code>{
+  "mcpServers": {
+    "emporos": {
+      "command": "{{ powershell_path|replace('\\','\\\\') }}",
+      "args": [
+        "-NoLogo",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "{{ mcp_script|replace('\\','\\\\') }}"
+      ]
+    }
+  }
+}</code></pre>
+  <p><strong>No AI API key is entered into Emporos.</strong> The MCP connection is local, and the desktop client remains responsible for its own model subscription and memory.</p>
+</section>
+<section class="panel info-card"><small>AVAILABLE TO THE CLIENT</small><h2>What the connection can do</h2><div class="capability-grid"><p><strong>Read campaign truth</strong><br>Campaigns, characters, ships, systems, clocks, sources, and recent narration.</p><p><strong>Run the referee</strong><br>Receive pending actions and return narration while mechanics stay inside audited commands.</p><p><strong>Use the engine</strong><br>Invoke allowlisted deterministic gameplay tools and receive permanent receipts.</p><p><strong>Keep the log</strong><br>Archive ordered desktop conversations as readable Captain's Logs in the Journal.</p></div></section>
+<section class="panel production-credit"><small>PRODUCTION</small><h2>Emporos</h2><p>Produced by <strong>Raymond Williams</strong>.</p><p class="muted">Built as an open, locally operated Cepheus campaign workstation.</p></section>
+{% endblock %}

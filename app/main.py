@@ -113,6 +113,7 @@ NAVIGATION = (
     ("encounters", "Encounters"),
     ("journal", "Journal"),
     ("library", "Library"),
+    ("info", "Information"),
 )
 
 
@@ -1452,6 +1453,15 @@ def contacts(request:Request,campaign:str|None=None):
 def operations(request:Request,campaign:str|None=None):
     current=selected_campaign(campaign)
     return templates.TemplateResponse(request=request,name="operations.html",context=page_context(request,"operations",campaign=current,field_rules=reader.field_rules(),creation_key=str(uuid.uuid4())))
+
+@app.get("/info",response_class=HTMLResponse)
+def information(request:Request,campaign:str|None=None):
+    current=selected_campaign(campaign)
+    mcp_script=str((ROOT / "tools" / "run_emporos_mcp.ps1").resolve())
+    powershell_path=str(Path("C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"))
+    return templates.TemplateResponse(request=request,name="info.html",context=page_context(
+        request,"info",campaign=current,mcp_script=mcp_script,powershell_path=powershell_path,
+    ))
 
 
 @app.get("/{page_name}", response_class=HTMLResponse)
