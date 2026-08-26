@@ -164,7 +164,6 @@
     <div class="log" id="log"></div>
     <div class="inputbar">
       <input id="actionIn" placeholder="Describe your action…  (Enter to send)"/>
-      <button id="assistBtn" style="display:none">AI Assist</button>
       <button id="sendBtn">Send</button>
     </div>
   </div>
@@ -263,7 +262,6 @@ function renderHeaderPills(){
   const f=S.full;
   $('#dayPill').textContent=f?('Day '+f.day_number):'';
   $('#modePill').textContent=f?String(f.play_mode||'').replace(/_/g,' '):'';
-  $('#assistBtn').style.display=f&&f.play_mode==='ai_assisted'?'':'none';
   $('#sendBtn').textContent=f&&['human_refereed','ai_assisted'].includes(f.play_mode)?'Publish':'Send';
   $('#actionIn').placeholder=f&&['human_refereed','ai_assisted'].includes(f.play_mode)?'Write the GM narration shown to players…':'Describe your action…  (Enter to send)';
   const q=S.cid?('?campaign='+S.cid):'';
@@ -1098,10 +1096,6 @@ async function sendAction(){
   await post('/campaigns/'+S.cid+'/referee-turns',{player_text:text},null);
 }
 $('#sendBtn').onclick=sendAction;
-$('#assistBtn').onclick=()=>{
-  openGen(`<h3>Private AI assistant</h3><p class="sub">The suggestion is visible only to the campaign owner and never changes game state.</p><label>What help do you want? <textarea id="assistPrompt" style="width:100%;min-height:100px"></textarea></label><div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end"><button onclick="closeGen()">Cancel</button><button id="assistGo" class="goldbtn">Ask privately</button></div>`);
-  $('#assistGo').onclick=async()=>{const prompt=$('#assistPrompt').value.trim();if(!prompt)return;const ok=await post('/campaigns/'+S.cid+'/gm-assistance',{prompt_text:prompt},'Private GM suggestion ready.');if(ok)closeGen();};
-};
 $('#actionIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendAction();});
 $('#genModal').addEventListener('click',e=>{if(e.target.id==='genModal')closeGen();});
 $('#cgModal').addEventListener('click',e=>{if(e.target.id==='cgModal')closeChargen();});

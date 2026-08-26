@@ -12,6 +12,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
+from app.auth import local_mode
 
 ROOT = Path(__file__).resolve().parent
 COCKPIT_DIR = ROOT / "static" / "cockpit"
@@ -31,7 +32,7 @@ def whoami(request: Request) -> JSONResponse:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication required")
-    return JSONResponse({"display_name": user.display_name, "email": user.email})
+    return JSONResponse({"display_name": user.display_name,"email":user.email,"local_mode":local_mode()})
 
 
 @router.get("/market")

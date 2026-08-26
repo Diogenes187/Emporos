@@ -14,13 +14,16 @@ Current playable foundation:
 - sector import, maps, travel, jumps, and misjumps;
 - markets, audited accounts, cargo purchases, and cargo sales;
 - relational mechanics and command receipts without stored JSON state blobs.
-- provider-neutral AI calls, with DeepSeek configured as the economical default;
+- provider-neutral desktop-client integration through the local MCP server;
 - page-accounted, spoiler-safe campaign source ingestion and private review.
 
-AI configuration uses `EMPOROS_AI_PROVIDER`, `EMPOROS_AI_BASE_URL`,
-`EMPOROS_AI_MODEL`, and `EMPOROS_AI_API_KEY`. For the default DeepSeek adapter,
-`DEEPSEEK_API_KEY` may be used instead. Provider responses are transient; the
-database stores relational outcomes and invocation hashes, not response blobs.
+This edition is local-only by default. Loopback requests automatically use the
+established local campaign owner, so no login screen interrupts personal play.
+Non-loopback requests still require a normal session and campaign membership.
+
+Emporos does not request model API keys or call model-provider APIs. The user
+connects a desktop client such as ChatGPT, Claude, or another MCP-capable host;
+that client owns model choice, memory, subscriptions, and cost.
 
 ## Local MCP server
 

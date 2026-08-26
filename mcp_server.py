@@ -8,6 +8,8 @@ import psycopg
 from app.database import database_url
 from engine.orchestration import GameplayOrchestrator,available_tools
 from engine.referee_modes import record_human_referee_turn_command
+from engine.external_referee import complete_external_referee_turn_command
+from engine.conversation_logs import append_external_conversation_entry_command
 
 PROTOCOL_VERSION='2025-03-26'
 def _connect():
@@ -43,6 +45,30 @@ def _search_sources(args):
   return [{'document':r[0],'page':r[1],'text':r[2]} for r in rows]
 def _record(args):
  with _connect() as c:return record_human_referee_turn_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),campaign_public_id=args['campaign_public_id'],narration=args['narration'])
+def _pending_turns(args):
+ with _connect() as c:
+  campaign=_owned(c,args['campaign_public_id'])
+  rows=c.execute("""SELECT turn.public_id::text,turn.campaign_day,message.message_text,turn.created_at
+    FROM camp_referee_turn turn JOIN camp_referee_message message
+      ON message.referee_turn_id=turn.referee_turn_id AND message.speaker_kind='player'
+    WHERE turn.campaign_id=%s AND turn.turn_status='pending'
+    ORDER BY turn.created_at""",(campaign[0],)).fetchall()
+  return [{'turn_public_id':r[0],'campaign_day':r[1],'player_text':r[2],'submitted_at':r[3]} for r in rows]
+def _complete_turn(args):
+ with _connect() as c:return complete_external_referee_turn_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),turn_public_id=args['turn_public_id'],narration=args['narration'])
+def _append_log(args):
+ with _connect() as c:return append_external_conversation_entry_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),campaign_public_id=args['campaign_public_id'],log_reference=args['log_reference'],title=args.get('title') or "Captain's Log",client_name=args.get('client_name') or 'Desktop MCP Client',speaker_kind=args['speaker_kind'],message_text=args['message_text'])
+def _conversation_logs(args):
+ with _connect() as c:
+  campaign=_owned(c,args['campaign_public_id'])
+  rows=c.execute("SELECT public_id::text,log_reference,title,client_name,opened_day,created_at FROM camp_external_conversation_log WHERE campaign_id=%s ORDER BY created_at DESC",(campaign[0],)).fetchall()
+  return [{'log_public_id':r[0],'log_reference':r[1],'title':r[2],'client_name':r[3],'opened_day':r[4],'created_at':r[5]} for r in rows]
+def _conversation_entries(args):
+ with _connect() as c:
+  row=c.execute("SELECT log.external_conversation_log_id FROM camp_external_conversation_log log JOIN camp_campaign campaign USING(campaign_id) WHERE log.public_id=%s AND campaign.owner_reference=%s",(args['log_public_id'],_authority())).fetchone()
+  if not row:raise PermissionError('Conversation log is outside this MCP authority')
+  rows=c.execute("SELECT public_id::text,entry_order,speaker_kind,message_text,campaign_day,created_at FROM camp_external_conversation_entry WHERE external_conversation_log_id=%s ORDER BY entry_order",(row[0],)).fetchall()
+  return [{'entry_public_id':r[0],'entry_order':r[1],'speaker_kind':r[2],'message_text':r[3],'campaign_day':r[4],'created_at':r[5]} for r in rows]
 def _catalog(args=None):return [asdict(spec) for spec in available_tools()]
 def _execute(args):
  with _connect() as c:return GameplayOrchestrator(c,authority_reference=_authority()).invoke(args['tool_name'],idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),arguments=args.get('arguments') or {})
@@ -52,6 +78,11 @@ TOOLS={
  'get_campaign_snapshot':('Read current relational campaign truth',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_snapshot),
  'search_campaign_sources':('Search verified private pages from this campaign library',{'campaign_public_id':{'type':'string'},'query':{'type':'string'},'limit':{'type':'integer','minimum':1,'maximum':20}},('campaign_public_id','query'),_search_sources),
  'record_referee_narration':('Publish narration from the connected external referee',{'campaign_public_id':{'type':'string'},'narration':{'type':'string'},'idempotency_key':{'type':'string'}},('campaign_public_id','narration'),_record),
+ 'list_pending_referee_turns':('Read player actions awaiting the connected desktop referee',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_pending_turns),
+ 'complete_referee_turn':('Return narration for one queued player action',{'turn_public_id':{'type':'string'},'narration':{'type':'string'},'idempotency_key':{'type':'string'}},('turn_public_id','narration'),_complete_turn),
+ 'append_conversation_log_entry':('Archive one ordered desktop conversation entry in the campaign log',{'campaign_public_id':{'type':'string'},'log_reference':{'type':'string'},'title':{'type':'string'},'client_name':{'type':'string'},'speaker_kind':{'type':'string','enum':['user','assistant','system','tool']},'message_text':{'type':'string'},'idempotency_key':{'type':'string'}},('campaign_public_id','log_reference','speaker_kind','message_text'),_append_log),
+ 'list_conversation_logs':('List archived Captain and AI conversation logs',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_conversation_logs),
+ 'read_conversation_log':('Read ordered entries from one archived conversation log',{'log_public_id':{'type':'string'}},('log_public_id',),_conversation_entries),
  'list_gameplay_tool_schemas':('Describe deterministic gameplay commands',{},(),_catalog),
  'execute_gameplay_tool':('Invoke an allowlisted deterministic engine command and return its receipt',{'tool_name':{'type':'string'},'arguments':{'type':'object'},'idempotency_key':{'type':'string'}},('tool_name',),_execute),
 }

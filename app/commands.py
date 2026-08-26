@@ -31,6 +31,7 @@ from engine.ships import acquire_ship_command  # noqa: E402
 from engine.sectors import import_sector_command  # noqa: E402
 from engine.settings import initialize_campaign_setting_command  # noqa: E402
 from engine.referee_modes import record_human_referee_turn_command,request_gm_assistance_command  # noqa: E402
+from engine.external_referee import submit_external_referee_turn_command  # noqa: E402
 from engine.travel_planning import cancel_jump_journey_command, place_ship_command, plan_jump_journey_command  # noqa: E402
 from engine.navigation import resolve_navigation_command  # noqa: E402
 from engine.jump_attempts import resolve_jump_attempt_command  # noqa: E402
@@ -379,7 +380,7 @@ def send_referee_message(*,campaign_public_id:str,player_text:str,idempotency_ke
         if not mode:raise PermissionError("Campaign is outside this authority")
         if mode[0] in ("human_refereed","ai_assisted"):
             return record_human_referee_turn_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,narration=player_text)
-        return submit_referee_turn(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,player_text=player_text)
+        return submit_external_referee_turn_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,player_text=player_text)
 
 def record_human_narration(*,campaign_public_id:str,narration:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

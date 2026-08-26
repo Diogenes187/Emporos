@@ -19,6 +19,13 @@ from app.database import database_url
 
 SESSION_COOKIE = "emporos_session"
 SESSION_DAYS = 30
+LOCAL_USER_EMAIL = "local@emporos.invalid"
+
+
+def local_mode() -> bool:
+    return os.environ.get("EMPOROS_LOCAL_MODE", "true").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
 
 CAMPAIGN_RESOURCE_TABLES = (
     "actor_actor", "actor_faction", "actor_note", "actor_relationship",
@@ -143,6 +150,26 @@ def user_for_session(token: str | None) -> User | None:
             (_digest(token),),
         ).fetchone()
     return User(**row) if row else None
+
+
+def local_user() -> User:
+    """Use the established local owner, falling back to the seeded identity."""
+    with _connect() as connection:
+        row = connection.execute(
+            """SELECT account.user_id,account.public_id::text,account.email,account.display_name
+               FROM auth_user_account account
+               LEFT JOIN auth_campaign_membership membership
+                 ON membership.user_id=account.user_id AND membership.membership_role='owner'
+               WHERE account.account_status='active'
+               GROUP BY account.user_id
+               ORDER BY count(membership.campaign_id) DESC,
+                        (account.email=%s) ASC,account.user_id
+               LIMIT 1""",
+            (LOCAL_USER_EMAIL,),
+        ).fetchone()
+    if not row:
+        raise RuntimeError("Local identity is missing; apply database migrations")
+    return User(**row)
 
 
 def revoke_session(token: str | None) -> None:

@@ -85,11 +85,7 @@
       <input name="player_text" aria-label="{{ 'Record referee narration' if campaign.play_mode in ('human_refereed','ai_assisted') else 'Describe your action' }}" placeholder="{{ 'Write the GM narration shown to players…' if campaign.play_mode in ('human_refereed','ai_assisted') else 'Describe your action… (Enter to send)' }}" required autocomplete="off">
       <button type="submit">{{ 'Publish' if campaign.play_mode in ('human_refereed','ai_assisted') else 'Send' }}</button>
     </form>
-    {% if campaign.play_mode=='ai_assisted' and campaign_role=='owner' %}
-    <details class="card"><summary>Private AI assistant</summary>
-      <form method="post" action="/campaigns/{{ campaign.public_id }}/gm-assistance"><input type="hidden" name="idempotency_key" value="{{ creation_key }}-assist"><input type="hidden" name="return_to" value="play"><input name="prompt_text" required placeholder="Ask for scene ideas, NPC dialogue, or preparation help"><button type="submit">Ask privately</button></form>
-      {% for help in gm_assistance %}<article class="msg system"><span class="who">Private AI suggestion · {{ help.provider_code }} / {{ help.model_name }}</span><p>{{ help.suggestion_text }}</p></article>{% endfor %}
-    </details>{% endif %}
+    {% if campaign.play_mode=='ai_assisted' %}<p class="sub">Use your connected desktop MCP client for private assistance; publish the narration you choose here.</p>{% endif %}
   </section>
 </main>
 

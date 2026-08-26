@@ -389,6 +389,20 @@ class CampaignReader:
             ship_expenses=connection.execute("""SELECT ship.name AS ship_name,receipt.operating_cost_code,receipt.quantity,receipt.amount_minor,command.completed_at FROM cmd_ship_operating_expense_receipt receipt JOIN ship_ship ship USING(ship_id) JOIN cmd_command command USING(command_id) WHERE receipt.campaign_id=%s ORDER BY receipt.command_id DESC LIMIT 20""",(campaign_id,)).fetchall()
             journal_notes=connection.execute("SELECT public_id::text AS public_id,title,note_kind,note_text,ai_memory_enabled,created_at FROM camp_journal_note WHERE campaign_id=%s ORDER BY created_at DESC LIMIT 100",(campaign_id,)).fetchall()
             session_archives=connection.execute("SELECT public_id::text AS public_id,title,campaign_day,transcript_text,ai_memory_enabled,archived_at FROM camp_session_archive WHERE campaign_id=%s ORDER BY archived_at DESC LIMIT 100",(campaign_id,)).fetchall()
+            conversation_logs=connection.execute("""SELECT log.external_conversation_log_id,log.public_id::text AS public_id,
+              log.log_reference,log.title,log.client_name,log.opened_day,log.created_at,
+              count(entry.external_conversation_entry_id) AS entry_count
+              FROM camp_external_conversation_log log
+              LEFT JOIN camp_external_conversation_entry entry USING(external_conversation_log_id,campaign_id)
+              WHERE log.campaign_id=%s
+              GROUP BY log.external_conversation_log_id
+              ORDER BY log.created_at DESC LIMIT 100""",(campaign_id,)).fetchall()
+            for log in conversation_logs:
+                log_id=log.pop("external_conversation_log_id")
+                log["entries"]=connection.execute("""SELECT public_id::text AS public_id,entry_order,
+                  speaker_kind,message_text,campaign_day,created_at
+                  FROM camp_external_conversation_entry
+                  WHERE external_conversation_log_id=%s ORDER BY entry_order""",(log_id,)).fetchall()
             scene_templates=connection.execute("SELECT scene_template_code AS template_code,name FROM rule_scene_template ORDER BY display_order").fetchall()
             for template in scene_templates:template["slots"]=connection.execute("SELECT slot_code,slot_name,data_kind,required FROM rule_scene_template_slot WHERE scene_template_code=%s ORDER BY slot_order",(template["template_code"],)).fetchall()
             scene_snapshots=connection.execute("""SELECT snapshot.public_id::text AS public_id,template.name AS template_name,snapshot.scene_reference,snapshot.created_at,count(fact.slot_code) AS fact_count FROM camp_scene_snapshot snapshot JOIN rule_scene_template template ON template.scene_template_code=snapshot.scene_template_code JOIN camp_scene_fact fact USING(scene_snapshot_id,campaign_id) WHERE snapshot.campaign_id=%s GROUP BY snapshot.scene_snapshot_id,template.name ORDER BY snapshot.created_at DESC LIMIT 100""",(campaign_id,)).fetchall()
@@ -517,6 +531,7 @@ class CampaignReader:
             "ship_expenses": ship_expenses,
             "journal_notes": journal_notes,
             "session_archives": session_archives,
+            "conversation_logs": conversation_logs,
             "scene_templates": scene_templates,
             "scene_snapshots": scene_snapshots,
             "crew_payrolls": crew_payrolls,
