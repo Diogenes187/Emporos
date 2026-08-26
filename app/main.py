@@ -468,11 +468,13 @@ def campaign_create(
     request: Request,
     name: str = Form(...),
     play_mode: str = Form("ai_refereed"),
+    setting_choice: str = Form("ledger_reach"),
     idempotency_key: str = Form(...),
 ):
     result = create_campaign(
         name=name,
         play_mode=play_mode,
+        setting_choice=setting_choice,
         idempotency_key=idempotency_key,
     )
     grant_campaign_owner(result.campaign_public_id, request.state.user.user_id)

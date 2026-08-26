@@ -487,8 +487,20 @@ class CampaignReader:
             active_trade_work=connection.execute("""SELECT work.public_id::text AS public_id,COALESCE(profile.character_name,actor.name) AS actor_name,skill.name AS skill_name,work.started_day,work.work_status FROM camp_trade_work_week work JOIN actor_actor actor USING(actor_id,campaign_id) JOIN rule_rule skill ON skill.rule_id=work.skill_rule_id LEFT JOIN actor_current_character_profile profile ON profile.actor_id=actor.actor_id WHERE work.campaign_id=%s AND work.work_status='active' ORDER BY work.work_week_id DESC""",(campaign_id,)).fetchall()
             ground_weapon_batteries=connection.execute("""SELECT battery.public_id::text AS public_id,battery.battery_reference,actor.name AS operator_name,battery.operational_weapon_count,battery.ammunition_remaining FROM gf_ground_weapon_battery battery JOIN actor_actor actor ON actor.actor_id=battery.operator_actor_id WHERE battery.campaign_id=%s AND battery.operational_weapon_count>0 AND battery.ammunition_remaining>0 ORDER BY battery.battery_reference""",(campaign_id,)).fetchall()
             pending_ground_volleys=connection.execute("""SELECT command.public_id::text AS command_public_id,ship.name AS target_name,count(*) FILTER(WHERE attack.hit) AS successful_attacks FROM cmd_ground_starship_volley volley JOIN cmd_command command USING(command_id) JOIN ship_ship ship ON ship.ship_id=volley.target_ship_id JOIN cmd_ground_starship_volley_attack attack USING(command_id) WHERE volley.campaign_id=%s AND volley.volley_status='awaiting_primary' GROUP BY command.public_id,ship.name,volley.command_id ORDER BY volley.command_id DESC""",(campaign_id,)).fetchall()
+            setting=connection.execute("""SELECT selected.startup_choice,package.setting_code,
+              COALESCE(package.setting_name,
+                CASE selected.startup_choice WHEN 'generate_original' THEN 'Generated original sector'
+                  WHEN 'import_own' THEN 'Private sector import pending'
+                  ELSE 'Uncharted space' END) AS setting_name,
+              selected.provenance_class,selected.rights_class,selected.export_permitted,
+              sector.public_id::text AS sector_public_id
+              FROM camp_campaign_setting selected
+              LEFT JOIN setting_package package USING(setting_package_id)
+              LEFT JOIN loc_location sector ON sector.location_id=selected.sector_location_id
+              WHERE selected.campaign_id=%s""",(campaign_id,)).fetchone()
         return {
             **campaign,
+            "setting": setting,
             "actors": actors,
             "ships": ships,
             "crew_positions": crew_positions,

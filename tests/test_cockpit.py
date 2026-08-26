@@ -26,6 +26,14 @@ def test_registry_console_still_lives_at_command():
     assert "CAMPAIGN REGISTRY" in response.text.upper() or "campaign" in response.text
 
 
+def test_cockpit_and_command_offer_the_same_setting_startup_choices():
+    choices = ("ledger_reach", "generate_original", "import_own", "uncharted")
+    for path in ("/", "/command"):
+        text = client.get(path).text
+        for choice in choices:
+            assert f'value="{choice}"' in text
+
+
 def test_pulse_unknown_campaign_is_404():
     response = client.get("/api/campaigns/00000000-0000-4000-8000-000000000000/pulse")
     assert response.status_code == 404

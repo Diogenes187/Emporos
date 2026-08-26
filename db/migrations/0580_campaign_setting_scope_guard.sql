@@ -1,0 +1,5 @@
+ALTER TABLE camp_campaign_setting
+ DROP CONSTRAINT camp_campaign_setting_sector_location_id_fkey,
+ ADD CONSTRAINT camp_campaign_setting_sector_campaign_fk
+ FOREIGN KEY(sector_location_id,campaign_id)
+ REFERENCES loc_location(location_id,campaign_id);

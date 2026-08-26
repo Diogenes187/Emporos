@@ -29,6 +29,7 @@ from engine.campaigns import create_campaign_command  # noqa: E402
 from engine.character_creation import initialize_character_command  # noqa: E402
 from engine.ships import acquire_ship_command  # noqa: E402
 from engine.sectors import import_sector_command  # noqa: E402
+from engine.settings import initialize_campaign_setting_command  # noqa: E402
 from engine.travel_planning import cancel_jump_journey_command, place_ship_command, plan_jump_journey_command  # noqa: E402
 from engine.navigation import resolve_navigation_command  # noqa: E402
 from engine.jump_attempts import resolve_jump_attempt_command  # noqa: E402
@@ -113,7 +114,8 @@ from engine.careers import apply_career_aging_command, apply_career_basic_traini
 
 
 def create_campaign(
-    *, name: str, play_mode: str, idempotency_key: str
+    *, name: str, play_mode: str, idempotency_key: str,
+    setting_choice: str = "ledger_reach",
 ):
     url = database_url()
     if not url:
@@ -122,13 +124,22 @@ def create_campaign(
         "EMPOROS_AUTHORITY_REFERENCE", "emporos-local-player"
     )
     with psycopg.connect(url) as connection:
-        return create_campaign_command(
-            connection,
-            initiator_reference=authority,
-            idempotency_key=idempotency_key,
-            name=name,
-            play_mode=play_mode,
-        )
+        with connection.transaction():
+            result = create_campaign_command(
+                connection,
+                initiator_reference=authority,
+                idempotency_key=idempotency_key,
+                name=name,
+                play_mode=play_mode,
+            )
+            initialize_campaign_setting_command(
+                connection,
+                initiator_reference=authority,
+                idempotency_key=idempotency_key + ":setting",
+                campaign_public_id=result.campaign_public_id,
+                startup_choice=setting_choice,
+            )
+            return result
 
 
 def initialize_character(*, campaign_public_id: str, idempotency_key: str):

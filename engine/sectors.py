@@ -41,7 +41,7 @@ def _load(c,cid,pub,replayed):
     row=c.execute("SELECT campaign.public_id,sector.public_id,sector.name,receipt.imported_system_count,receipt.source_sha256 FROM cmd_sector_import_receipt receipt JOIN camp_campaign campaign USING(campaign_id) JOIN loc_location sector ON sector.location_id=receipt.sector_location_id WHERE receipt.command_id=%s",(cid,)).fetchone()
     return SectorImportResult(str(pub),str(row[0]),str(row[1]),row[2],row[3],row[4],replayed)
 
-def import_sector_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,campaign_public_id:str,sector_name:str,sector_x:int,sector_y:int,source_filename:str,content:bytes)->SectorImportResult:
+def import_sector_command(c:psycopg.Connection,*,initiator_reference:str,idempotency_key:str,campaign_public_id:str,sector_name:str,sector_x:int,sector_y:int,source_filename:str,content:bytes,provenance_class:str='user_supplied',rights_class:str='private_non_exportable',export_permitted:bool=False,setting_package_id:int|None=None)->SectorImportResult:
     name=sector_name.strip();filename=source_filename.strip();parsed=_rows(content);digest=hashlib.sha256(content).hexdigest()
     if not name: raise ValueError("Sector name cannot be blank")
     if not filename: raise ValueError("Source filename cannot be blank")
@@ -57,7 +57,13 @@ def import_sector_command(c:psycopg.Connection,*,initiator_reference:str,idempot
         cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('import_sector',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone()
         sector,sector_pub=c.execute("INSERT INTO loc_location(campaign_id,location_type_rule_id,name) VALUES(%s,%s,%s) RETURNING location_id,public_id",(campaign[0],types['sector'],name)).fetchone()
         c.execute("INSERT INTO loc_sector VALUES(%s,%s,%s,%s)",(sector,campaign[0],sector_x,sector_y))
-        c.execute("INSERT INTO cmd_sector_import_receipt VALUES(%s,%s,%s,%s,%s,%s,%s)",(cid,campaign[0],sector,filename,digest,len(content),len(parsed)))
+        c.execute("""INSERT INTO cmd_sector_import_receipt
+          (command_id,campaign_id,sector_location_id,source_filename,source_sha256,
+           source_byte_count,imported_system_count,provenance_class,rights_class,
+           export_permitted,setting_package_id)
+          VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+          (cid,campaign[0],sector,filename,digest,len(content),len(parsed),
+           provenance_class,rights_class,export_permitted,setting_package_id))
         for order,(line,system_name,hex_code,column,row_number,uwp,values) in enumerate(parsed,1):
             system=c.execute("INSERT INTO loc_location(campaign_id,location_type_rule_id,name) VALUES(%s,%s,%s) RETURNING location_id",(campaign[0],types['star-system'],system_name)).fetchone()[0]
             c.execute("INSERT INTO loc_star_system(location_id,campaign_id,sector_location_id,hex_column,hex_row) VALUES(%s,%s,%s,%s,%s)",(system,campaign[0],sector,column,row_number))

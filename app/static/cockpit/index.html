@@ -324,12 +324,18 @@ $('#newBtn').onclick=()=>{
       <option value="human_refereed">Human referee (tools only)</option>
       <option value="player_directed">Player directed</option>
     </select></label>
+    <label>Starting setting <select id="ncSetting">
+      <option value="ledger_reach" selected>Ledger Reach — Emporos default</option>
+      <option value="generate_original">Generate an original sector</option>
+      <option value="import_own">Import my own sector after creation</option>
+      <option value="uncharted">Begin uncharted / without a sector</option>
+    </select></label>
     <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
       <button onclick="closeGen()">Cancel</button>
       <button id="ncGo" class="goldbtn">Open the ledger</button></div>`);
   $('#ncGo').onclick=async()=>{
     const name=$('#ncName').value.trim();if(!name)return;
-    const ok=await post('/campaigns',{name,play_mode:$('#ncMode').value},'Campaign "'+name+'" begins.');
+    const ok=await post('/campaigns',{name,play_mode:$('#ncMode').value,setting_choice:$('#ncSetting').value},'Campaign "'+name+'" begins.');
     if(ok){closeGen();await loadCampaigns();
       const mine=S.campaigns.find(c=>c.name===name);if(mine){S.cid=mine.public_id;$('#campaignSel').value=S.cid;}
       await refresh();}
@@ -998,7 +1004,7 @@ function worldsPanel(f){
       <div class="nm">${esc(y.name)} <span class="upp" style="font-size:12px">${uwpOf(y)}</span></div>
       <div class="sub">Hex ${hexLabel(y)} · ${esc(y.sector_name)} · ${esc(String(y.discovery_status||'known'))}</div></div>`;
   }
-  if(!f.systems.length)h+='<div class="card"><div class="sub">No star systems. Import a sector and the chart lights up.</div></div>';
+  if(!f.systems.length)h+='<div class="card"><div class="sub">No sector is charted for this campaign yet. Import your own compatible sector file when you are ready, or explore uncharted space.</div></div>';
   h+=`<button id="impSector" style="width:100%">+ Import sector (.tab file)</button>`;
   return h;
 }

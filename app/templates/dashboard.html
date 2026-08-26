@@ -46,6 +46,7 @@
     <input type="hidden" name="idempotency_key" value="{{ creation_key }}">
     <label><span>Campaign name</span><input name="name" required maxlength="120" placeholder="The Long Account"></label>
     <label><span>Referee mode</span><select name="play_mode"><option value="ai_refereed">AI refereed</option><option value="ai_assisted">AI assisted</option><option value="player_directed">Player directed</option><option value="human_refereed">Human refereed</option></select></label>
+    <label><span>Starting setting</span><select name="setting_choice"><option value="ledger_reach">Ledger Reach — bundled Emporos setting</option><option value="generate_original">Generate an original sector</option><option value="import_own">Import my own sector after creation</option><option value="uncharted">Begin uncharted / without a sector</option></select></label>
     <button class="primary" type="submit">Create campaign</button>
   </form>
   <div class="campaign-list">{% for item in campaigns[:8] %}<a href="/?campaign={{ item.public_id }}"><strong>{{ item.name }}</strong><small>{{ item.actor_count }} actors · {{ item.ship_count }} ships · {{ item.system_count }} systems</small></a>{% else %}<p>No campaigns found.</p>{% endfor %}</div>
