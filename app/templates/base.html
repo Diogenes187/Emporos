@@ -16,12 +16,13 @@
   <link rel="stylesheet" href="/static/css/journal.css?v=20260804">
   <link rel="stylesheet" href="/static/css/theme-light.css?v=20260804">
   <link rel="stylesheet" href="/static/css/polish.css?v=20260804a">
+  <link rel="stylesheet" href="/static/css/lovable-pages.css?v=20260826">
 </head>
 <body>
   <aside class="rail">
     <a class="brand" href="/" aria-label="Emporos command">
       <img src="/logos/emporos_thumbnail_256.jpg" alt="">
-      <span><strong>EMPOROS</strong><small>Free Trader Registry</small></span>
+      <span><strong>Emporos</strong><small>Campaign Workstation</small></span>
     </a>
     <nav aria-label="Primary">
       {% for route, label in navigation %}
@@ -32,7 +33,7 @@
     </nav>
     <div class="rail-status">
       <span class="signal"></span>
-      <div><strong>Engine connected</strong><small>AI has narration authority</small></div>
+      <div><strong>Local engine</strong><small>Relational campaign state</small></div>
     </div>
   </aside>
 
@@ -43,7 +44,7 @@
         <strong>{{ campaign.name if campaign else 'No campaign selected' }}</strong>
       </div>
       <div class="topbar-center">{% if campaign %}Day {{ campaign.day_number }} · {{ campaign.play_mode|replace('_',' ')|title }}{% else %}Awaiting campaign{% endif %}</div>
-      <div class="account-menu"><span class="profile">{{ current_user.display_name[:2]|upper }}</span><form method="post" action="/logout"><button class="quiet" type="submit">Sign out</button></form></div>
+      <div class="account-menu"><button class="quiet theme-toggle" type="button">☀ Light</button><span class="profile">{{ current_user.display_name[:2]|upper }}</span><form method="post" action="/logout"><button class="quiet" type="submit">Sign out</button></form></div>
     </header>
     {% block content %}{% endblock %}
   </main>
@@ -77,5 +78,11 @@
     </form>
     {% if campaign and campaign.play_mode=='ai_assisted' %}<p class="source-note">Private assistance lives in your connected desktop MCP client.</p>{% endif %}
   </aside>
+  <script>
+    const pageThemeButton=document.querySelector('.theme-toggle');
+    if(localStorage.getItem('emporos-theme')==='light')document.documentElement.classList.add('light');
+    function showPageTheme(){const light=document.documentElement.classList.contains('light');pageThemeButton.textContent=light?'☾ Dark':'☀ Light';}
+    showPageTheme();pageThemeButton.addEventListener('click',()=>{document.documentElement.classList.toggle('light');localStorage.setItem('emporos-theme',document.documentElement.classList.contains('light')?'light':'dark');showPageTheme();});
+  </script>
 </body>
 </html>

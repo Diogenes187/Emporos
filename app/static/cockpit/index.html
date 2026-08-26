@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Emporos</title>
+<link rel="stylesheet" href="/static/cockpit/lovable.css">
 <style>
   :root{
     --bg:#06070c; --panel:#0d1019; --panel2:#11151f; --line:#222c45;
@@ -108,9 +109,25 @@
 </style>
 </head>
 <body>
+<aside class="workspaces" aria-label="Game workspaces">
+  <div class="brand"><img src="/logos/emporos_thumbnail_256.jpg" alt=""><div><strong>Emporos</strong><span>Campaign Workstation</span></div></div>
+  <nav>
+    <a class="active" href="/">⌂ <span>Campaign Home</span></a>
+    <a href="/crew" data-campaign-link>♙ <span>Characters</span></a>
+    <a href="/ship" data-campaign-link>◈ <span>Ship &amp; Crew</span></a>
+    <a href="/sector" data-campaign-link>⌖ <span>Navigation &amp; Travel</span></a>
+    <a href="/trade" data-campaign-link>⚖ <span>Trade &amp; Contracts</span></a>
+    <a href="/operations" data-campaign-link>⌁ <span>Landing Party</span></a>
+    <a href="/encounters" data-campaign-link>⚔ <span>Combat</span></a>
+    <a href="/play" data-campaign-link>◆ <span>Referee Desk</span></a>
+    <a href="/journal" data-campaign-link>▤ <span>Library &amp; Memory</span></a>
+    <a href="/command" data-campaign-link>⚙ <span>Administration</span></a>
+  </nav>
+  <div class="local-foot"><span class="dot on"></span> Local engine</div>
+</aside>
 <header>
-  <h1>EMPOROS</h1>
-  <select id="campaignSel" title="Campaign"></select>
+  <div class="mobile-brand">EMPOROS</div>
+  <label class="context-select"><span>Campaign</span><select id="campaignSel" title="Campaign"></select></label>
   <button id="newBtn">New Campaign</button>
   <button id="helpBtn" title="How to play, in four steps">?</button>
   <a class="pill" href="/market" id="exchLink" target="_blank" rel="noopener"
@@ -120,11 +137,17 @@
   <span id="dayPill" class="pill" title="Campaign clock"></span>
   <span id="modePill" class="pill" title="Referee mode"></span>
   <span class="spacer"></span>
+  <button id="themeBtn" title="Switch between dark and light display">☀ Light</button>
   <a class="pill" href="/command" title="The registry console — every engine control as a plain form" style="opacity:.65">🛠 Console</a>
   <button id="inviteBtn" title="Invite a registered player to this campaign — they get a private join link">👥 Invite</button>
   <span id="userpill" class="pill" title="Signed in">&#9679; signed in</span>
   <button id="logoutBtn">Logout</button>
 </header>
+
+<section class="workspace-heading">
+  <div><small>CAMPAIGN HOME</small><h1>Command overview</h1><p>Your sector, company, vessel, and referee conversation in one working view.</p></div>
+  <div class="status-copy"><span>LOCAL DATABASE</span><strong>CONNECTED</strong></div>
+</section>
 
 <main>
   <div class="mapwrap" id="mapWrap">
@@ -182,11 +205,20 @@
   <div style="margin-top:12px;display:flex;justify-content:flex-end"><button onclick="document.getElementById('wModal').style.display='none'">To the stars</button></div>
 </div></div>
 <script>
-const $=s=>document.querySelector(s);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uuid=()=>crypto.randomUUID();
+const themeButton=document.getElementById('themeBtn');
+const savedTheme=localStorage.getItem('emporos-theme');
+if(savedTheme==='light')document.documentElement.classList.add('light');
+function paintTheme(){const light=document.documentElement.classList.contains('light');themeButton.textContent=light?'☾ Dark':'☀ Light';}
+paintTheme();
+themeButton.addEventListener('click',()=>{document.documentElement.classList.toggle('light');localStorage.setItem('emporos-theme',document.documentElement.classList.contains('light')?'light':'dark');paintTheme();});
+document.addEventListener('click',event=>{const link=event.target.closest('[data-campaign-link]');if(!link||typeof S==='undefined'||!S.cid)return;const url=new URL(link.href,location.origin);url.searchParams.set('campaign',S.cid);link.href=url.pathname+url.search;});
+</script>
+<script>
+var $=s=>document.querySelector(s);
+var esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+var uuid=()=>crypto.randomUUID();
 
-const S={campaigns:[],cid:null,full:null,assistance:[],shipClasses:[],tab:'crew',local:[],
+var S={campaigns:[],cid:null,full:null,assistance:[],shipClasses:[],tab:'crew',local:[],
          cgActor:null,cgLog:[],kept:{},zoom:1,selShip:null,selWorld:null,poll:null};
 
 function log(text,cls){S.local.push({t:new Date(),text,cls:cls||'sys'});renderLog();}
