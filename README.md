@@ -41,3 +41,11 @@ model.
 
 Base Cepheus is a template only. Emporos does not import or execute code from
 the Base Cepheus directory.
+
+## Windows playtest launch
+
+Copy `.env.example` to `.env` once and enter the local PostgreSQL connection.
+After that, double-click `Start Emporos.bat`. It applies pending migrations,
+starts the loopback-only web server, and opens the game. Double-click
+`Stop Emporos.bat` when finished. Startup diagnostics are retained under
+`var/` if the server cannot start.
