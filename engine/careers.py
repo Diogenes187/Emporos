@@ -2744,7 +2744,8 @@ def apply_career_term_training_command(
                       stint.assignment_rule_id,stint.rank_number,
                       term.bonus_training_rolls,
                       term.training_rolls_completed,
-                      progression.commission_characteristic_rule_id
+                      progression.commission_characteristic_rule_id,
+                      term.term_number,stint.entry_method
                FROM actor_actor actor
                JOIN actor_career_stint stint ON stint.actor_id=actor.actor_id
                JOIN actor_career_term term
@@ -2773,7 +2774,9 @@ def apply_career_term_training_command(
         ).fetchall()
         decisions = {row[0]: row[1] for row in rank_decisions}
         if hierarchy:
-            if term[5] == 0 and "commission" not in decisions:
+            first_term_draftee = term[9] == 1 and term[10] == "draft"
+            if (term[5] == 0 and "commission" not in decisions
+                    and not first_term_draftee):
                 raise ValueError(
                     "Commission decision is required before term training")
             if term[5] >= 1 and "advancement" not in decisions:

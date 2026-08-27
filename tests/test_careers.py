@@ -983,6 +983,17 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
                         attempt_kind="commission", decision="attempt",
                         random_source=FixedRandom((6, 6)),
                     )
+                training = apply_career_term_training_command(
+                    connection, initiator_reference="player",
+                    idempotency_key="draft-first-term-training",
+                    actor_public_id=actor_public,
+                    training_table_code="personal_development",
+                    cascade_specializations={
+                        "skill.melee-combat": "skill.slashing-weapons",
+                    },
+                    random_source=FixedRandom((1,)),
+                )
+                self.assertEqual(training.training_roll_order, 1)
 
     def test_repeated_cascade_training_advances_same_specialty_each_time(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
