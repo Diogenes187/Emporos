@@ -243,18 +243,15 @@
   </article>
   <aside class="panel create-character">
 {% if not unfinished_actors %}
-    <small>NEW CHARACTER</small>
-<h2>Begin lifepath</h2>
-<p>Roll the six normal Cepheus characteristics, then complete the resumable career lifepath. You will name the finished character afterward.</p>
-    <form method="post" action="/campaigns/{{ campaign.public_id }}/characters">
-      <input type="hidden" name="idempotency_key" value="{{ creation_key }}">
-      <button class="primary full" type="submit">Roll characteristics</button>
-    </form>
+    <small>CHARACTER CREATION</small>
+<h2>Create a Traveller</h2>
+<p>Roll, reroll, arrange characteristics, and begin the lifepath in the dedicated creation workspace.</p>
+    <a class="primary-link" href="/character-creation?campaign={{ campaign.public_id }}">Open character creation</a>
 {% else %}
     <small>CREATION IN PROGRESS</small>
     <h2>{{ unfinished_actors[0].character_name }}</h2>
     <p>Your lifepath is saved after every choice.</p>
-    <a class="primary-link" href="/crew?campaign={{ campaign.public_id }}#builder-{{ unfinished_actors[0].public_id }}">Resume character creation</a>
+    <a class="primary-link" href="/character-creation?campaign={{ campaign.public_id }}">Resume character creation</a>
 {% endif %}
   </aside>
   <aside class="panel create-character">

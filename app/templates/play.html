@@ -59,7 +59,7 @@
       <button type="button" data-tab="lore">Lore</button>
     </div>
     <div class="tab-panel active" data-panel="crew">
-      {% for actor in campaign.actors %}<article class="card"><strong>{{ actor.character_name }}</strong><small>{{ actor.lifepath_status|replace('_',' ')|title }} · {{ actor.skill_count }} skills</small><a href="/crew{{ campaign_query }}#builder-{{ actor.public_id }}">Open character</a></article>{% else %}<article class="card"><p>No characters yet.</p><a href="/crew{{ campaign_query }}">Build a character</a></article>{% endfor %}
+      {% for actor in campaign.actors %}<article class="card"><strong>{{ actor.character_name }}</strong><small>{{ actor.lifepath_status|replace('_',' ')|title }} · {{ actor.skill_count }} skills</small><a href="{% if actor.lifepath_status != 'completed' %}/character-creation{{ campaign_query }}{% else %}/crew{{ campaign_query }}#builder-{{ actor.public_id }}{% endif %}">{% if actor.lifepath_status != 'completed' %}Continue creation{% else %}Open character{% endif %}</a></article>{% else %}<article class="card"><p>No characters yet.</p><a href="/character-creation{{ campaign_query }}">Build a character</a></article>{% endfor %}
     </div>
     <div class="tab-panel" data-panel="ships">
       {% for ship in campaign.ships %}<article class="card"><strong>{{ ship.name }}</strong><small>{{ ship.class_code|replace('_',' ')|title }}{% if ship.location_name %} · {{ ship.location_name }}{% endif %}</small><a href="/ship{{ campaign_query }}">Open ship</a></article>{% else %}<article class="card"><p>No ship registered.</p><a href="/ship{{ campaign_query }}">Commission a ship</a></article>{% endfor %}

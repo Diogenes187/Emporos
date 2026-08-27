@@ -30,7 +30,7 @@ def test_campaign_api_returns_a_list():
 
 
 def test_primary_pages_render():
-    for path in ("/", "/play", "/crew", "/psionics", "/contacts", "/operations", "/ship", "/sector", "/trade", "/journal", "/encounters", "/library", "/info"):
+    for path in ("/", "/play", "/character-creation", "/crew", "/psionics", "/contacts", "/operations", "/ship", "/sector", "/trade", "/journal", "/encounters", "/library", "/info"):
         response = client.get(path)
         assert response.status_code == 200
         assert "Emporos" in response.text
