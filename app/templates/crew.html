@@ -42,7 +42,7 @@
 <small>{{ stat.abbreviation }}</small>
 <strong>{{ stat.current }}</strong>
 </div>{% else %}<span>No characteristics recorded</span>{% endfor %}</div>
-{% if not actor.careers and actor.lifepath_status != 'completed' %}
+{% if not actor.careers and not actor.career_entry_pending and actor.lifepath_status != 'completed' %}
 <section class="chargen-step">
 <small>STEP 1 · CHARACTERISTICS</small>
 <h3>Keep these rolls or try another set</h3>
