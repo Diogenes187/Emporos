@@ -85,4 +85,8 @@ def campaign_adventure_modules(c:psycopg.Connection,*,initiator_reference:str,ca
  campaign=c.execute("SELECT campaign_id FROM camp_campaign WHERE public_id=%s AND owner_reference=%s",(campaign_public_id,initiator_reference)).fetchone()
  if not campaign:raise PermissionError('Campaign is outside this authority')
  rows=c.execute("SELECT public_id FROM camp_adventure_module WHERE campaign_id=%s ORDER BY (module_status='active') DESC,created_at DESC",(campaign[0],)).fetchall()
- return [dict(public_id=str(row[0]),**adventure_module_snapshot(c,initiator_reference=initiator_reference,module_public_id=str(row[0]))) for row in rows]
+ from engine.adventure_indexing import adventure_index_snapshot
+ result=[]
+ for row in rows:
+  public=str(row[0]);item=dict(public_id=public,**adventure_module_snapshot(c,initiator_reference=initiator_reference,module_public_id=public));item['indexing']=adventure_index_snapshot(c,initiator_reference=initiator_reference,module_public_id=public);result.append(item)
+ return result

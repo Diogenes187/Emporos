@@ -33,7 +33,7 @@ CAMPAIGN_RESOURCE_TABLES = (
     "camp_language", "camp_leadership_coordination", "camp_liaison_negotiation",
     "camp_patron_brief", "camp_player_visible_source", "camp_referee_tool_request",
     "camp_referee_turn", "camp_scene_snapshot", "camp_session_archive",
-    "camp_source_document", "camp_adventure_module", "camp_adventure_location", "camp_trade_work_week", "enc_encounter",
+    "camp_source_document", "camp_adventure_module", "camp_adventure_location", "camp_adventure_index_session", "camp_adventure_location_proposal", "camp_trade_work_week", "enc_encounter",
     "env_acid_exposure", "env_acid_fume_exposure", "env_antiradiation_dose_receipt",
     "env_deprivation_episode", "env_disease_case", "env_fall_attempt",
     "env_fire_episode", "env_poison_attempt", "env_radiation_exposure_attempt",

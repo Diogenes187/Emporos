@@ -58,6 +58,7 @@ from engine.starship_charters import quote_starship_charter_command, accept_star
 from engine.ship_mortgages import open_ship_mortgage_command, pay_ship_mortgage_command  # noqa: E402
 from engine.source_library import ingest_campaign_source_command  # noqa: E402
 from engine.adventure_modules import create_adventure_module_command,key_adventure_location_command,enter_adventure_location_command,update_adventure_location_state_command,advance_adventure_exploration_command,campaign_adventure_modules  # noqa: E402
+from engine.adventure_indexing import begin_adventure_indexing_command,review_adventure_location_proposal_command  # noqa: E402
 from ai.source_reviewer import review_document_text_queue  # noqa: E402
 from ai.referee import submit_referee_turn  # noqa: E402
 from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
@@ -396,6 +397,12 @@ def update_adventure_location_state(*,location_public_id:str,occupant_status:str
 def advance_adventure_exploration(*,module_public_id:str,turns:int,rest:bool,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return advance_adventure_exploration_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,module_public_id=module_public_id,turns=turns,rest=rest)
+def begin_adventure_indexing(*,module_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return begin_adventure_indexing_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,module_public_id=module_public_id)
+def review_adventure_location_proposal(*,proposal_public_id:str,decision:str,review_note:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return review_adventure_location_proposal_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,proposal_public_id=proposal_public_id,decision=decision,review_note=review_note)
 
 def send_referee_message(*,campaign_public_id:str,player_text:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

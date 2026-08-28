@@ -20,6 +20,7 @@ from app.commands import cancel_jump
 from app.commands import reroll_characteristics, arrange_characteristics, abandon_unfinished_character, delete_character
 from app.commands import record_human_narration, request_gm_assistance
 from app.commands import adventure_modules,create_adventure_module,key_adventure_location,enter_adventure_location,update_adventure_location_state,advance_adventure_exploration
+from app.commands import begin_adventure_indexing,review_adventure_location_proposal
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -1014,6 +1015,18 @@ def adventure_key_location(campaign_id:str,module_id:str,location_key:str=Form(.
 @app.post("/campaigns/{campaign_id}/adventures/{module_id}/advance")
 def adventure_advance(campaign_id:str,module_id:str,turns:int=Form(1),rest:bool=Form(False),idempotency_key:str=Form(...)):
     try:advance_adventure_exploration(module_public_id=module_id,turns=turns,rest=rest,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/adventures/{module_id}/index")
+def adventure_index_begin(campaign_id:str,module_id:str,idempotency_key:str=Form(...)):
+    try:begin_adventure_indexing(module_public_id=module_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/adventure-proposals/{proposal_id}/review")
+def adventure_proposal_review(campaign_id:str,proposal_id:str,decision:str=Form(...),review_note:str=Form(""),idempotency_key:str=Form(...)):
+    try:review_adventure_location_proposal(proposal_public_id=proposal_id,decision=decision,review_note=review_note,idempotency_key=idempotency_key)
     except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
 

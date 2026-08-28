@@ -11,6 +11,7 @@ from engine.referee_modes import record_human_referee_turn_command
 from engine.external_referee import complete_external_referee_turn_command
 from engine.conversation_logs import append_external_conversation_entry_command
 from engine.adventure_modules import adventure_module_snapshot,create_adventure_module_command,key_adventure_location_command,enter_adventure_location_command,update_adventure_location_state_command,advance_adventure_exploration_command
+from engine.adventure_indexing import adventure_index_snapshot,read_adventure_source_page_command,propose_adventure_location_command
 
 PROTOCOL_VERSION='2025-03-26'
 def _connect():
@@ -85,6 +86,12 @@ def _update_location(args):
  with _connect() as c:return update_adventure_location_state_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),location_public_id=args['location_public_id'],occupant_status=args['occupant_status'],treasure_status=args['treasure_status'],alert_status=args['alert_status'],current_note=args.get('current_note') or '')
 def _advance_adventure(args):
  with _connect() as c:return advance_adventure_exploration_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),module_public_id=args['module_public_id'],turns=int(args.get('turns',1)),rest=bool(args.get('rest',False)))
+def _index_status(args):
+ with _connect() as c:return adventure_index_snapshot(c,initiator_reference=_authority(),module_public_id=args['module_public_id'])
+def _read_index_page(args):
+ with _connect() as c:return read_adventure_source_page_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),session_public_id=args['session_public_id'],page_number=int(args['page_number']))
+def _propose_location(args):
+ with _connect() as c:return propose_adventure_location_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),session_public_id=args['session_public_id'],source_page_number=int(args['source_page_number']),source_excerpt=args['source_excerpt'],location_key=args['location_key'],name=args['name'],keyed_description=args['keyed_description'],occupants_initial=args.get('occupants_initial'),treasure_initial=args.get('treasure_initial'))
 TOOLS={
  'emporos_status':('Check the local Emporos database and MCP authority',{},(),_status),
  'list_campaigns':('List campaign identities and operating modes owned by this local authority',{},(),_campaigns),
@@ -102,6 +109,9 @@ TOOLS={
  'enter_adventure_location':('Make a keyed location current and return its persistent state',{'location_public_id':{'type':'string'},'idempotency_key':{'type':'string'}},('location_public_id',),_enter_location),
  'update_adventure_location_state':('Record authoritative changes after play so stale key text cannot override them',{'location_public_id':{'type':'string'},'occupant_status':{'type':'string','enum':['as_keyed','absent','fled','dead','captured','allied','changed']},'treasure_status':{'type':'string','enum':['as_keyed','untouched','taken','moved','destroyed','changed']},'alert_status':{'type':'string','enum':['unaware','suspicious','alerted','secured']},'current_note':{'type':'string'},'idempotency_key':{'type':'string'}},('location_public_id','occupant_status','treasure_status','alert_status'),_update_location),
  'advance_adventure_exploration':('Advance deterministic exploration time and report how many wandering checks are due',{'module_public_id':{'type':'string'},'turns':{'type':'integer','minimum':1,'maximum':24},'rest':{'type':'boolean'},'idempotency_key':{'type':'string'}},('module_public_id',),_advance_adventure),
+ 'get_adventure_index_status':('Read full-document indexing progress and draft proposals',{'module_public_id':{'type':'string'}},('module_public_id',),_index_status),
+ 'read_adventure_source_page':('Read and account for one verified source page; call for every page before proposing keys',{'session_public_id':{'type':'string'},'page_number':{'type':'integer','minimum':1},'idempotency_key':{'type':'string'}},('session_public_id','page_number'),_read_index_page),
+ 'propose_adventure_location':('Submit a cited draft after every source page has been read; human approval is still required',{'session_public_id':{'type':'string'},'source_page_number':{'type':'integer','minimum':1},'source_excerpt':{'type':'string'},'location_key':{'type':'string'},'name':{'type':'string'},'keyed_description':{'type':'string'},'occupants_initial':{'type':'string'},'treasure_initial':{'type':'string'},'idempotency_key':{'type':'string'}},('session_public_id','source_page_number','source_excerpt','location_key','name','keyed_description'),_propose_location),
  'list_gameplay_tool_schemas':('Describe deterministic gameplay commands',{},(),_catalog),
  'execute_gameplay_tool':('Invoke an allowlisted deterministic engine command and return its receipt',{'tool_name':{'type':'string'},'arguments':{'type':'object'},'idempotency_key':{'type':'string'}},('tool_name',),_execute),
 }
