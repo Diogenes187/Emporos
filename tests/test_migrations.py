@@ -25,8 +25,17 @@ class MigrationStructureTests(unittest.TestCase):
 
     def test_files_have_stable_sha256_inputs(self) -> None:
         for path in self.migration_paths():
-            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            raw = path.read_bytes()
+            normalized = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+            digest = hashlib.sha256(normalized).hexdigest()
             self.assertRegex(digest, r"^[0-9a-f]{64}$")
+            self.assertEqual(
+                digest,
+                hashlib.sha256(
+                    normalized.replace(b"\n", b"\r\n")
+                    .replace(b"\r\n", b"\n")
+                ).hexdigest(),
+            )
 
     def test_runner_owns_transactions(self) -> None:
         for path in self.migration_paths():
@@ -54,4 +63,3 @@ class MigrationStructureTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

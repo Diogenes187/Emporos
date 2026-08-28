@@ -33,6 +33,20 @@ MIGRATION_NAME = re.compile(r"^(?P<version>\d{4})_(?P<name>[a-z0-9_]+)\.sql$")
 LOCK_ID = 1_384_927_441
 
 
+def normalized_sql_bytes(raw: bytes) -> bytes:
+    """Use one checksum on Windows and Unix without weakening SQL checks."""
+    return raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def checksum_variants(raw: bytes) -> set[str]:
+    normalized = normalized_sql_bytes(raw)
+    return {
+        hashlib.sha256(raw).hexdigest(),
+        hashlib.sha256(normalized).hexdigest(),
+        hashlib.sha256(normalized.replace(b"\n", b"\r\n")).hexdigest(),
+    }
+
+
 def migration_files() -> list[tuple[int, str, Path, str]]:
     found: list[tuple[int, str, Path, str]] = []
     for path in sorted(MIGRATION_DIR.glob("*.sql")):
@@ -45,7 +59,7 @@ def migration_files() -> list[tuple[int, str, Path, str]]:
                 int(match.group("version")),
                 match.group("name"),
                 path,
-                hashlib.sha256(raw).hexdigest(),
+                hashlib.sha256(normalized_sql_bytes(raw)).hexdigest(),
             )
         )
     versions = [row[0] for row in found]
@@ -100,7 +114,7 @@ def main() -> int:
         for version, name, path, checksum in migrations:
             recorded = applied.get(version)
             if recorded is not None:
-                if recorded != checksum:
+                if recorded not in checksum_variants(path.read_bytes()):
                     raise RuntimeError(
                         f"Applied migration {version:04d} checksum changed: "
                         f"database={recorded}, file={checksum}"

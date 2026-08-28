@@ -34,15 +34,19 @@ def expect(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def expected_checksums() -> dict[int, str]:
-    checksums: dict[int, str] = {}
+def expected_checksums() -> dict[int, set[str]]:
+    checksums: dict[int, set[str]] = {}
     for path in sorted(MIGRATIONS.glob("*.sql")):
         match = VERSION.match(path.name)
         if match is None:
             raise AssertionError(f"Invalid migration filename: {path.name}")
-        checksums[int(match.group("version"))] = hashlib.sha256(
-            path.read_bytes()
-        ).hexdigest()
+        raw = path.read_bytes()
+        normalized = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        checksums[int(match.group("version"))] = {
+            hashlib.sha256(raw).hexdigest(),
+            hashlib.sha256(normalized).hexdigest(),
+            hashlib.sha256(normalized.replace(b"\n", b"\r\n")).hexdigest(),
+        }
     return checksums
 
 
@@ -127,7 +131,12 @@ def main() -> int:
                 "SELECT version, checksum_sha256 FROM sys_schema_migration"
             ).fetchall()
         )
-        expect(recorded == expected_checksums(), "Migration checksums do not match.")
+        expected = expected_checksums()
+        mismatches = {
+            version: checksum for version, checksum in recorded.items()
+            if version not in expected or checksum not in expected[version]
+        }
+        expect(not mismatches, f"Migration checksums do not match: {mismatches}")
 
         package = connection.execute(
             """
