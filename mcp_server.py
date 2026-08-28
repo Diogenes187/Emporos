@@ -10,6 +10,7 @@ from engine.orchestration import GameplayOrchestrator,available_tools
 from engine.referee_modes import record_human_referee_turn_command
 from engine.external_referee import complete_external_referee_turn_command
 from engine.conversation_logs import append_external_conversation_entry_command
+from engine.adventure_modules import adventure_module_snapshot,create_adventure_module_command,key_adventure_location_command,enter_adventure_location_command,update_adventure_location_state_command,advance_adventure_exploration_command
 
 PROTOCOL_VERSION='2025-03-26'
 def _connect():
@@ -72,6 +73,18 @@ def _conversation_entries(args):
 def _catalog(args=None):return [asdict(spec) for spec in available_tools()]
 def _execute(args):
  with _connect() as c:return GameplayOrchestrator(c,authority_reference=_authority()).invoke(args['tool_name'],idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),arguments=args.get('arguments') or {})
+def _adventure_snapshot(args):
+ with _connect() as c:return adventure_module_snapshot(c,initiator_reference=_authority(),module_public_id=args['module_public_id'])
+def _create_adventure(args):
+ with _connect() as c:return create_adventure_module_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),campaign_public_id=args['campaign_public_id'],name=args['name'],source_document_public_id=args.get('source_document_public_id'))
+def _key_location(args):
+ with _connect() as c:return key_adventure_location_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),module_public_id=args['module_public_id'],location_key=args['location_key'],name=args['name'],keyed_description=args['keyed_description'],source_page_number=args.get('source_page_number'),occupants_initial=args.get('occupants_initial'),treasure_initial=args.get('treasure_initial'))
+def _enter_location(args):
+ with _connect() as c:return enter_adventure_location_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),location_public_id=args['location_public_id'])
+def _update_location(args):
+ with _connect() as c:return update_adventure_location_state_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),location_public_id=args['location_public_id'],occupant_status=args['occupant_status'],treasure_status=args['treasure_status'],alert_status=args['alert_status'],current_note=args.get('current_note') or '')
+def _advance_adventure(args):
+ with _connect() as c:return advance_adventure_exploration_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),module_public_id=args['module_public_id'],turns=int(args.get('turns',1)),rest=bool(args.get('rest',False)))
 TOOLS={
  'emporos_status':('Check the local Emporos database and MCP authority',{},(),_status),
  'list_campaigns':('List campaign identities and operating modes owned by this local authority',{},(),_campaigns),
@@ -83,6 +96,12 @@ TOOLS={
  'append_conversation_log_entry':('Archive one ordered desktop conversation entry in the campaign log',{'campaign_public_id':{'type':'string'},'log_reference':{'type':'string'},'title':{'type':'string'},'client_name':{'type':'string'},'speaker_kind':{'type':'string','enum':['user','assistant','system','tool']},'message_text':{'type':'string'},'idempotency_key':{'type':'string'}},('campaign_public_id','log_reference','speaker_kind','message_text'),_append_log),
  'list_conversation_logs':('List archived Captain and AI conversation logs',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_conversation_logs),
  'read_conversation_log':('Read ordered entries from one archived conversation log',{'log_public_id':{'type':'string'}},('log_public_id',),_conversation_entries),
+ 'get_adventure_module':('Read the keyed adventure and current relational state; obey every contradiction warning before narrating',{'module_public_id':{'type':'string'}},('module_public_id',),_adventure_snapshot),
+ 'create_adventure_module':('Create a campaign-scoped keyed adventure workspace',{'campaign_public_id':{'type':'string'},'name':{'type':'string'},'source_document_public_id':{'type':'string'},'idempotency_key':{'type':'string'}},('campaign_public_id','name'),_create_adventure),
+ 'key_adventure_location':('Add one deliberately reviewed keyed location; never invent omitted source facts',{'module_public_id':{'type':'string'},'location_key':{'type':'string'},'name':{'type':'string'},'keyed_description':{'type':'string'},'source_page_number':{'type':'integer','minimum':1},'occupants_initial':{'type':'string'},'treasure_initial':{'type':'string'},'idempotency_key':{'type':'string'}},('module_public_id','location_key','name','keyed_description'),_key_location),
+ 'enter_adventure_location':('Make a keyed location current and return its persistent state',{'location_public_id':{'type':'string'},'idempotency_key':{'type':'string'}},('location_public_id',),_enter_location),
+ 'update_adventure_location_state':('Record authoritative changes after play so stale key text cannot override them',{'location_public_id':{'type':'string'},'occupant_status':{'type':'string','enum':['as_keyed','absent','fled','dead','captured','allied','changed']},'treasure_status':{'type':'string','enum':['as_keyed','untouched','taken','moved','destroyed','changed']},'alert_status':{'type':'string','enum':['unaware','suspicious','alerted','secured']},'current_note':{'type':'string'},'idempotency_key':{'type':'string'}},('location_public_id','occupant_status','treasure_status','alert_status'),_update_location),
+ 'advance_adventure_exploration':('Advance deterministic exploration time and report how many wandering checks are due',{'module_public_id':{'type':'string'},'turns':{'type':'integer','minimum':1,'maximum':24},'rest':{'type':'boolean'},'idempotency_key':{'type':'string'}},('module_public_id',),_advance_adventure),
  'list_gameplay_tool_schemas':('Describe deterministic gameplay commands',{},(),_catalog),
  'execute_gameplay_tool':('Invoke an allowlisted deterministic engine command and return its receipt',{'tool_name':{'type':'string'},'arguments':{'type':'object'},'idempotency_key':{'type':'string'}},('tool_name',),_execute),
 }

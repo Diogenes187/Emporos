@@ -19,6 +19,7 @@ from app.commands import select_social_content,create_patron_brief,authorize_ext
 from app.commands import cancel_jump
 from app.commands import reroll_characteristics, arrange_characteristics, abandon_unfinished_character, delete_character
 from app.commands import record_human_narration, request_gm_assistance
+from app.commands import adventure_modules,create_adventure_module,key_adventure_location,enter_adventure_location,update_adventure_location_state,advance_adventure_exploration
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -998,6 +999,36 @@ def source_review(campaign_id:str,document_id:str,idempotency_key:str=Form(...))
     except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
     return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
 
+@app.post("/campaigns/{campaign_id}/adventures")
+def adventure_create(campaign_id:str,name:str=Form(...),source_document_public_id:str=Form(""),idempotency_key:str=Form(...)):
+    try:create_adventure_module(campaign_public_id=campaign_id,name=name,source_document_public_id=source_document_public_id or None,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/adventures/{module_id}/locations")
+def adventure_key_location(campaign_id:str,module_id:str,location_key:str=Form(...),name:str=Form(...),keyed_description:str=Form(...),source_page_number:str=Form(""),occupants_initial:str=Form(""),treasure_initial:str=Form(""),idempotency_key:str=Form(...)):
+    try:key_adventure_location(module_public_id=module_id,location_key=location_key,name=name,keyed_description=keyed_description,source_page_number=int(source_page_number) if source_page_number else None,occupants_initial=occupants_initial or None,treasure_initial=treasure_initial or None,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/adventures/{module_id}/advance")
+def adventure_advance(campaign_id:str,module_id:str,turns:int=Form(1),rest:bool=Form(False),idempotency_key:str=Form(...)):
+    try:advance_adventure_exploration(module_public_id=module_id,turns=turns,rest=rest,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/adventure-locations/{location_id}/enter")
+def adventure_enter(campaign_id:str,location_id:str,idempotency_key:str=Form(...)):
+    try:enter_adventure_location(location_public_id=location_id,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
+
+@app.post("/campaigns/{campaign_id}/adventure-locations/{location_id}/state")
+def adventure_state(campaign_id:str,location_id:str,occupant_status:str=Form(...),treasure_status:str=Form(...),alert_status:str=Form(...),current_note:str=Form(""),idempotency_key:str=Form(...)):
+    try:update_adventure_location_state(location_public_id=location_id,occupant_status=occupant_status,treasure_status=treasure_status,alert_status=alert_status,current_note=current_note,idempotency_key=idempotency_key)
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/library?campaign={campaign_id}",status_code=303)
+
 @app.post("/campaigns/{campaign_id}/referee-turns")
 def referee_turn(campaign_id:str,player_text:str=Form(...),idempotency_key:str=Form(...),return_to:str=Form("")):
     try:send_referee_message(campaign_public_id=campaign_id,player_text=player_text,idempotency_key=idempotency_key)
@@ -1421,10 +1452,11 @@ def character_creation(request:Request,campaign:str|None=None):
 @app.get("/library", response_class=HTMLResponse)
 def library(request: Request, campaign: str | None = None):
     current = selected_campaign(campaign)
+    modules = adventure_modules(campaign_public_id=current.public_id) if current else []
     return templates.TemplateResponse(
         request=request,
         name="library.html",
-        context=page_context(request, "library", campaign=current,creation_key=str(uuid.uuid4())),
+        context=page_context(request, "library", campaign=current,adventure_modules=modules,creation_key=str(uuid.uuid4())),
     )
 
 

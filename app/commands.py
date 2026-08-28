@@ -57,6 +57,7 @@ from engine.postal_contracts import accept_postal_contract_command, deliver_post
 from engine.starship_charters import quote_starship_charter_command, accept_starship_charter_command, complete_starship_charter_command  # noqa: E402
 from engine.ship_mortgages import open_ship_mortgage_command, pay_ship_mortgage_command  # noqa: E402
 from engine.source_library import ingest_campaign_source_command  # noqa: E402
+from engine.adventure_modules import create_adventure_module_command,key_adventure_location_command,enter_adventure_location_command,update_adventure_location_state_command,advance_adventure_exploration_command,campaign_adventure_modules  # noqa: E402
 from ai.source_reviewer import review_document_text_queue  # noqa: E402
 from ai.referee import submit_referee_turn  # noqa: E402
 from engine.referee_tools import confirm_referee_tool_request  # noqa: E402
@@ -376,6 +377,25 @@ def review_campaign_source(*,document_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     if not url:raise RuntimeError("No Emporos database URL is configured")
     with psycopg.connect(url) as connection:return review_document_text_queue(connection,initiator_reference=authority,document_public_id=document_public_id,idempotency_key=idempotency_key)
+
+def adventure_modules(*,campaign_public_id:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return campaign_adventure_modules(connection,initiator_reference=authority,campaign_public_id=campaign_public_id)
+def create_adventure_module(*,campaign_public_id:str,name:str,source_document_public_id:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return create_adventure_module_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,campaign_public_id=campaign_public_id,name=name,source_document_public_id=source_document_public_id)
+def key_adventure_location(*,module_public_id:str,location_key:str,name:str,keyed_description:str,source_page_number:int|None,occupants_initial:str|None,treasure_initial:str|None,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return key_adventure_location_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,module_public_id=module_public_id,location_key=location_key,name=name,keyed_description=keyed_description,source_page_number=source_page_number,occupants_initial=occupants_initial,treasure_initial=treasure_initial)
+def enter_adventure_location(*,location_public_id:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return enter_adventure_location_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,location_public_id=location_public_id)
+def update_adventure_location_state(*,location_public_id:str,occupant_status:str,treasure_status:str,alert_status:str,current_note:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return update_adventure_location_state_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,location_public_id=location_public_id,occupant_status=occupant_status,treasure_status=treasure_status,alert_status=alert_status,current_note=current_note)
+def advance_adventure_exploration(*,module_public_id:str,turns:int,rest:bool,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return advance_adventure_exploration_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,module_public_id=module_public_id,turns=turns,rest=rest)
 
 def send_referee_message(*,campaign_public_id:str,player_text:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
