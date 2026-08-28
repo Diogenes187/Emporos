@@ -1,5 +1,8 @@
 # Emporos
 
+New testers can use the [Emporos Quick Start](output/pdf/Emporos-Quick-Start.pdf)
+for a short illustrated installation, launch, update, and MCP connection guide.
+
 Emporos is a self-contained, page-based Cepheus campaign game copied from the
 Base Cepheus relational template and developed independently from it.
 
