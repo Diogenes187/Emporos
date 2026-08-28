@@ -49,3 +49,26 @@ After that, double-click `Start Emporos.bat`. It applies pending migrations,
 starts the loopback-only web server, and opens the game. Double-click
 `Stop Emporos.bat` when finished. Startup diagnostics are retained under
 `var/` if the server cannot start.
+
+## Beginner Windows installation
+
+1. Install GitHub Desktop, Python 3.11 or newer, and PostgreSQL.
+2. In GitHub Desktop, clone `Diogenes187/Emporos` and keep the `main` branch.
+3. In pgAdmin, create an empty PostgreSQL database named `emporos`.
+4. Copy `.env.example` to a new file named `.env`.
+5. Edit the first line of `.env` with the PostgreSQL user and password chosen
+   during installation. A typical local connection is
+   `postgresql://postgres:YOUR_PASSWORD@localhost:5432/emporos`.
+6. Open PowerShell in the cloned Emporos folder and run
+   `python -m pip install -r requirements.txt` once.
+7. Double-click `Start Emporos.bat`. The database is built automatically and
+   the game opens at `http://127.0.0.1:8765/`.
+8. Double-click `Stop Emporos.bat` when finished.
+
+## Updating
+
+Double-click `Update Emporos.bat`. It refuses to overwrite local changes,
+stops the local server, fast-forwards the `main` branch from GitHub, refreshes
+Python dependencies, applies new database migrations, and opens the updated
+game. Campaign data and the private `.env` file remain local and are not
+replaced by an update.
