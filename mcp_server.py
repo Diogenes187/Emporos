@@ -10,6 +10,7 @@ from engine.orchestration import GameplayOrchestrator,available_tools
 from engine.referee_modes import record_human_referee_turn_command
 from engine.external_referee import complete_external_referee_turn_command
 from engine.conversation_logs import append_external_conversation_entry_command
+from engine.chronicle import record_campaign_chronicle_command,campaign_chronicle
 from engine.adventure_modules import adventure_module_snapshot,create_adventure_module_command,key_adventure_location_command,enter_adventure_location_command,update_adventure_location_state_command,advance_adventure_exploration_command
 from engine.adventure_indexing import adventure_index_snapshot,read_adventure_source_page_command,propose_adventure_location_command
 
@@ -84,18 +85,20 @@ def _resume(args):
   active_module=c.execute("SELECT public_id::text FROM camp_adventure_module WHERE campaign_id=%s AND module_status='active'",(cid,)).fetchone()
   module=adventure_module_snapshot(c,initiator_reference=_authority(),module_public_id=active_module[0]) if active_module else None
   sources=[{'public_id':r[0],'title':r[1],'status':r[2]} for r in c.execute("SELECT public_id::text,title,ingestion_status FROM camp_source_document WHERE campaign_id=%s ORDER BY source_document_id",(cid,)).fetchall()]
+  chronicle=campaign_chronicle(c,initiator_reference=_authority(),campaign_public_id=campaign_public,limit=recent)
+  desktop_conversation=[{'speaker':r[0],'text':r[1],'campaign_day':r[2]} for r in c.execute("SELECT entry.speaker_kind,entry.message_text,entry.campaign_day FROM camp_external_conversation_entry entry WHERE entry.campaign_id=%s ORDER BY entry.created_at DESC LIMIT %s",(cid,recent)).fetchall()[::-1]]
   return {
    'campaign':{'public_id':campaign_public,'name':campaign[1],'play_mode':campaign[2],'status':campaign[3]},
    'clock':{'day_number':clock[0],'second_of_day':clock[1]},'characters':characters,'ships':ships,
    'active_encounters':encounters,'active_space_engagements':engagements,'active_adventure':module,
-   'pending_player_turns':pending,'recent_narration':narration,'remembered_notes_and_sessions':memory,'private_sources':sources,
+   'pending_player_turns':pending,'recent_narration':narration,'recent_desktop_conversation':desktop_conversation,'campaign_chronicle':chronicle,'remembered_notes_and_sessions':memory,'private_sources':sources,
    'tool_capabilities':{'read_state':['get_campaign_snapshot','search_campaign_sources','get_adventure_module'],'mechanics':['list_gameplay_tool_schemas','execute_gameplay_tool'],'web_referee':['list_pending_referee_turns','complete_referee_turn'],'memory':['append_conversation_log_entry','list_conversation_logs','read_conversation_log']},
    'resume_instruction':(
     'This campaign is now the active Emporos game for the remainder of this conversation. Treat later user messages as player actions unless they are clearly meta-discussion. '
     'The relational database is authoritative. Never invent a roll, rule result, inventory change, injury, trade result, travel result, combat result, or other mechanical state: inspect schemas as needed and use execute_gameplay_tool for mechanics, then narrate its receipt. '
     'Use verified campaign-source and keyed-adventure tools when source facts matter, and obey every contradiction warning. Do not substitute an unverified PDF, workspace file, or model memory for indexed campaign material. '
     'Narrate the immediate situation clearly and stop when the player has a meaningful decision. If pending_player_turns is nonempty, answer the oldest with complete_referee_turn. Otherwise use record_referee_narration for narration that must appear in the Emporos web game. '
-    'Archive important user and assistant exchanges with append_conversation_log_entry so a later campaign_resume can recover them. Call campaign_resume again only after context loss, campaign change, or an explicit request to refresh.'),
+    'Archive user and assistant exchanges with append_conversation_log_entry. Whenever play establishes a durable person, place, discovery, promise, decision, relationship, threat, or opportunity, immediately call record_campaign_chronicle and link known relational subjects. Do not wait for the user to request memory. Call campaign_resume again only after context loss, campaign change, or an explicit request to refresh.'),
    'recommended_next_action':('Resolve the oldest pending_player_turn with complete_referee_turn.' if pending else 'Continue from the current state and ask what the player does next.')
   }
 def _search_sources(args):
@@ -106,7 +109,11 @@ def _search_sources(args):
   rows=c.execute("""SELECT document.title,page.page_number,page.text_content FROM camp_source_page page JOIN camp_source_document document USING(source_document_id,campaign_id) WHERE page.campaign_id=%s AND page.review_status='verified' AND page.search_document @@ websearch_to_tsquery('english',%s) ORDER BY ts_rank(page.search_document,websearch_to_tsquery('english',%s)) DESC LIMIT %s""",(campaign[0],query,query,min(max(int(args.get('limit',6)),1),20))).fetchall()
   return [{'document':r[0],'page':r[1],'text':r[2]} for r in rows]
 def _record(args):
- with _connect() as c:return record_human_referee_turn_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),campaign_public_id=args['campaign_public_id'],narration=args['narration'])
+ key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4())
+ with _connect() as c:
+  result=record_human_referee_turn_command(c,initiator_reference=_authority(),idempotency_key=key,campaign_public_id=args['campaign_public_id'],narration=args['narration'])
+  record_campaign_chronicle_command(c,initiator_reference=_authority(),idempotency_key=key+'-chronicle',campaign_public_id=args['campaign_public_id'],entry_kind='scene',title='Referee narration',summary_text=args['narration'],importance=2,source_kind='desktop_referee')
+  return result
 def _pending_turns(args):
  with _connect() as c:
   campaign=_owned(c,args['campaign_public_id'])
@@ -117,9 +124,17 @@ def _pending_turns(args):
     ORDER BY turn.created_at""",(campaign[0],)).fetchall()
   return [{'turn_public_id':r[0],'campaign_day':r[1],'player_text':r[2],'submitted_at':r[3]} for r in rows]
 def _complete_turn(args):
- with _connect() as c:return complete_external_referee_turn_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),turn_public_id=args['turn_public_id'],narration=args['narration'])
+ key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4())
+ with _connect() as c:
+  turn=c.execute("SELECT campaign.public_id::text,message.message_text FROM camp_referee_turn turn JOIN camp_campaign campaign USING(campaign_id) JOIN camp_referee_message message ON message.referee_turn_id=turn.referee_turn_id AND message.speaker_kind='player' WHERE turn.public_id=%s AND campaign.owner_reference=%s",(args['turn_public_id'],_authority())).fetchone()
+  if not turn:raise PermissionError('Referee turn is absent or outside this MCP authority')
+  result=complete_external_referee_turn_command(c,initiator_reference=_authority(),idempotency_key=key,turn_public_id=args['turn_public_id'],narration=args['narration'])
+  record_campaign_chronicle_command(c,initiator_reference=_authority(),idempotency_key=key+'-chronicle',campaign_public_id=turn[0],entry_kind='scene',title='Player action and consequence',summary_text='Player: '+turn[1]+' Referee: '+args['narration'],importance=2,source_kind='desktop_referee')
+  return result
 def _append_log(args):
  with _connect() as c:return append_external_conversation_entry_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),campaign_public_id=args['campaign_public_id'],log_reference=args['log_reference'],title=args.get('title') or "Captain's Log",client_name=args.get('client_name') or 'Desktop MCP Client',speaker_kind=args['speaker_kind'],message_text=args['message_text'])
+def _record_chronicle(args):
+ with _connect() as c:return record_campaign_chronicle_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),campaign_public_id=args['campaign_public_id'],entry_kind=args['entry_kind'],title=args['title'],summary_text=args['summary'],importance=int(args.get('importance',3)),source_kind='desktop_referee',actor_public_ids=args.get('actor_public_ids') or (),location_public_ids=args.get('location_public_ids') or (),ship_public_ids=args.get('ship_public_ids') or ())
 def _conversation_logs(args):
  with _connect() as c:
   campaign=_owned(c,args['campaign_public_id'])
@@ -162,6 +177,7 @@ TOOLS={
  'list_pending_referee_turns':('Read player actions awaiting the connected desktop referee',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_pending_turns),
  'complete_referee_turn':('Return narration for one queued player action',{'turn_public_id':{'type':'string'},'narration':{'type':'string'},'idempotency_key':{'type':'string'}},('turn_public_id','narration'),_complete_turn),
  'append_conversation_log_entry':('Archive one ordered desktop conversation entry in the campaign log',{'campaign_public_id':{'type':'string'},'log_reference':{'type':'string'},'title':{'type':'string'},'client_name':{'type':'string'},'speaker_kind':{'type':'string','enum':['user','assistant','system','tool']},'message_text':{'type':'string'},'idempotency_key':{'type':'string'}},('campaign_public_id','log_reference','speaker_kind','message_text'),_append_log),
+ 'record_campaign_chronicle':('Immediately preserve one durable campaign fact for future referee memory. Use for introduced people and places, discoveries, promises, decisions, relationships, threats, and opportunities.',{'campaign_public_id':{'type':'string'},'entry_kind':{'type':'string','enum':['scene','person','place','discovery','promise','decision','relationship','threat','opportunity','other']},'title':{'type':'string'},'summary':{'type':'string'},'importance':{'type':'integer','minimum':1,'maximum':5},'actor_public_ids':{'type':'array','items':{'type':'string'}},'location_public_ids':{'type':'array','items':{'type':'string'}},'ship_public_ids':{'type':'array','items':{'type':'string'}},'idempotency_key':{'type':'string'}},('campaign_public_id','entry_kind','title','summary'),_record_chronicle),
  'list_conversation_logs':('List archived Captain and AI conversation logs',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_conversation_logs),
  'read_conversation_log':('Read ordered entries from one archived conversation log',{'log_public_id':{'type':'string'}},('log_public_id',),_conversation_entries),
  'get_adventure_module':('Read the keyed adventure and current relational state; obey every contradiction warning before narrating',{'module_public_id':{'type':'string'}},('module_public_id',),_adventure_snapshot),
