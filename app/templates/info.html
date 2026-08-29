@@ -7,7 +7,7 @@
   <article class="panel info-card"><small>PLAY WITH AI</small><h2>Desktop MCP client</h2><p>Your ChatGPT, Claude, SillyTavern, or other MCP-capable desktop client supplies the model. Emporos supplies private campaign state and deterministic game tools. Your client account owns model choice and cost.</p></article>
 </section>
 <section class="panel mcp-setup"><header><div><small>MCP CONNECTION</small><h2>Connect your desktop client</h2></div><span class="tag">LOCAL STDIO</span></header>
-  <ol class="setup-steps"><li>Make sure Emporos has a working <code>.env</code> database configuration.</li><li>Open your desktop client's MCP server settings.</li><li>Add a local standard-input/output server using the configuration below.</li><li>Restart or reconnect the desktop client, then ask it to call <code>emporos_status</code>.</li></ol>
+  <ol class="setup-steps"><li>Make sure Emporos has a working <code>.env</code> database configuration.</li><li>Open your desktop client's MCP server settings.</li><li>Add a local standard-input/output server using the configuration below.</li><li>Restart or reconnect the desktop client, then say <q>Resume my Emporos campaign</q>. The client should call <code>campaign_resume</code> once and remain in play.</li></ol>
   <p class="muted">Different clients place MCP settings in different menus, but the command and arguments are the same.</p>
   <pre class="config-block"><code>{
   "mcpServers": {
@@ -25,7 +25,7 @@
   }
 }</code></pre>
   <p><strong>No AI API key is entered into Emporos.</strong> The MCP connection is local, and the desktop client remains responsible for its own model subscription and memory.</p>
-  <p><strong>Connection lights:</strong> Connected means the desktop client has the Emporos MCP process open. Waiting means it is connected and a player action is queued. Offline means the MCP process is not currently reachable. Because MCP is client-driven, a connected client must still be asked to check and resolve pending referee turns; the web page cannot start a model response by itself.</p>
+  <p><strong>Connection lights:</strong> Connected means the desktop client has the Emporos MCP process open. Waiting means it is connected and a player action is queued. Offline means the MCP process is not currently reachable. Start the AI conversation with <code>campaign_resume</code>; after that, ordinary messages in the same conversation continue the game. The web page cannot awaken a closed or idle AI conversation by itself.</p>
 </section>
 <section class="panel info-card"><small>AVAILABLE TO THE CLIENT</small><h2>What the connection can do</h2><div class="capability-grid"><p><strong>Read campaign truth</strong><br>Campaigns, characters, ships, systems, clocks, sources, and recent narration.</p><p><strong>Run the referee</strong><br>Receive pending actions and return narration while mechanics stay inside audited commands.</p><p><strong>Use the engine</strong><br>Invoke allowlisted deterministic gameplay tools and receive permanent receipts.</p><p><strong>Keep the log</strong><br>Archive ordered desktop conversations as readable Captain's Logs in the Journal.</p></div></section>
 <section class="panel production-credit"><small>PRODUCTION</small><h2>Emporos</h2><p>Produced by <strong>Raymond Williams</strong>.</p><p class="muted">Built as an open, locally operated Cepheus campaign workstation.</p></section>

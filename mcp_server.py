@@ -56,6 +56,48 @@ def _snapshot(args):
   campaign=_owned(c,args['campaign_public_id']);cid=campaign[0]
   clock=c.execute('SELECT day_number,second_of_day FROM camp_clock WHERE campaign_id=%s',(cid,)).fetchone()
   return {'campaign':{'public_id':args['campaign_public_id'],'name':campaign[1],'play_mode':campaign[2],'status':campaign[3]},'clock':{'day_number':clock[0],'second_of_day':clock[1]},'characters':[{'public_id':str(r[0]),'name':r[1]} for r in c.execute("SELECT public_id,name FROM actor_actor WHERE campaign_id=%s AND lifecycle_status='active' ORDER BY name",(cid,))],'ships':[{'public_id':str(r[0]),'name':r[1],'status':r[2],'location':r[3]} for r in c.execute("SELECT ship.public_id,ship.name,ship.lifecycle_status,location.name FROM ship_ship ship LEFT JOIN loc_location location ON location.location_id=ship.current_location_id WHERE ship.campaign_id=%s ORDER BY ship.name",(cid,))],'systems':[{'public_id':str(r[0]),'name':r[1],'hex':f'{r[2]:02d}{r[3]:02d}'} for r in c.execute("SELECT location.public_id,location.name,system.hex_column,system.hex_row FROM loc_star_system system JOIN loc_location location USING(location_id) WHERE system.campaign_id=%s ORDER BY system.hex_column,system.hex_row",(cid,))],'recent_narration':[{'speaker':r[0],'text':r[1]} for r in c.execute("SELECT message.speaker_kind,message.message_text FROM camp_referee_message message JOIN camp_referee_turn turn USING(referee_turn_id,campaign_id) WHERE message.campaign_id=%s AND turn.turn_status='completed' ORDER BY message.referee_message_id DESC LIMIT 20",(cid,)).fetchall()[::-1]]}
+def _resume(args):
+ """Return one compact, authoritative context packet for a desktop AI referee."""
+ recent=min(max(int(args.get('recent',12)),1),40)
+ with _connect() as c:
+  requested=args.get('campaign_public_id')
+  if requested:
+   campaign=_owned(c,requested);campaign_public=str(requested)
+  else:
+   rows=c.execute("SELECT campaign_id,public_id::text,name,play_mode,campaign_status FROM camp_campaign WHERE owner_reference=%s AND campaign_status='active' ORDER BY created_at DESC",(_authority(),)).fetchall()
+   if not rows:raise ValueError('No active campaign is available. Create one in Emporos first.')
+   if len(rows)>1:raise ValueError('More than one active campaign is available. Call list_campaigns, then pass campaign_public_id to campaign_resume.')
+   row=rows[0];campaign=(row[0],row[2],row[3],row[4]);campaign_public=row[1]
+  cid=campaign[0]
+  clock=c.execute('SELECT day_number,second_of_day FROM camp_clock WHERE campaign_id=%s',(cid,)).fetchone()
+  characters=[]
+  for actor in c.execute("SELECT actor_id,public_id::text,name FROM actor_actor WHERE campaign_id=%s AND lifecycle_status='active' ORDER BY name",(cid,)).fetchall():
+   characteristics=c.execute("SELECT definition.abbreviation,state.current_value,state.maximum_value FROM actor_characteristic state JOIN rule_characteristic definition ON definition.rule_id=state.characteristic_rule_id WHERE state.actor_id=%s ORDER BY definition.display_order",(actor[0],)).fetchall()
+   skills=c.execute("SELECT rule.name,state.skill_level FROM actor_skill state JOIN rule_rule rule ON rule.rule_id=state.skill_rule_id WHERE state.actor_id=%s ORDER BY rule.name",(actor[0],)).fetchall()
+   characters.append({'public_id':actor[1],'name':actor[2],'characteristics':[{'name':r[0],'current':r[1],'maximum':r[2]} for r in characteristics],'skills':[{'name':r[0],'level':r[1]} for r in skills]})
+  ships=[{'public_id':r[0],'name':r[1],'status':r[2],'location':r[3]} for r in c.execute("SELECT ship.public_id::text,ship.name,ship.lifecycle_status,location.name FROM ship_ship ship LEFT JOIN loc_location location ON location.location_id=ship.current_location_id WHERE ship.campaign_id=%s ORDER BY ship.name",(cid,)).fetchall()]
+  pending=[{'turn_public_id':r[0],'campaign_day':r[1],'player_text':r[2],'submitted_at':r[3]} for r in c.execute("SELECT turn.public_id::text,turn.campaign_day,message.message_text,turn.created_at FROM camp_referee_turn turn JOIN camp_referee_message message ON message.referee_turn_id=turn.referee_turn_id AND message.speaker_kind='player' WHERE turn.campaign_id=%s AND turn.turn_status='pending' ORDER BY turn.created_at",(cid,)).fetchall()]
+  narration=[{'speaker':r[0],'text':r[1]} for r in c.execute("SELECT message.speaker_kind,message.message_text FROM camp_referee_message message JOIN camp_referee_turn turn USING(referee_turn_id,campaign_id) WHERE message.campaign_id=%s AND turn.turn_status='completed' ORDER BY message.referee_message_id DESC LIMIT %s",(cid,recent)).fetchall()[::-1]]
+  memory=[{'kind':r[0],'title':r[1],'text':r[2]} for r in c.execute("SELECT kind,title,body FROM (SELECT 'journal' AS kind,title,note_text AS body,created_at AS recorded_at FROM camp_journal_note WHERE campaign_id=%s AND ai_memory_enabled UNION ALL SELECT 'session',title,transcript_text,archived_at FROM camp_session_archive WHERE campaign_id=%s AND ai_memory_enabled) remembered ORDER BY recorded_at DESC LIMIT %s",(cid,cid,recent)).fetchall()]
+  encounters=[{'public_id':r[0],'mode':r[1],'personal_combat_status':r[2],'round':r[3]} for r in c.execute("SELECT encounter.public_id::text,encounter.current_mode,combat.combat_status,combat.current_round FROM enc_encounter encounter LEFT JOIN enc_personal_combat combat USING(encounter_id) WHERE encounter.campaign_id=%s AND encounter.encounter_status='active' ORDER BY encounter.created_at",(cid,)).fetchall()]
+  engagements=[{'public_id':r[0],'status':r[1],'round':r[2]} for r in c.execute("SELECT public_id::text,engagement_status,current_round FROM senc_engagement WHERE campaign_id=%s AND engagement_status IN('forming','active') ORDER BY engagement_id",(cid,)).fetchall()]
+  active_module=c.execute("SELECT public_id::text FROM camp_adventure_module WHERE campaign_id=%s AND module_status='active'",(cid,)).fetchone()
+  module=adventure_module_snapshot(c,initiator_reference=_authority(),module_public_id=active_module[0]) if active_module else None
+  sources=[{'public_id':r[0],'title':r[1],'status':r[2]} for r in c.execute("SELECT public_id::text,title,ingestion_status FROM camp_source_document WHERE campaign_id=%s ORDER BY source_document_id",(cid,)).fetchall()]
+  return {
+   'campaign':{'public_id':campaign_public,'name':campaign[1],'play_mode':campaign[2],'status':campaign[3]},
+   'clock':{'day_number':clock[0],'second_of_day':clock[1]},'characters':characters,'ships':ships,
+   'active_encounters':encounters,'active_space_engagements':engagements,'active_adventure':module,
+   'pending_player_turns':pending,'recent_narration':narration,'remembered_notes_and_sessions':memory,'private_sources':sources,
+   'tool_capabilities':{'read_state':['get_campaign_snapshot','search_campaign_sources','get_adventure_module'],'mechanics':['list_gameplay_tool_schemas','execute_gameplay_tool'],'web_referee':['list_pending_referee_turns','complete_referee_turn'],'memory':['append_conversation_log_entry','list_conversation_logs','read_conversation_log']},
+   'resume_instruction':(
+    'This campaign is now the active Emporos game for the remainder of this conversation. Treat later user messages as player actions unless they are clearly meta-discussion. '
+    'The relational database is authoritative. Never invent a roll, rule result, inventory change, injury, trade result, travel result, combat result, or other mechanical state: inspect schemas as needed and use execute_gameplay_tool for mechanics, then narrate its receipt. '
+    'Use verified campaign-source and keyed-adventure tools when source facts matter, and obey every contradiction warning. Do not substitute an unverified PDF, workspace file, or model memory for indexed campaign material. '
+    'Narrate the immediate situation clearly and stop when the player has a meaningful decision. If pending_player_turns is nonempty, answer the oldest with complete_referee_turn. Otherwise use record_referee_narration for narration that must appear in the Emporos web game. '
+    'Archive important user and assistant exchanges with append_conversation_log_entry so a later campaign_resume can recover them. Call campaign_resume again only after context loss, campaign change, or an explicit request to refresh.'),
+   'recommended_next_action':('Resolve the oldest pending_player_turn with complete_referee_turn.' if pending else 'Continue from the current state and ask what the player does next.')
+  }
 def _search_sources(args):
  query=args['query'].strip()
  if not query:raise ValueError('query is required')
@@ -113,6 +155,7 @@ def _propose_location(args):
 TOOLS={
  'emporos_status':('Check the local Emporos database and MCP authority',{},(),_status),
  'list_campaigns':('List campaign identities and operating modes owned by this local authority',{},(),_campaigns),
+ 'campaign_resume':('THE single startup/resume call for playing Emporos through an AI client. Call once, trust the returned relational state, and remain the campaign referee until the user changes campaigns or asks to stop.',{'campaign_public_id':{'type':'string'},'recent':{'type':'integer','minimum':1,'maximum':40}},(),_resume),
  'get_campaign_snapshot':('Read current relational campaign truth',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_snapshot),
  'search_campaign_sources':('Search verified private pages from this campaign library',{'campaign_public_id':{'type':'string'},'query':{'type':'string'},'limit':{'type':'integer','minimum':1,'maximum':20}},('campaign_public_id','query'),_search_sources),
  'record_referee_narration':('Publish narration from the connected external referee',{'campaign_public_id':{'type':'string'},'narration':{'type':'string'},'idempotency_key':{'type':'string'}},('campaign_public_id','narration'),_record),
