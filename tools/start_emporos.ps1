@@ -48,10 +48,11 @@ if (Test-Path -LiteralPath $pidPath) {
 }
 
 $migrationDsn = if ($env:EMPOROS_DATABASE_URL) { $env:EMPOROS_DATABASE_URL } elseif ($env:BASE_CEPHEUS_DATABASE_URL) { $env:BASE_CEPHEUS_DATABASE_URL } else { $env:DATABASE_URL }
+$env:EMPOROS_DATABASE_URL = $migrationDsn
 $env:BASE_CEPHEUS_DATABASE_URL = $migrationDsn
-Write-Host 'Checking the Emporos database...'
-& python -B tools\migrate.py
-if ($LASTEXITCODE -ne 0) { throw 'Database migration failed. Review the message above.' }
+Write-Host 'Preparing the Emporos database...'
+& python -B tools\deploy_database.py
+if ($LASTEXITCODE -ne 0) { throw 'Database preparation failed. Review the message above.' }
 
 Write-Host 'Starting the local game server...'
 $server = Start-Process -FilePath 'python' -ArgumentList @('-B','-m','uvicorn','app.main:app','--host','127.0.0.1','--port','8765') -WorkingDirectory $emporosRoot -WindowStyle Hidden -RedirectStandardOutput $outputPath -RedirectStandardError $errorPath -PassThru

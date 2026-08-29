@@ -64,7 +64,7 @@ starts the loopback-only web server, and opens the game. Double-click
    `postgresql://postgres:YOUR_PASSWORD@localhost:5432/emporos`.
 6. Open PowerShell in the cloned Emporos folder and run
    `python -m pip install -r requirements.txt` once.
-7. Double-click `Start Emporos.bat`. The database is built automatically and
+7. Double-click `Start Emporos.bat`. The complete phased rules catalogue and database are built automatically and
    the game opens at `http://127.0.0.1:8765/`.
 8. Double-click `Stop Emporos.bat` when finished.
 
