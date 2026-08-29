@@ -21,6 +21,12 @@ def test_cockpit_pages_serve():
         assert marker in response.text
 
 
+def test_external_referee_actions_have_an_honest_pending_state():
+    text = client.get("/").text
+    assert "awaiting connected MCP referee" in text
+    assert "Action queued for the connected MCP referee." in text
+
+
 def test_registry_console_still_lives_at_command():
     response = client.get("/command")
     assert response.status_code == 200

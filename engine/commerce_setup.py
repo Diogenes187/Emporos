@@ -16,10 +16,13 @@ def prepare_trading_command(c:psycopg.Connection,*,initiator_reference:str,idemp
    return _load(c,old[0],old[1],True)
   s=c.execute("SELECT campaign.campaign_id,actor.actor_id,actor.name,ship.ship_id,ship.name,ship.inventory_item_instance_id FROM camp_campaign campaign JOIN actor_actor actor USING(campaign_id) JOIN ship_ship ship USING(campaign_id) WHERE campaign.public_id=%s AND campaign.owner_reference=%s AND actor.public_id=%s AND ship.public_id=%s FOR UPDATE OF actor,ship",(campaign_public_id,initiator_reference,actor_public_id,ship_public_id)).fetchone()
   if not s:raise PermissionError('Trader or ship is outside this campaign')
-  if c.execute("SELECT 1 FROM fin_actor_account owner JOIN fin_account account USING(account_id) WHERE owner.actor_id=%s AND account.account_status='open'",(s[1],)).fetchone():raise ValueError('Trader already has an open account')
+  existing_account=c.execute("SELECT account.account_id,account.public_id FROM fin_actor_account owner JOIN fin_account account USING(account_id) WHERE owner.actor_id=%s AND account.account_status='open' ORDER BY account.account_id LIMIT 1",(s[1],)).fetchone()
+  if c.execute("SELECT 1 FROM cmd_trading_preparation_receipt WHERE actor_id=%s",(s[1],)).fetchone():raise ValueError('Trader has already been prepared for commerce')
   if c.execute("SELECT 1 FROM inv_item_container WHERE owner_item_instance_id=%s",(s[5],)).fetchone():raise ValueError('Ship already has a cargo hold')
   cid,pub=c.execute("INSERT INTO cmd_command(command_type,initiator_reference,idempotency_key) VALUES('prepare_trading',%s,%s) RETURNING command_id,public_id",(initiator_reference,idempotency_key)).fetchone()
-  code='trader-'+str(s[1]);account,account_pub=c.execute("INSERT INTO fin_account(campaign_id,currency_code,account_code,name,account_kind) VALUES(%s,'CR',%s,%s,'asset') RETURNING account_id,public_id",(s[0],code,s[2]+' Trading Account')).fetchone();c.execute("INSERT INTO fin_actor_account VALUES(%s,%s,%s)",(account,s[0],s[1]))
+  if existing_account:account,account_pub=existing_account
+  else:
+   code='trader-'+str(s[1]);account,account_pub=c.execute("INSERT INTO fin_account(campaign_id,currency_code,account_code,name,account_kind) VALUES(%s,'CR',%s,%s,'asset') RETURNING account_id,public_id",(s[0],code,s[2]+' Trading Account')).fetchone();c.execute("INSERT INTO fin_actor_account VALUES(%s,%s,%s)",(account,s[0],s[1]))
   equity=c.execute("SELECT account_id FROM fin_account WHERE campaign_id=%s AND account_code='campaign-opening-equity'",(s[0],)).fetchone()
   if equity:equity=equity[0]
   else:

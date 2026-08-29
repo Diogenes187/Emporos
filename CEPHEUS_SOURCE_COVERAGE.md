@@ -13,10 +13,10 @@ These labels measure provenance coverage, not whether every Cepheus procedure ha
 
 ## Snapshot
 
-- Latest schema migration: 0588
-- Normalized rules: 1087
-- Covered by paired sources: 1062
-- Partial — explicit source gap: 25
+- Latest schema migration: 0591
+- Normalized rules: 1089
+- Covered by paired sources: 1042
+- Partial — explicit source gap: 47
 - Partial — not individually linked: 0
 - Open source questions: 0
 
@@ -43,15 +43,15 @@ The legacy local implementation is comparison-only and never governs a mechanica
 | other | 12 | 12 | 0 | 0 | **covered** |
 | psionics | 42 | 42 | 0 | 0 | **covered** |
 | ship | 66 | 41 | 25 | 0 | **partial** |
-| skill | 103 | 103 | 0 | 0 | **covered** |
+| skill | 105 | 103 | 2 | 0 | **partial** |
 | species | 6 | 6 | 0 | 0 | **covered** |
 | species_trait | 33 | 33 | 0 | 0 | **covered** |
 | task | 18 | 18 | 0 | 0 | **covered** |
 | trade | 45 | 45 | 0 | 0 | **covered** |
 | travel | 3 | 3 | 0 | 0 | **covered** |
-| vehicle | 320 | 320 | 0 | 0 | **covered** |
+| vehicle | 320 | 300 | 20 | 0 | **partial** |
 | world | 26 | 26 | 0 | 0 | **covered** |
-| **Total** | **1087** | **1062** | **25** | **0** | **partial** |
+| **Total** | **1089** | **1042** | **47** | **0** | **partial** |
 
 ## Open source questions
 

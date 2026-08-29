@@ -117,6 +117,20 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
             ).fetchone()
             self.assertEqual(broker, (5, "skill.broker"))
 
+    def test_every_printed_career_skill_and_rank_award_is_playable(self):
+        with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
+            unresolved = connection.execute(
+                """SELECT source_outcome_text
+                   FROM rule_career_training_entry
+                   WHERE outcome_kind='text'
+                   UNION ALL
+                   SELECT source_grant_text
+                   FROM rule_career_rank
+                   WHERE source_grant_text IS NOT NULL
+                     AND granted_skill_rule_id IS NULL"""
+            ).fetchall()
+            self.assertEqual(unresolved, [])
+
     def test_qualified_entry_is_idempotent_and_starts_merchant(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
             with connection.transaction(force_rollback=True):
@@ -237,6 +251,31 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
                 )
                 self.assertTrue(replay.replayed)
                 self.assertEqual(replay.grants, result.grants)
+
+    def test_belter_basic_training_resolves_printed_prospecting_skill(self):
+        with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
+            with connection.transaction(force_rollback=True):
+                _, actor_public = self._actor(connection)
+                attempt_career_entry_command(
+                    connection, initiator_reference="player",
+                    idempotency_key="belter-training-entry",
+                    actor_public_id=actor_public, career_code="belter",
+                    random_source=FixedRandom((6, 6)),
+                )
+                result = apply_career_basic_training_command(
+                    connection, initiator_reference="player",
+                    idempotency_key="belter-training-complete",
+                    actor_public_id=actor_public,
+                    cascade_specializations={
+                        "skill.gun-combat": "skill.slug-pistol",
+                        "skill.gunnery": "skill.turret-weapons",
+                    },
+                )
+                self.assertEqual(len(result.grants), 6)
+                self.assertIn(
+                    "skill.prospecting",
+                    {grant.granted_skill_rule_code for grant in result.grants},
+                )
 
     def test_later_career_basic_training_grants_one_chosen_service_skill(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
@@ -1818,6 +1857,15 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
                     actor_public_id=actor_public,
                 )
                 self.assertTrue(replay.replayed)
+                account = connection.execute(
+                    """SELECT balance.balance_minor
+                       FROM actor_actor actor
+                       JOIN fin_actor_account ownership USING(actor_id,campaign_id)
+                       JOIN fin_account_balance balance USING(account_id)
+                       WHERE actor.public_id=%s""",
+                    (actor_public,),
+                ).fetchone()
+                self.assertIsNotNone(account)
                 with self.assertRaisesRegex(ValueError, "not active"):
                     attempt_career_entry_command(
                         connection, initiator_reference="player",

@@ -59,11 +59,10 @@ def build_report(connection: psycopg.Connection) -> str:
              SELECT rule_category,count(*),
                     count(*) FILTER (
                       WHERE COALESCE(has_website,false)
-                        AND COALESCE(has_pinned_repository,false)),
+                        AND COALESCE(has_pinned_repository,false)
+                        AND NOT COALESCE(fills_source_gap,false)),
                     count(*) FILTER (
-                      WHERE COALESCE(fills_source_gap,false)
-                        AND NOT (COALESCE(has_website,false)
-                                 AND COALESCE(has_pinned_repository,false))),
+                      WHERE COALESCE(fills_source_gap,false)),
                     count(*) FILTER (
                       WHERE NOT COALESCE(has_website,false)
                         AND NOT COALESCE(has_pinned_repository,false)

@@ -63,7 +63,7 @@ def main() -> int:
             attack_profiles = connection.execute(
                 "SELECT count(*) FROM combat_attack_profile"
             ).fetchone()[0]
-        if version != 588 or not complete:
+        if version != 591 or not complete:
             raise RuntimeError(
                 f"clean install incomplete: schema={version}, marker={complete}"
             )

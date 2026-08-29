@@ -5085,6 +5085,86 @@ def finish_character_creation_command(
                RETURNING command_id,public_id""",
             (initiator_reference, idempotency_key),
         ).fetchone()
+        financial = connection.execute(
+            """SELECT COALESCE(cash_credits,0)
+               FROM actor_financial_state WHERE actor_id=%s""",
+            (actor[0],),
+        ).fetchone()
+        opening_cash = financial[0] if financial else 0
+        account = connection.execute(
+            """SELECT account.account_id
+               FROM fin_actor_account ownership
+               JOIN fin_account account USING(account_id,campaign_id)
+               WHERE ownership.actor_id=%s AND account.account_status='open'
+               ORDER BY account.account_id LIMIT 1""",
+            (actor[0],),
+        ).fetchone()
+        actor_identity = connection.execute(
+            """SELECT campaign_id,name FROM actor_actor WHERE actor_id=%s""",
+            (actor[0],),
+        ).fetchone()
+        if account is None:
+            account_id = connection.execute(
+                """INSERT INTO fin_account
+                   (campaign_id,currency_code,account_code,name,account_kind)
+                   VALUES(%s,'CR',%s,%s,'asset') RETURNING account_id""",
+                (
+                    actor_identity[0],
+                    f"personal-{actor[0]}",
+                    actor_identity[1] + " Personal Funds",
+                ),
+            ).fetchone()[0]
+            connection.execute(
+                "INSERT INTO fin_actor_account VALUES(%s,%s,%s)",
+                (account_id, actor_identity[0], actor[0]),
+            )
+        else:
+            account_id = account[0]
+        if opening_cash:
+            equity = connection.execute(
+                """SELECT account_id FROM fin_account
+                   WHERE campaign_id=%s
+                     AND account_code='campaign-opening-equity'""",
+                (actor_identity[0],),
+            ).fetchone()
+            if equity is None:
+                equity_id = connection.execute(
+                    """INSERT INTO fin_account
+                       (campaign_id,currency_code,account_code,name,account_kind)
+                       VALUES(%s,'CR','campaign-opening-equity',
+                              'Campaign Opening Equity','equity')
+                       RETURNING account_id""",
+                    (actor_identity[0],),
+                ).fetchone()[0]
+                connection.execute(
+                    "INSERT INTO fin_campaign_account VALUES(%s,%s)",
+                    (equity_id, actor_identity[0]),
+                )
+            else:
+                equity_id = equity[0]
+            transaction_id = connection.execute(
+                """INSERT INTO fin_transaction
+                   (campaign_id,currency_code,description,command_id)
+                   VALUES(%s,'CR',%s,%s) RETURNING transaction_id""",
+                (
+                    actor_identity[0],
+                    "Lifepath funds for " + actor_identity[1],
+                    command_id,
+                ),
+            ).fetchone()[0]
+            connection.execute(
+                """INSERT INTO fin_entry
+                   (transaction_id,campaign_id,currency_code,account_id,
+                    entry_order,amount_minor)
+                   VALUES(%s,%s,'CR',%s,1,%s),
+                         (%s,%s,'CR',%s,2,%s)""",
+                (
+                    transaction_id, actor_identity[0], account_id,
+                    opening_cash, transaction_id, actor_identity[0],
+                    equity_id, -opening_cash,
+                ),
+            )
+            connection.execute("SELECT fin_post_transaction(%s)", (transaction_id,))
         connection.execute(
             """UPDATE actor_lifepath_state SET lifepath_status='completed'
                WHERE actor_id=%s""",

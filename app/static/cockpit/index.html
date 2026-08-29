@@ -229,7 +229,8 @@ function renderLog(){
   const msgs=(S.full&&S.full.referee_messages)||[];
   for(const m of msgs){
     const gm=m.speaker_kind!=='player';
-    h+=`<div class="msg${gm?' gm':''}"><span class="who">${gm?'Referee':'You'}</span>${esc(m.message_text)}</div>`;
+    const waiting=m.turn_status==='pending';
+    h+=`<div class="msg${gm?' gm':''}${waiting?' sys':''}"><span class="who">${gm?'Referee':waiting?'You · awaiting connected MCP referee':'You'}</span>${esc(m.message_text)}</div>`;
   }
   for(const e of S.local){
     h+=`<div class="msg ${e.cls}"><span class="t">${e.t.toLocaleTimeString()}</span>${esc(e.text)}</div>`;
@@ -1127,7 +1128,8 @@ function wirePanel(){
 async function sendAction(){
   const inp=$('#actionIn'),text=inp.value.trim();if(!text||!S.cid)return;
   inp.value='';
-  await post('/campaigns/'+S.cid+'/referee-turns',{player_text:text},null);
+  const external=S.full&&['ai_refereed','player_directed'].includes(S.full.play_mode);
+  await post('/campaigns/'+S.cid+'/referee-turns',{player_text:text},external?'Action queued for the connected MCP referee.':'Narration published.');
 }
 $('#sendBtn').onclick=sendAction;
 $('#actionIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendAction();});

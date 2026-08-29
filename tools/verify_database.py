@@ -2452,10 +2452,10 @@ def main() -> int:
         expect(
             catalogue_counts
             == {
-                "rules": 1087,
+                "rules": 1089,
                 "characteristics": 7,
                 "modifier_bands": 12,
-                "skills": 74,
+                "skills": 76,
                 "cascade_skills": 8,
                 "specialty_links": 36,
                 "check_systems": 1,
@@ -3313,7 +3313,7 @@ def main() -> int:
         ).fetchall()
         expect(
             unresolved_career_outcomes
-            == [("Liaision-1", 1), ("Perception", 1), ("Prospecting", 2)],
+            == [],
             "Unexpected unresolved career outcomes: "
             f"{unresolved_career_outcomes}",
         )
