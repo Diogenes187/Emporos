@@ -22,9 +22,14 @@ def test_cockpit_pages_serve():
 
 
 def test_external_referee_actions_have_an_honest_pending_state():
-    text = client.get("/").text
-    assert "awaiting connected MCP referee" in text
-    assert "Action queued for the connected MCP referee." in text
+    for path in ("/", "/classic"):
+        text = client.get(path).text
+        assert "awaiting connected MCP referee" in text
+        assert "Action queued for the connected MCP referee." in text
+        assert "MCP Referee: Connected" in text
+        assert "MCP Referee: Waiting" in text
+        assert "MCP Referee: Offline" in text
+        assert "MCP referee is offline; open or reconnect your desktop client" in text
 
 
 def test_registry_console_still_lives_at_command():

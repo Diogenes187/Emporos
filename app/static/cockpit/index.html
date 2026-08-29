@@ -138,6 +138,7 @@
      title="The Field Desk — the engine keeps the schedule, you roll the dice">&#9876; Field Desk</a>
   <span id="dayPill" class="pill" title="Campaign clock"></span>
   <span id="modePill" class="pill" title="Referee mode"></span>
+  <span id="mcpPill" class="pill" title="Desktop MCP referee connection"></span>
   <span class="spacer"></span>
   <button id="themeBtn" title="Switch between dark and light display">☀ Light</button>
   <a class="pill" href="/command" title="The registry console — every engine control as a plain form" style="opacity:.65">🛠 Console</a>
@@ -297,12 +298,20 @@ function renderHeaderPills(){
   const f=S.full;
   $('#dayPill').textContent=f?('Day '+f.day_number):'';
   $('#modePill').textContent=f?String(f.play_mode||'').replace(/_/g,' '):'';
+  paintMcp(f&&f.mcp_referee);
   $('#sendBtn').textContent=f&&['human_refereed','ai_assisted'].includes(f.play_mode)?'Publish':'Send';
   $('#actionIn').placeholder=f&&['human_refereed','ai_assisted'].includes(f.play_mode)?'Write the GM narration shown to players…':'Describe your action…  (Enter to send)';
   const q=S.cid?('?campaign='+S.cid):'';
   for(const id of['exchLink','deskLink','tradeLink','combatLink']){
     const a=$('#'+id);a.href=(id==='exchLink'||id==='tradeLink'?'/market':'/battle')+q;
   }
+}
+function paintMcp(mcp){
+  const p=$('#mcpPill'),state=(mcp&&mcp.status)||'offline';
+  const labels={connected:'MCP Referee: Connected',waiting:'MCP Referee: Waiting',offline:'MCP Referee: Offline'};
+  p.textContent=labels[state];
+  p.style.color=state==='connected'?'#4ade80':state==='waiting'?'var(--gold)':'var(--red)';
+  p.title=state==='offline'?'Open or reconnect your desktop MCP client.':state==='waiting'?`${mcp.pending_turns||1} player action(s) awaiting the desktop referee.`:`${mcp.client_name||'Desktop MCP client'} is connected.`;
 }
 
 /* ---------- header / campaigns ---------- */
@@ -1129,7 +1138,8 @@ async function sendAction(){
   const inp=$('#actionIn'),text=inp.value.trim();if(!text||!S.cid)return;
   inp.value='';
   const external=S.full&&['ai_refereed','player_directed'].includes(S.full.play_mode);
-  await post('/campaigns/'+S.cid+'/referee-turns',{player_text:text},external?'Action queued for the connected MCP referee.':'Narration published.');
+  const offline=external&&S.full.mcp_referee&&S.full.mcp_referee.status==='offline';
+  await post('/campaigns/'+S.cid+'/referee-turns',{player_text:text},external?(offline?'Action queued. MCP referee is offline; open or reconnect your desktop client.':'Action queued for the connected MCP referee.'):'Narration published.');
 }
 $('#sendBtn').onclick=sendAction;
 $('#actionIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendAction();});
@@ -1159,6 +1169,7 @@ $('#wdModal').addEventListener('click',e=>{if(e.target.id==='wdModal')wdClose();
       if(!S.cid)return;
       try{
         const p=await api('/api/campaigns/'+S.cid+'/pulse');
+        if(S.full){S.full.mcp_referee=p.mcp_referee;paintMcp(p.mcp_referee);}
         const tok=p.token+':'+p.day_number;
         if(lastPulse===null){lastPulse=tok;return;}
         if(tok!==lastPulse){lastPulse=tok;if(!S.cgActor)await refresh();}

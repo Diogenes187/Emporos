@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict,is_dataclass
 from datetime import date,datetime
 from decimal import Decimal
-import json,os,sys,uuid
+import json,os,sys,threading,uuid
 import psycopg
 from app.database import database_url
 from engine.orchestration import GameplayOrchestrator,available_tools
@@ -14,11 +14,29 @@ from engine.adventure_modules import adventure_module_snapshot,create_adventure_
 from engine.adventure_indexing import adventure_index_snapshot,read_adventure_source_page_command,propose_adventure_location_command
 
 PROTOCOL_VERSION='2025-03-26'
+PROCESS_SESSION_ID=uuid.uuid4()
+CLIENT_INFO={'name':'Desktop MCP Client','version':None}
+HEARTBEAT_SECONDS=15
 def _connect():
  dsn=database_url()
  if not dsn:raise RuntimeError('EMPOROS_DATABASE_URL or BASE_CEPHEUS_DATABASE_URL is required')
  return psycopg.connect(dsn)
 def _authority():return os.environ.get('EMPOROS_AUTHORITY_REFERENCE','emporos-local-player')
+def _record_presence(status='connected'):
+ try:
+  with _connect() as c:
+   c.execute("""INSERT INTO sys_mcp_client_presence
+    (process_session_id,authority_reference,client_name,client_version,presence_status,disconnected_at)
+    VALUES(%s,%s,%s,%s,%s,CASE WHEN %s='disconnected' THEN clock_timestamp() END)
+    ON CONFLICT(process_session_id) DO UPDATE SET
+      client_name=excluded.client_name,client_version=excluded.client_version,
+      presence_status=excluded.presence_status,last_seen_at=clock_timestamp(),
+      disconnected_at=excluded.disconnected_at""",
+    (PROCESS_SESSION_ID,_authority(),CLIENT_INFO['name'],CLIENT_INFO['version'],status,status))
+ except Exception:
+  pass
+def _heartbeat(stop):
+ while not stop.wait(HEARTBEAT_SECONDS):_record_presence()
 def _plain(value):
  if is_dataclass(value):return _plain(asdict(value))
  if isinstance(value,dict):return {str(k):_plain(v) for k,v in value.items()}
@@ -120,7 +138,12 @@ def _content(value):
  value=_plain(value);return {'content':[{'type':'text','text':json.dumps(value,ensure_ascii=False)}],'structuredContent':value}
 def handle(message):
  method=message.get('method');params=message.get('params') or {}
- if method=='initialize':return {'protocolVersion':PROTOCOL_VERSION,'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'Emporos','version':'0.1.0'}}
+ if method=='initialize':
+  supplied=params.get('clientInfo') or {}
+  CLIENT_INFO['name']=(str(supplied.get('name') or '').strip() or 'Desktop MCP Client')[:160]
+  CLIENT_INFO['version']=str(supplied.get('version'))[:80] if supplied.get('version') else None
+  _record_presence()
+  return {'protocolVersion':PROTOCOL_VERSION,'capabilities':{'tools':{'listChanged':False}},'serverInfo':{'name':'Emporos','version':'0.1.0'}}
  if method=='ping':return {}
  if method=='tools/list':return {'tools':_tool_list()}
  if method=='tools/call':
@@ -130,13 +153,17 @@ def handle(message):
  if method in ('notifications/initialized','notifications/cancelled'):return None
  raise KeyError('Unsupported MCP method: '+str(method))
 def main():
- for line in sys.stdin:
-  message={}
-  try:
-   message=json.loads(line);result=handle(message)
-   if 'id' not in message or result is None:continue
-   response={'jsonrpc':'2.0','id':message['id'],'result':result}
-  except Exception as exc:response={'jsonrpc':'2.0','id':message.get('id'),'error':{'code':-32000,'message':str(exc)}}
-  sys.stdout.write(json.dumps(response,ensure_ascii=False)+'\n');sys.stdout.flush()
+ stop=threading.Event();_record_presence();worker=threading.Thread(target=_heartbeat,args=(stop,),daemon=True);worker.start()
+ try:
+  for line in sys.stdin:
+   message={}
+   try:
+    message=json.loads(line);_record_presence();result=handle(message)
+    if 'id' not in message or result is None:continue
+    response={'jsonrpc':'2.0','id':message['id'],'result':result}
+   except Exception as exc:response={'jsonrpc':'2.0','id':message.get('id'),'error':{'code':-32000,'message':str(exc)}}
+   sys.stdout.write(json.dumps(response,ensure_ascii=False)+'\n');sys.stdout.flush()
+ finally:
+  stop.set();_record_presence('disconnected')
  return 0
 if __name__=='__main__':raise SystemExit(main())

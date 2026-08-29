@@ -154,6 +154,38 @@ class CampaignReader:
             if campaign is None:
                 return None
             campaign_id = campaign.pop("campaign_id")
+            pending_referee_turns = connection.execute(
+                """SELECT count(*) AS pending_count FROM camp_referee_turn
+                   WHERE campaign_id=%s AND turn_status='pending'""",
+                (campaign_id,),
+            ).fetchone()["pending_count"]
+            mcp_presence = connection.execute(
+                """SELECT client_name,last_seen_at,
+                          presence_status='connected'
+                          AND last_seen_at>=clock_timestamp()-interval '45 seconds'
+                          AS live
+                   FROM sys_mcp_client_presence
+                   WHERE authority_reference=(
+                       SELECT owner_reference FROM camp_campaign
+                       WHERE campaign_id=%s
+                   )
+                   ORDER BY live DESC,last_seen_at DESC LIMIT 1""",
+                (campaign_id,),
+            ).fetchone()
+            mcp_live = bool(mcp_presence and mcp_presence["live"])
+            campaign["mcp_referee"] = {
+                "status": (
+                    "waiting" if mcp_live and pending_referee_turns
+                    else "connected" if mcp_live else "offline"
+                ),
+                "client_name": (
+                    mcp_presence["client_name"] if mcp_presence else None
+                ),
+                "last_seen_at": (
+                    mcp_presence["last_seen_at"] if mcp_presence else None
+                ),
+                "pending_turns": pending_referee_turns,
+            }
             actors = connection.execute(
                 """
                 SELECT actor.actor_id,actor.public_id::text AS public_id,actor.name,
@@ -624,7 +656,32 @@ class CampaignReader:
             token = "-".join(str(sig[k]) for k in
                              ("last_message","open_turns","journey_version",
                               "ship_version","actor_version","system_count","note_count"))
-            return {"day_number": row["day_number"], "token": token}
+            presence = connection.execute(
+                """SELECT client_name,
+                          presence_status='connected'
+                          AND last_seen_at>=clock_timestamp()-interval '45 seconds'
+                          AS live
+                   FROM sys_mcp_client_presence
+                   WHERE authority_reference=(
+                       SELECT owner_reference FROM camp_campaign
+                       WHERE campaign_id=%s
+                   )
+                   ORDER BY live DESC,last_seen_at DESC LIMIT 1""",
+                (campaign_id,),
+            ).fetchone()
+            live = bool(presence and presence["live"])
+            mcp_referee = {
+                "status": (
+                    "waiting" if live and sig["open_turns"]
+                    else "connected" if live else "offline"
+                ),
+                "client_name": presence["client_name"] if presence else None,
+                "pending_turns": sig["open_turns"],
+            }
+            return {
+                "day_number": row["day_number"], "token": token,
+                "mcp_referee": mcp_referee,
+            }
 
     def ship_classes(self) -> list[dict[str, Any]]:
         if not self.url: return []

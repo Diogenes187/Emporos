@@ -86,6 +86,7 @@
   <a class="pill" href="/classic/market" title="The Exchange">&#9878; Market</a>
   <a class="pill" href="/classic/battle" title="The Field Desk">&#9876; Battle</a>
   <span class="spacer"></span>
+  <span id="mcpPill" class="pill" title="Desktop MCP referee connection"></span>
   <span id="userpill" class="pill" title="Signed in">&#9679; signed in</span>
   <button id="logoutBtn">Logout</button>
 </header>
@@ -184,8 +185,15 @@ async function refresh(){
 }
 
 function render(){
-  renderBoard();renderPanel();renderLog();
+  paintMcp(S.full&&S.full.mcp_referee);renderBoard();renderPanel();renderLog();
   if(S.cgActor)renderChargen();
+}
+function paintMcp(mcp){
+  const p=$('#mcpPill'),state=(mcp&&mcp.status)||'offline';
+  const labels={connected:'MCP Referee: Connected',waiting:'MCP Referee: Waiting',offline:'MCP Referee: Offline'};
+  p.textContent=labels[state];
+  p.style.color=state==='connected'?'#4ade80':state==='waiting'?'var(--gold)':'var(--red)';
+  p.title=state==='offline'?'Open or reconnect your desktop MCP client.':state==='waiting'?`${mcp.pending_turns||1} player action(s) awaiting the desktop referee.`:`${mcp.client_name||'Desktop MCP client'} is connected.`;
 }
 
 /* ---------- header / campaigns ---------- */
@@ -749,7 +757,8 @@ async function sendAction(){
   const inp=$('#actionIn'),text=inp.value.trim();if(!text||!S.cid)return;
   inp.value='';
   const external=S.full&&['ai_refereed','player_directed'].includes(S.full.play_mode);
-  await post('/campaigns/'+S.cid+'/referee-turns',{player_text:text},external?'Action queued for the connected MCP referee.':'Narration published.');
+  const offline=external&&S.full.mcp_referee&&S.full.mcp_referee.status==='offline';
+  await post('/campaigns/'+S.cid+'/referee-turns',{player_text:text},external?(offline?'Action queued. MCP referee is offline; open or reconnect your desktop client.':'Action queued for the connected MCP referee.'):'Narration published.');
 }
 $('#sendBtn').onclick=sendAction;
 $('#actionIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendAction();});
@@ -762,6 +771,7 @@ $('#cgModal').addEventListener('click',e=>{if(e.target.id==='cgModal')closeCharg
     await loadCampaigns();
     try{S.shipClasses=await api('/api/catalog/ship-classes');}catch(e){}
     await refresh();
+    setInterval(async()=>{if(!S.cid)return;try{const p=await api('/api/campaigns/'+S.cid+'/pulse');if(S.full){S.full.mcp_referee=p.mcp_referee;paintMcp(p.mcp_referee);}}catch(e){}},4000);
   }catch(e){/* redirected to login */}
 })();
 </script>
