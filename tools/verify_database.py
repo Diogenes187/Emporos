@@ -25,7 +25,7 @@ NARRATIVE_TEXT_MARKERS = (
     "description", "summary", "rationale", "notes", "message",
     "citation", "evidence", "question", "statement", "reason",
     "explanation", "text", "uri", "path", "value", "basis",
-    "obligations", "scope",
+    "obligations", "scope", "appearance",
 )
 
 
