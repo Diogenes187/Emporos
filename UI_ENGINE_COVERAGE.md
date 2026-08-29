@@ -4,14 +4,18 @@ This generated inventory identifies authoritative engine commands with a direct 
 
 ## Snapshot
 
-- Engine command entry points: 170
-- Direct web-application wrappers: 161
-- Engine-only review candidates: 9
+- Engine command entry points: 190
+- Direct web-application wrappers: 177
+- Engine-only review candidates: 13
 
 ## Engine-only review candidates
 
 | Engine module | Command |
 |---|---|
+| `adventure_indexing.py` | `read_adventure_source_page_command` |
+| `adventure_indexing.py` | `propose_adventure_location_command` |
+| `conversation_logs.py` | `append_external_conversation_entry_command` |
+| `external_referee.py` | `complete_external_referee_turn_command` |
 | `injury_runtime.py` | `resolve_personal_natural_healing_command` |
 | `medical_runtime.py` | `apply_personal_first_aid_command` |
 | `medical_runtime.py` | `resolve_personal_surgery_command` |
@@ -26,6 +30,13 @@ This generated inventory identifies authoritative engine commands with a direct 
 
 | Engine module | Command |
 |---|---|
+| `adventure_indexing.py` | `begin_adventure_indexing_command` |
+| `adventure_indexing.py` | `review_adventure_location_proposal_command` |
+| `adventure_modules.py` | `create_adventure_module_command` |
+| `adventure_modules.py` | `key_adventure_location_command` |
+| `adventure_modules.py` | `enter_adventure_location_command` |
+| `adventure_modules.py` | `update_adventure_location_state_command` |
+| `adventure_modules.py` | `advance_adventure_exploration_command` |
 | `ammunition_purchases.py` | `purchase_personal_ammunition_command` |
 | `animal_skills.py` | `resolve_animal_skill_operation_command` |
 | `animals.py` | `set_animal_reaction_context_command` |
@@ -64,7 +75,11 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `careers.py` | `roll_career_benefit_command` |
 | `careers.py` | `resolve_career_weapon_benefit_command` |
 | `careers.py` | `finish_character_creation_command` |
+| `character_abandonment.py` | `abandon_unfinished_character_command` |
+| `character_arrangement.py` | `arrange_characteristics_command` |
 | `character_creation.py` | `initialize_character_command` |
+| `character_deletion.py` | `delete_character_command` |
+| `character_rerolls.py` | `reroll_characteristics_command` |
 | `characters.py` | `update_character_final_details_command` |
 | `characters.py` | `assign_actor_species_command` |
 | `combat_resolution_runtime.py` | `resolve_personal_combat_command` |
@@ -113,6 +128,7 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `extended_actions_runtime.py` | `advance_personal_extended_action_command` |
 | `extended_actions_runtime.py` | `abandon_personal_extended_action_command` |
 | `extended_actions_runtime.py` | `resolve_personal_extended_action_interruption_command` |
+| `external_referee.py` | `submit_external_referee_turn_command` |
 | `extreme_range_runtime.py` | `authorize_extreme_range_command` |
 | `free_actions_runtime.py` | `perform_personal_free_action_command` |
 | `freight_contracts.py` | `accept_freight_contract_command` |
@@ -155,12 +171,15 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `psionics.py` | `set_telepathic_shield_command` |
 | `purchases.py` | `purchase_trade_goods_command` |
 | `recon.py` | `resolve_recon_command` |
+| `referee_modes.py` | `record_human_referee_turn_command` |
+| `referee_modes.py` | `request_gm_assistance_command` |
 | `refueling.py` | `refuel_ship_command` |
 | `regulatory.py` | `resolve_regulatory_task_command` |
 | `route_revenue.py` | `open_route_revenue_command` |
 | `sales.py` | `sell_trade_goods_command` |
 | `scenes.py` | `create_scene_snapshot_command` |
 | `sectors.py` | `import_sector_command` |
+| `settings.py` | `initialize_campaign_setting_command` |
 | `ship_expenses.py` | `pay_ship_operating_expense_command` |
 | `ship_mortgages.py` | `open_ship_mortgage_command` |
 | `ship_mortgages.py` | `pay_ship_mortgage_command` |
@@ -186,4 +205,5 @@ This generated inventory identifies authoritative engine commands with a direct 
 | `transport.py` | `resolve_transport_operation_command` |
 | `travel_planning.py` | `place_ship_command` |
 | `travel_planning.py` | `plan_jump_journey_command` |
+| `travel_planning.py` | `cancel_jump_journey_command` |
 | `weapon_ready_runtime.py` | `advance_personal_weapon_ready_command` |

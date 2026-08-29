@@ -36,6 +36,23 @@ class LocationsRelationshipsIntegrationTests(unittest.TestCase):
         permits_containment=True,
         permits_actor_position=True,
     ):
+        existing = connection.execute(
+            """SELECT rule.rule_id,location_type.permits_containment,
+                      location_type.permits_actor_position
+               FROM rule_location_type location_type
+               JOIN rule_rule rule
+                 ON rule.rule_id=location_type.location_type_rule_id
+               WHERE location_type.location_type_code=%s""",
+            (code,),
+        ).fetchone()
+        if existing is not None:
+            if code in {"generic", "restricted"}:
+                self.assertEqual(
+                    existing[1:],
+                    (permits_containment, permits_actor_position),
+                    f"existing location type {code} has unexpected capabilities",
+                )
+            return existing[0]
         rule_id = self.create_rule(
             connection, f"location.type.{code}", code.title(), "world")
         connection.execute(

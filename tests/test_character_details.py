@@ -90,15 +90,22 @@ class CharacterFinalDetailsIntegrationTests(unittest.TestCase):
                 self.assertIsNone(second.appearance)
                 rows = connection.execute(
                     """SELECT revision_number,character_name
-                       FROM actor_character_profile_revision
-                       ORDER BY revision_number"""
+                       FROM actor_character_profile_revision revision
+                       JOIN actor_actor actor ON actor.actor_id=revision.actor_id
+                       WHERE actor.public_id=%s
+                       ORDER BY revision_number""",
+                    (actor_public,),
                 ).fetchall()
                 self.assertEqual(
                     rows,
                     [(1, "Sera Venn"), (2, "Captain Sera Venn")],
                 )
                 current = connection.execute(
-                    """SELECT character_name FROM actor_current_character_profile"""
+                    """SELECT profile.character_name
+                       FROM actor_current_character_profile profile
+                       JOIN actor_actor actor ON actor.actor_id=profile.actor_id
+                       WHERE actor.public_id=%s""",
+                    (actor_public,),
                 ).fetchone()[0]
                 actor_name = connection.execute(
                     """SELECT name FROM actor_actor WHERE public_id=%s""",
@@ -126,7 +133,11 @@ class CharacterFinalDetailsIntegrationTests(unittest.TestCase):
                 self.assertTrue(replay.replayed)
                 self.assertEqual(first.revision_number, replay.revision_number)
                 count = connection.execute(
-                    """SELECT COUNT(*) FROM actor_character_profile_revision"""
+                    """SELECT COUNT(*)
+                       FROM actor_character_profile_revision revision
+                       JOIN actor_actor actor ON actor.actor_id=revision.actor_id
+                       WHERE actor.public_id=%s""",
+                    (actor_public,),
                 ).fetchone()[0]
                 self.assertEqual(count, 1)
                 with self.assertRaisesRegex(ValueError, "not controlled"):
@@ -192,7 +203,11 @@ class CharacterFinalDetailsIntegrationTests(unittest.TestCase):
                 ).fetchone()[0]
                 self.assertEqual(current, "human")
                 history = connection.execute(
-                    """SELECT COUNT(*) FROM actor_species_assignment"""
+                    """SELECT COUNT(*)
+                       FROM actor_species_assignment assignment
+                       JOIN actor_actor actor ON actor.actor_id=assignment.actor_id
+                       WHERE actor.public_id=%s""",
+                    (actor_public,),
                 ).fetchone()[0]
                 self.assertEqual(history, 2)
 

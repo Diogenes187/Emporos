@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 import app.main as main_module
 from app.auth import User
+from tools.audit_template_routes import main as audit_template_routes
 
 
 main_module.user_for_session = lambda token: User(
@@ -50,3 +51,7 @@ def test_journey_cancel_requires_planning_state(monkeypatch):
     )
     assert response.status_code == 400
     assert "still in planning" in response.json()["detail"]
+
+
+def test_every_server_rendered_post_form_matches_its_route_contract():
+    assert audit_template_routes() == 0
