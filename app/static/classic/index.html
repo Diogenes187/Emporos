@@ -663,7 +663,10 @@ function chargenStep(a,base,f){
         <button data-cga="keep" class="goldbtn">Keep rolls and choose career</button></div></div>`;
       return h;
     }
-    h+=`<div class="cgstep"><small>CAREER ENTRY</small><b>Attempt qualification</b>
+    const guide=(f.career_options||[]).map(o=>`<tr><th>${esc(o.career_name)}${o.assignment_name?'<small>'+esc(o.assignment_name)+'</small>':''}</th><td>${o.qualification_target?o.qualification_target+'+ · '+esc(o.qualification_stat)+' DM':'Automatic'}</td><td>${o.survival_target?o.survival_target+'+ · '+esc(o.survival_stat)+' DM':'—'}</td><td>${o.commission_target?o.commission_target+'+ · '+esc(o.commission_stat)+' DM':'—'}</td><td>${o.promotion_target?o.promotion_target+'+ · '+esc(o.promotion_stat)+' DM':'—'}</td><td>${o.reenlistment_target?o.reenlistment_target+'+':'—'}</td></tr>`).join('');
+    h+=`<div class="cgstep"><small>CAREER ENTRY</small><b>Choose a profession suited to your characteristics</b>
+      <p>Targets are rolls on 2d6. The named characteristic supplies its modifier; it is not a minimum score.</p>
+      <div class="career-guide-table"><table><thead><tr><th>Career</th><th>Qualify</th><th>Survive</th><th>Commission</th><th>Promotion</th><th>Re-enlist</th></tr></thead><tbody>${guide}</tbody></table></div>
       <div class="rowform"><select id="cgCareer">${(f.career_options||[]).map(o=>`<option value="${esc(o.career_code)}||${esc(o.assignment_code||'')}">${esc(o.career_name)}${o.assignment_name?' · '+esc(o.assignment_name):''}</option>`).join('')}</select>
       <button data-cga="career-entry">Attempt qualification</button></div>
       <div style="margin-top:8px"><button data-cga="finish">Finish prior experience and begin play</button></div></div>`;

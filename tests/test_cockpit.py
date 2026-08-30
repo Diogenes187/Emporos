@@ -83,3 +83,11 @@ def test_training_controls_distinguish_level_zero_grants_from_random_training():
 def test_primary_character_cards_link_to_referee_corrections():
     for path in ("/", "/classic"):
         assert "Referee corrections" in client.get(path).text
+
+
+def test_primary_character_creation_explains_career_targets():
+    for path in ("/", "/classic"):
+        text = client.get(path).text
+        assert "Choose a profession suited to your characteristics" in text
+        assert "The named characteristic supplies its modifier" in text
+        assert "Re-enlist" in text
