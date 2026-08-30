@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import uuid
+from urllib.parse import quote
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
@@ -569,7 +570,8 @@ def character_career_entry(campaign_id:str,actor_id:str,career_selection:str=For
 @app.post("/campaigns/{campaign_id}/career-entry-fallbacks")
 def character_career_fallback(campaign_id:str,attempt_command_public_id:str=Form(...),fallback_kind:str=Form(...),idempotency_key:str=Form(...)):
     try:resolve_career_entry_failure(attempt_command_public_id=attempt_command_public_id,fallback_kind=fallback_kind,idempotency_key=idempotency_key)
-    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    except (ValueError,PermissionError,RuntimeError) as exc:
+        return RedirectResponse(url=f"/crew?campaign={campaign_id}&chargen_error={quote(str(exc))}",status_code=303)
     return RedirectResponse(url=f"/crew?campaign={campaign_id}",status_code=303)
 
 @app.post("/campaigns/{campaign_id}/characters/{actor_id}/basic-training")

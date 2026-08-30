@@ -356,6 +356,20 @@ def test_failed_career_entry_fallback_dispatches_and_returns_to_crew(monkeypatch
     }
 
 
+def test_invalid_career_fallback_returns_to_creator_with_message(monkeypatch):
+    def unavailable(**kwargs):
+        raise ValueError("The actor has already used the permitted draft")
+    monkeypatch.setattr(main_module, "resolve_career_entry_failure", unavailable)
+    response = client.post(
+        "/campaigns/campaign/career-entry-fallbacks",
+        data={"attempt_command_public_id": "attempt-command", "fallback_kind": "draft", "idempotency_key": "stale-draft"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert response.headers["location"].startswith("/crew?campaign=campaign&chargen_error=")
+    assert "already%20used" in response.headers["location"]
+
+
 def test_basic_training_dispatches_specializations_and_returns_to_crew(monkeypatch):
     captured = {}
     monkeypatch.setattr(

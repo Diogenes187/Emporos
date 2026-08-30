@@ -476,7 +476,7 @@ function chargenStep(a,base,f){
       <b>${esc(p.career_name)} qualification failed</b>
       <p>Result ${p.check_total} vs target ${p.target_number}. Choose a fallback.</p>
       <div class="cgbtns">
-        <button data-cga="fallback" data-arg="draft">Submit to the draft</button>
+        ${p.draft_available?'<button data-cga="fallback" data-arg="draft">Submit to the draft</button>':'<span class="sub">The one permitted draft has already been used. Drifter is the remaining fallback.</span>'}
         <button data-cga="fallback" data-arg="drifter">Enter the Drifter career</button>
       </div></div>`;
   }
@@ -631,7 +631,7 @@ function chargenStep(a,base,f){
   if(a.career_muster&&!a.career_injury&&!a.medical_care&&!a.injury_crisis){
     const m=a.career_muster;
     if(!m.muster_status)return extra+`<div class="cgstep"><small>MUSTER</small><b>Muster out of ${esc(m.career_name)}</b>
-      <p>${m.terms_completed} terms · Rank ${m.rank_number}.</p>
+      <p>${m.departure_reason==='forced_leave_failed'?`Reenlistment failed ${m.reenlistment_total} vs ${m.reenlistment_target}; Cepheus requires this career to end. `:''}${m.terms_completed} terms · Rank ${m.rank_number}.</p>
       <button data-cga="muster">Calculate benefits and pension</button></div>`;
     let h=extra+`<div class="cgstep"><small>MUSTER</small><b>${esc(m.career_name)} mustering out · ${m.rolls_completed}/${m.total_benefit_rolls}</b>`;
     for(const r of m.benefit_rolls||[])h+=`<p class="sub" style="color:var(--dim)">Roll ${r.roll_order} · ${esc(r.benefit_table_code)} ${r.natural_roll} → ${r.table_result}: ${esc(r.source_outcome_text||'')}${r.cash_awarded?' · Cr'+r.cash_awarded:''}</p>`;
