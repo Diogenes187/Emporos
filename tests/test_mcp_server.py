@@ -15,3 +15,9 @@ def test_initialize_and_safe_tool_surface():
  assert resume['inputSchema']['required']==[]
  assert resume['inputSchema']['properties']=={}
  assert 'parameterless startup/resume call' in resume['description']
+
+def test_default_resume_discards_stale_or_placeholder_arguments(monkeypatch):
+ captured=[]
+ monkeypatch.setattr(mcp_server,'_resume',lambda arguments:captured.append(arguments) or {'ok':True})
+ assert mcp_server._resume_latest({'campaign_public_id':'your-campaign-id','recent':{'type':'integer'}})=={'ok':True}
+ assert captured==[{}]
