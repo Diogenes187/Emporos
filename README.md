@@ -42,9 +42,10 @@ cannot issue arbitrary SQL: engine validation and command receipts remain the
 only mutation path. MCP transport JSON is never stored as a parallel game-state
 model.
 
-To begin or return to play, ask the connected client to call `campaign_resume`.
-When there is one active campaign it is selected automatically; when there are
-several, choose one from `list_campaigns` and pass its public ID. The resume call
+To begin or return to play, ask the connected client to call `campaign_resume`
+with no parameters. It selects the most recently active campaign. To choose or
+switch deliberately, call `list_campaigns` and then `campaign_resume_selected`
+with that campaign's public ID. The resume call
 loads authoritative state, recent memory, active encounters, pending web turns,
 and referee instructions into the current AI conversation. The client then
 remains in play until the user changes campaigns, ends play, or context is lost.

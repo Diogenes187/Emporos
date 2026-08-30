@@ -67,7 +67,6 @@ def _resume(args):
   else:
    rows=c.execute("SELECT campaign_id,public_id::text,name,play_mode,campaign_status FROM camp_campaign WHERE owner_reference=%s AND campaign_status='active' ORDER BY created_at DESC",(_authority(),)).fetchall()
    if not rows:raise ValueError('No active campaign is available. Create one in Emporos first.')
-   if len(rows)>1:raise ValueError('More than one active campaign is available. Call list_campaigns, then pass campaign_public_id to campaign_resume.')
    row=rows[0];campaign=(row[0],row[2],row[3],row[4]);campaign_public=row[1]
   cid=campaign[0]
   clock=c.execute('SELECT day_number,second_of_day FROM camp_clock WHERE campaign_id=%s',(cid,)).fetchone()
@@ -170,7 +169,8 @@ def _propose_location(args):
 TOOLS={
  'emporos_status':('Check the local Emporos database and MCP authority',{},(),_status),
  'list_campaigns':('List campaign identities and operating modes owned by this local authority',{},(),_campaigns),
- 'campaign_resume':('THE single startup/resume call for playing Emporos through an AI client. Call once, trust the returned relational state, and remain the campaign referee until the user changes campaigns or asks to stop.',{'campaign_public_id':{'type':'string'},'recent':{'type':'integer','minimum':1,'maximum':40}},(),_resume),
+ 'campaign_resume':('THE parameterless startup/resume call for playing Emporos through an AI client. Call with an empty object. It resumes the most recently active campaign and remains its referee until the user changes campaigns or asks to stop.',{},(),_resume),
+ 'campaign_resume_selected':('Resume one explicitly selected Emporos campaign after list_campaigns. Use only when the user asks to choose or switch campaigns.',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_resume),
  'get_campaign_snapshot':('Read current relational campaign truth',{'campaign_public_id':{'type':'string'}},('campaign_public_id',),_snapshot),
  'search_campaign_sources':('Search verified private pages from this campaign library',{'campaign_public_id':{'type':'string'},'query':{'type':'string'},'limit':{'type':'integer','minimum':1,'maximum':20}},('campaign_public_id','query'),_search_sources),
  'record_referee_narration':('Publish narration from the connected external referee',{'campaign_public_id':{'type':'string'},'narration':{'type':'string'},'idempotency_key':{'type':'string'}},('campaign_public_id','narration'),_record),
