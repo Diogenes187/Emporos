@@ -194,6 +194,7 @@ class CampaignReader:
                        profile.gender_identity,profile.appearance,
                        position.name AS location_name,
                        lifepath.age_years,lifepath.lifepath_status,
+                       lifepath.retirement_required,
                        (SELECT count(*) FROM actor_skill skill
                         WHERE skill.actor_id=actor.actor_id) AS skill_count
                 FROM actor_actor actor
