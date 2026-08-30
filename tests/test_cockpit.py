@@ -66,3 +66,8 @@ def test_journey_cancel_requires_planning_state(monkeypatch):
 
 def test_every_server_rendered_post_form_matches_its_route_contract():
     assert audit_template_routes() == 0
+
+
+def test_every_character_interface_keeps_completed_muster_benefits_visible():
+    for path in ("/", "/classic"):
+        assert "Muster benefits:" in client.get(path).text

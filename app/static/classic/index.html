@@ -272,11 +272,13 @@ function crewPanel(f){
     const creating=a.lifepath_status!=='completed'||a.character_name==='Unnamed Traveller';
     const careers=(a.careers||[]).map(c=>`${esc(c.career_name)} (${c.terms_completed} terms, rank ${c.rank_number}, ${esc(c.stint_status)})`).join('; ');
     const skills=(a.skills||[]).map(s=>`${esc(s.name)}-${s.skill_level}`).join(', ');
+    const benefits=(a.muster_benefits||[]).map(b=>b.benefit_table_code==='cash'?`${esc(b.career_name)}: Cr${b.cash_awarded}${b.medical_debt_paid?' (Cr'+b.medical_debt_paid+' paid medical debt)':''}${b.anagathic_debt_paid?' (Cr'+b.anagathic_debt_paid+' paid anagathic debt)':''}; Cr${b.cash_retained} retained`:`${esc(b.career_name)}: ${esc(b.source_outcome_text)}${b.ship_shares_awarded?' · '+b.ship_shares_awarded+' ship shares':''}`).join('; ');
     h+=`<div class="card">
       <div class="nm">${esc(a.character_name)} <span class="upp">${uppOf(a)}</span></div>
       <div class="sub">${esc(a.species?a.species.name:'Species unassigned')} · ${a.age_years?'Age '+a.age_years:'no age'} · Cr${cashOf(a)} · ${esc(a.lifepath_status||'lifepath not begun')}</div>
       <div class="sub">${esc(a.injury?a.injury.injury_status.replace(/_/g,' '):'')}${skills?' · '+skills:''}</div>
       ${careers?`<div class="sub">${careers}</div>`:''}
+      ${benefits?`<div class="sub"><b>Muster benefits:</b> ${benefits}</div>`:''}
       ${a.lifepath_status!=='completed'?`<button class="goldbtn" data-cg="${a.public_id}">Continue creation</button>`:
         (a.character_name==='Unnamed Traveller'?`<button class="goldbtn" data-cg="${a.public_id}">Name character</button>`:'')}
     </div>`;

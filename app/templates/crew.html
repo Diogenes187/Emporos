@@ -90,6 +90,7 @@
 </div>
 <span>{{ career.terms_completed }} terms · Rank {{ career.rank_number }}</span>
 </article>{% else %}<p>No career stint recorded yet.</p>{% endfor %}</div>
+{% if actor.muster_benefits %}<div class="career-step"><strong>Muster benefits</strong>{% for benefit in actor.muster_benefits %}<p>{{ benefit.career_name }} · {% if benefit.benefit_table_code == 'cash' %}Cr{{ benefit.cash_awarded }}{% if benefit.medical_debt_paid %} · Cr{{ benefit.medical_debt_paid }} paid toward medical debt{% endif %}{% if benefit.anagathic_debt_paid %} · Cr{{ benefit.anagathic_debt_paid }} paid toward anagathic debt{% endif %} · Cr{{ benefit.cash_retained }} retained{% else %}{{ benefit.source_outcome_text }}{% if benefit.ship_shares_awarded %} · {{ benefit.ship_shares_awarded }} ship shares{% endif %}{% endif %}</p>{% endfor %}</div>{% endif %}
 {% if actor.career_entry_pending %}
 <div class="career-step">
 <strong>{{ actor.career_entry_pending.career_name }} qualification failed</strong>
