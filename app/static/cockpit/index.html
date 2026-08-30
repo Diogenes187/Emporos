@@ -742,11 +742,11 @@ function chargenStep(a,base,f){
       });
       return h+'<div style="margin-top:8px"><button data-cga="basic-first">Apply all Service skills</button></div></div>';
     }
-    let h=`<div class="cgstep"><small>BASIC TRAINING</small><b>${esc(bt.career_name)}: choose one Service result</b>`;
+    let h=`<div class="cgstep"><small>BASIC TRAINING</small><b>${esc(bt.career_name)}: choose one level-0 Service skill</b><p><b>This grants level 0 only.</b> It does not improve a skill already at level 0 or higher; choose an untrained skill to gain something new.</p>`;
     (bt.entries||[]).forEach(e=>{
       h+=`<div class="rowform"><span class="sub" style="color:var(--dim)">${e.roll_value} · ${esc(e.source_outcome_text)}</span>
         ${e.cascade_skill?`<select class="btSel" data-roll="${e.roll_value}">${(e.specializations||[]).map(s=>`<option value="${esc(e.skill_rule_code)}||${s.rule_code}">${esc(s.name)}</option>`).join('')}</select>`:''}
-        <button data-cga="basic-one" data-arg="${e.roll_value}">Choose</button></div>`;
+        <button data-cga="basic-one" data-arg="${e.roll_value}">Take at level 0</button></div>`;
     });
     return h+'</div>';
   }
@@ -784,11 +784,11 @@ function chargenStep(a,base,f){
         <button data-cga="rank" data-arg="decline" data-kind="${r.attempt_kind}">Decline</button></div></div>`;
     }
     if(t.stage==='term_training_pending'){
-      let h=`<div class="cgstep"><small>TRAINING</small><b>Term training · ${t.training_rolls_completed}/${t.allowed_training_rolls} rolls used</b>`;
+      let h=`<div class="cgstep"><small>TRAINING</small><b>Term training · ${t.training_rolls_completed}/${t.allowed_training_rolls} rolls used</b><p><b>You choose a table, not a skill.</b> The d6 selects the result. Specialty menus are contingencies only and do not affect the roll.</p>`;
       for(const r of t.training_results||[])h+=`<p class="sub" style="color:var(--dim)">Training ${r.training_roll_order}: ${esc(r.training_table_code)} ${r.roll_value} · ${esc(r.result_name)} → ${r.resulting_value}</p>`;
       for(const tb of t.training_tables||[]){
         h+=`<div class="rowform" data-table="${esc(tb.code)}"><span>${esc(tb.name)}</span>`;
-        for(const c of tb.cascades||[])h+=`<select class="ttSpec">${(c.specializations||[]).map(s=>`<option value="${esc(c.rule_code)}||${s.rule_code}">${esc(s.name)}</option>`).join('')}</select>`;
+        for(const c of tb.cascades||[])h+=`<label>Only if d6 rolls ${esc(c.name)} <select class="ttSpec">${(c.specializations||[]).map(s=>`<option value="${esc(c.rule_code)}||${s.rule_code}">${esc(s.name)}</option>`).join('')}</select></label>`;
         h+=`<button data-cga="term-train" data-arg="${esc(tb.code)}">Roll ${esc(tb.name)}</button></div>`;
       }
       return h+'</div>';

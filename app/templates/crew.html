@@ -129,12 +129,12 @@
 <button type="submit">Apply all Service skills</button>
 </form>
 {% else %}
-<p>A later career grants one selected result from its Service table.</p>
+<p><strong>This grants one selected Service skill at level 0 only.</strong> It does not increase a skill you already have at level 0 or higher; choose an untrained skill to gain something new.</p>
 <div class="station-list">{% for entry in actor.basic_training.entries %}<article><div><strong>{{ entry.roll_value }} · {{ entry.source_outcome_text }}</strong>{% if entry.cascade_skill %}<small>Specialty required</small>{% endif %}</div><form method="post" action="/campaigns/{{ campaign.public_id }}/characters/{{ actor.public_id }}/basic-training">
 <input type="hidden" name="idempotency_key" value="{{ creation_key }}-bt-{{ actor_index }}-{{ entry.roll_value }}">
 <input type="hidden" name="selected_roll_value" value="{{ entry.roll_value }}">
 {% if entry.cascade_skill %}<select name="specialization" required>{% for specialty in entry.specializations %}<option value="{{ entry.skill_rule_code }}||{{ specialty.rule_code }}">{{ specialty.name }}</option>{% endfor %}</select>{% endif %}
-<button type="submit">Choose result</button>
+<button type="submit">Take at level 0</button>
 </form></article>{% endfor %}</div>
 {% endif %}
 </div>
@@ -159,7 +159,7 @@
 {% elif actor.career_term_step and actor.career_term_step.stage == 'term_training_pending' %}
 <div class="career-step training-choice">
 <strong>Choose one training table · {{ actor.career_term_step.training_rolls_completed }}/{{ actor.career_term_step.allowed_training_rolls }} rolls used</strong>
-<p>Open one table, review its six possible results, then roll. You receive the result matching the d6. A specialty preference matters only if the roll lands on that broad skill.</p>
+<p><strong>You choose a table, not a skill.</strong> The d6 selects one of its six results. A specialty menu is only a contingency if the d6 lands on that broad skill; it does not affect the roll.</p>
 {% if actor.career_term_step.entry_method == 'draft' and actor.career_term_step.term_number == 1 and actor.career_term_step.rank_number == 0 %}<p><strong>No rank roll this term:</strong> a first-term draftee cannot attempt commission, and promotion begins only after reaching Rank 1. A commission opportunity can follow survival in a later term.</p>{% endif %}
 {% for result in actor.career_term_step.rank_results %}<p>{{ 'Promotion' if result.attempt_kind == 'advancement' else 'Commission' }}: {% if result.decision == 'decline' %}declined{% elif result.succeeded %}passed {{ result.check_total }} vs {{ result.target_number }} · Rank {{ result.resulting_rank }}{% else %}failed {{ result.check_total }} vs {{ result.target_number }} · remains Rank {{ result.prior_rank }}{% endif %}</p>{% endfor %}
 {% for result in actor.career_term_step.training_results %}<p class="training-result"><strong>Training {{ result.training_roll_order }}:</strong> {{ result.training_table_code|replace('_',' ')|title }} · d6 {{ result.roll_value }} · {{ result.result_name }} {{ result.prior_value if result.prior_value is not none else 'untrained' }} → {{ result.resulting_value }}</p>{% endfor %}

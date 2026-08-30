@@ -71,3 +71,10 @@ def test_every_server_rendered_post_form_matches_its_route_contract():
 def test_every_character_interface_keeps_completed_muster_benefits_visible():
     for path in ("/", "/classic"):
         assert "Muster benefits:" in client.get(path).text
+
+
+def test_training_controls_distinguish_level_zero_grants_from_random_training():
+    for path in ("/", "/classic"):
+        text = client.get(path).text
+        assert "This grants level 0 only." in text
+        assert "You choose a table, not a skill." in text
