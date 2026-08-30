@@ -23,6 +23,8 @@ class CampaignSettingStartupTests(unittest.TestCase):
                 self.assertTrue(replay.replayed);self.assertEqual(result.sector_public_id,replay.sector_public_id)
                 names=[r[0] for r in c.execute("SELECT location.name FROM loc_star_system system JOIN loc_location location USING(location_id) WHERE system.campaign_id=(SELECT campaign_id FROM camp_campaign WHERE public_id=%s) ORDER BY system.hex_column,system.hex_row",(first.campaign_public_id,))]
                 self.assertEqual(names,["Ledger's Rest",'Orison','Kestrel'])
+                worlds=c.execute("SELECT starting.name,current.name FROM camp_campaign_setting setting JOIN loc_location starting ON starting.location_id=setting.starting_world_location_id JOIN loc_location current ON current.location_id=setting.current_world_location_id WHERE setting.campaign_id=(SELECT campaign_id FROM camp_campaign WHERE public_id=%s)",(first.campaign_public_id,)).fetchone()
+                self.assertEqual(worlds,("Ledger's Rest","Ledger's Rest"))
                 second=self._campaign(c,owner,suffix+'-b')
                 other=initialize_campaign_setting_command(c,initiator_reference=owner,idempotency_key='setting-'+suffix+'-b',campaign_public_id=second.campaign_public_id,startup_choice='ledger_reach')
                 self.assertNotEqual(result.sector_public_id,other.sector_public_id)
@@ -38,6 +40,8 @@ class CampaignSettingStartupTests(unittest.TestCase):
                     row=c.execute("SELECT selected.startup_choice,selected.rights_class,count(system.location_id) FROM camp_campaign_setting selected JOIN camp_campaign campaign USING(campaign_id) LEFT JOIN loc_star_system system ON system.campaign_id=campaign.campaign_id WHERE campaign.public_id=%s GROUP BY selected.startup_choice,selected.rights_class",(campaign.campaign_public_id,)).fetchone()
                     self.assertEqual(row[0],choice);self.assertEqual(row[2],count)
                     if choice=='import_own': self.assertEqual(row[1],'private_non_exportable')
+                    world_count=c.execute("SELECT count(*) FROM camp_campaign_setting WHERE campaign_id=(SELECT campaign_id FROM camp_campaign WHERE public_id=%s) AND starting_world_location_id IS NOT NULL AND current_world_location_id IS NOT NULL",(campaign.campaign_public_id,)).fetchone()[0]
+                    self.assertEqual(world_count,1 if choice=='generate_original' else 0)
 
     def test_bundled_setting_contains_no_protected_traveller_setting_names(self):
         with psycopg.connect(os.environ['BASE_CEPHEUS_DATABASE_URL']) as c:

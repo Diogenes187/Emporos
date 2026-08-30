@@ -84,7 +84,17 @@ def initialize_campaign_setting_command(c:psycopg.Connection,*,initiator_referen
         if import_result:
             import_command_id=c.execute('SELECT command_id FROM cmd_command WHERE public_id=%s',(import_result.command_public_id,)).fetchone()[0]
             sector_id=c.execute('SELECT sector_location_id FROM cmd_sector_import_receipt WHERE command_id=%s',(import_command_id,)).fetchone()[0]
-        c.execute("INSERT INTO camp_campaign_setting(campaign_id,startup_choice,setting_package_id,sector_location_id,provenance_class,rights_class,export_permitted) VALUES(%s,%s,%s,%s,%s,%s,%s)",(campaign[0],startup_choice,package_id,sector_id,provenance,rights,export))
+        starting_world_id=None
+        if sector_id:
+            starting_world_id=c.execute("""SELECT body.location_id
+              FROM loc_star_system system
+              JOIN loc_celestial_body body ON body.system_location_id=system.location_id
+               AND body.campaign_id=system.campaign_id AND body.body_kind='planet'
+              JOIN loc_world_profile profile ON profile.location_id=body.location_id
+               AND profile.campaign_id=body.campaign_id
+              WHERE system.campaign_id=%s AND system.sector_location_id=%s
+              ORDER BY system.hex_column,system.hex_row,body.orbit_order LIMIT 1""",(campaign[0],sector_id)).fetchone()[0]
+        c.execute("INSERT INTO camp_campaign_setting(campaign_id,startup_choice,setting_package_id,sector_location_id,provenance_class,rights_class,export_permitted,starting_world_location_id,current_world_location_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",(campaign[0],startup_choice,package_id,sector_id,provenance,rights,export,starting_world_id,starting_world_id))
         c.execute("INSERT INTO cmd_campaign_setting_receipt(command_id,campaign_id,startup_choice,setting_package_id,sector_import_command_id) VALUES(%s,%s,%s,%s,%s)",(command_id,campaign[0],startup_choice,package_id,import_command_id))
         c.execute("INSERT INTO cmd_domain_event(command_id,event_order,event_type) VALUES(%s,1,'campaign_setting_initialized')",(command_id,))
         c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(command_id,))

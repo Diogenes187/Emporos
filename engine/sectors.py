@@ -73,6 +73,12 @@ def import_sector_command(c:psycopg.Connection,*,initiator_reference:str,idempot
             c.execute("INSERT INTO loc_containment(campaign_id,parent_location_id,child_location_id,source_command_id) VALUES(%s,%s,%s,%s)",(campaign[0],system,world,cid))
             c.execute("INSERT INTO loc_world_profile(location_id,campaign_id,revision_number,starport_code,size_code,atmosphere_code,hydrographics_code,population_code,government_code,law_level_code,technology_level) VALUES(%s,%s,1,%s,%s,%s,%s,%s,%s,%s,%s)",(world,campaign[0],uwp[0],*values))
             c.execute("INSERT INTO cmd_sector_import_system VALUES(%s,%s,%s,%s,%s,%s,%s)",(cid,order,system,world,line,hex_code,uwp))
+        first_world=c.execute("SELECT world_location_id FROM cmd_sector_import_system WHERE command_id=%s ORDER BY row_order LIMIT 1",(cid,)).fetchone()[0]
+        c.execute("""UPDATE camp_campaign_setting
+          SET sector_location_id=COALESCE(sector_location_id,%s),
+              starting_world_location_id=COALESCE(starting_world_location_id,%s),
+              current_world_location_id=COALESCE(current_world_location_id,%s)
+          WHERE campaign_id=%s AND startup_choice='import_own'""",(sector,first_world,first_world,campaign[0]))
         c.execute("INSERT INTO cmd_domain_event(command_id,event_order,event_type) VALUES(%s,1,'sector_imported')",(cid,))
         c.execute("UPDATE cmd_command SET command_status='completed',completed_at=clock_timestamp() WHERE command_id=%s",(cid,))
         return _load(c,cid,pub,False)

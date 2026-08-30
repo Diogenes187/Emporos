@@ -15,6 +15,8 @@ def test_initialize_and_safe_tool_surface():
  assert resume['inputSchema']['required']==[]
  assert resume['inputSchema']['properties']=={}
  assert 'parameterless startup/resume call' in resume['description']
+ enter=next(tool for tool in tools if tool['name']=='enter_adventure_location')
+ assert 'Do not use this for a planet' in enter['description']
 
 def test_default_resume_discards_stale_or_placeholder_arguments(monkeypatch):
  captured=[]

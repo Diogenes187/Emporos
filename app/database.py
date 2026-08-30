@@ -544,10 +544,16 @@ class CampaignReader:
                   WHEN 'import_own' THEN 'Private sector import pending'
                   ELSE 'Uncharted space' END) AS setting_name,
               selected.provenance_class,selected.rights_class,selected.export_permitted,
-              sector.public_id::text AS sector_public_id
+              sector.public_id::text AS sector_public_id,
+              starting.public_id::text AS starting_world_public_id,
+              starting.name AS starting_world_name,
+              current.public_id::text AS current_world_public_id,
+              current.name AS current_world_name
               FROM camp_campaign_setting selected
               LEFT JOIN setting_package package USING(setting_package_id)
               LEFT JOIN loc_location sector ON sector.location_id=selected.sector_location_id
+              LEFT JOIN loc_location starting ON starting.location_id=selected.starting_world_location_id
+              LEFT JOIN loc_location current ON current.location_id=selected.current_world_location_id
               WHERE selected.campaign_id=%s""",(campaign_id,)).fetchone()
         return {
             **campaign,
