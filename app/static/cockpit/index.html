@@ -1007,6 +1007,7 @@ function crewPanel(f){
       ${a.injury&&!['healthy','uninjured'].includes(a.injury.injury_status)?`<div class="sub" style="color:var(--red)">${esc(a.injury.injury_status.replace(/_/g,' '))}</div>`:''}
       ${a.lifepath_status!=='completed'?`<button class="goldbtn" data-cg="${a.public_id}">Continue the lifepath</button>`:
         (a.character_name==='Unnamed Traveller'?`<button class="goldbtn" data-cg="${a.public_id}">Name this Traveller</button>`:'')}
+      <a class="btn" href="/crew?campaign=${S.cid}#builder-${a.public_id}">Referee corrections</a>
     </div>`;
   }
   if(!f.actors.length)h+='<div class="card"><div class="sub">No Travellers yet. Roll one — the full lifepath if you want a story.</div></div>';

@@ -370,6 +370,15 @@ def test_invalid_career_fallback_returns_to_creator_with_message(monkeypatch):
     assert "already%20used" in response.headers["location"]
 
 
+def test_character_correction_dispatches_and_returns_to_character(monkeypatch):
+    captured={}
+    monkeypatch.setattr(main_module,"correct_character_state",lambda **kwargs:captured.update(kwargs))
+    response=client.post("/campaigns/campaign/characters/actor/corrections",data={"correction_kind":"skill","target_code":"skill.bludgeoning-weapons","resulting_value":"1","reason":"Restore agreed training","idempotency_key":"correction-test"},follow_redirects=False)
+    assert response.status_code==303
+    assert response.headers["location"]=="/crew?campaign=campaign#builder-actor"
+    assert captured=={"actor_public_id":"actor","correction_kind":"skill","target_code":"skill.bludgeoning-weapons","resulting_value":1,"resulting_maximum":None,"location_public_id":None,"reason":"Restore agreed training","idempotency_key":"correction-test"}
+
+
 def test_basic_training_dispatches_specializations_and_returns_to_crew(monkeypatch):
     captured = {}
     monkeypatch.setattr(

@@ -13,6 +13,7 @@ from engine.conversation_logs import append_external_conversation_entry_command
 from engine.chronicle import record_campaign_chronicle_command,campaign_chronicle
 from engine.adventure_modules import adventure_module_snapshot,create_adventure_module_command,key_adventure_location_command,enter_adventure_location_command,update_adventure_location_state_command,advance_adventure_exploration_command
 from engine.adventure_indexing import adventure_index_snapshot,read_adventure_source_page_command,propose_adventure_location_command
+from engine.character_corrections import correct_character_state_command
 
 PROTOCOL_VERSION='2025-03-26'
 PROCESS_SESSION_ID=uuid.uuid4()
@@ -165,6 +166,8 @@ def _conversation_entries(args):
 def _catalog(args=None):return [asdict(spec) for spec in available_tools()]
 def _execute(args):
  with _connect() as c:return GameplayOrchestrator(c,authority_reference=_authority()).invoke(args['tool_name'],idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),arguments=args.get('arguments') or {})
+def _correct_character(args):
+ with _connect() as c:return correct_character_state_command(c,initiator_reference=_authority(),idempotency_key=args.get('idempotency_key') or 'mcp-'+str(uuid.uuid4()),actor_public_id=args['actor_public_id'],correction_kind=args['correction_kind'],target_code=args.get('target_code'),resulting_value=args.get('resulting_value'),resulting_maximum=args.get('resulting_maximum'),location_public_id=args.get('location_public_id'),reason=args['reason'])
 def _adventure_snapshot(args):
  with _connect() as c:return adventure_module_snapshot(c,initiator_reference=_authority(),module_public_id=args['module_public_id'])
 def _create_adventure(args):
@@ -208,6 +211,7 @@ TOOLS={
  'propose_adventure_location':('Submit a cited draft after every source page has been read; human approval is still required',{'session_public_id':{'type':'string'},'source_page_number':{'type':'integer','minimum':1},'source_excerpt':{'type':'string'},'location_key':{'type':'string'},'name':{'type':'string'},'keyed_description':{'type':'string'},'occupants_initial':{'type':'string'},'treasure_initial':{'type':'string'},'idempotency_key':{'type':'string'}},('session_public_id','source_page_number','source_excerpt','location_key','name','keyed_description'),_propose_location),
  'list_gameplay_tool_schemas':('Describe deterministic gameplay commands',{},(),_catalog),
  'execute_gameplay_tool':('Invoke an allowlisted deterministic engine command and return its receipt',{'tool_name':{'type':'string'},'arguments':{'type':'object'},'idempotency_key':{'type':'string'}},('tool_name',),_execute),
+ 'correct_character_state':('OWNER/REFEREE OVERRIDE. Correct one character skill, characteristic, financial field, or location with an immutable before/after receipt. Use only on explicit user request and always supply the user-approved reason.',{'actor_public_id':{'type':'string'},'correction_kind':{'type':'string','enum':['skill','characteristic','finance','location']},'target_code':{'type':'string'},'resulting_value':{'type':'integer'},'resulting_maximum':{'type':'integer'},'location_public_id':{'type':'string'},'reason':{'type':'string'},'idempotency_key':{'type':'string'}},('actor_public_id','correction_kind','reason'),_correct_character),
 }
 def _tool_list():return [{'name':name,'description':description,'inputSchema':{'type':'object','properties':properties,'required':list(required),'additionalProperties':False}} for name,(description,properties,required,_) in TOOLS.items()]
 def _content(value):

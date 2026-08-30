@@ -78,3 +78,8 @@ def test_training_controls_distinguish_level_zero_grants_from_random_training():
         text = client.get(path).text
         assert "This grants level 0 only." in text
         assert "You choose a table, not a skill." in text
+
+
+def test_primary_character_cards_link_to_referee_corrections():
+    for path in ("/", "/classic"):
+        assert "Referee corrections" in client.get(path).text

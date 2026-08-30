@@ -27,6 +27,7 @@ if foundation.exists() and str(foundation) not in sys.path:
 
 from engine.campaigns import create_campaign_command  # noqa: E402
 from engine.character_creation import initialize_character_command  # noqa: E402
+from engine.character_corrections import correct_character_state_command  # noqa: E402
 from engine.ships import acquire_ship_command  # noqa: E402
 from engine.sectors import import_sector_command  # noqa: E402
 from engine.settings import initialize_campaign_setting_command  # noqa: E402
@@ -888,6 +889,10 @@ def update_character_final_details(*,actor_public_id:str,character_name:str,gend
 def finish_character_creation(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
     with psycopg.connect(url) as connection:return finish_character_creation_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id)
+
+def correct_character_state(*,actor_public_id:str,correction_kind:str,target_code:str|None,resulting_value:int|None,resulting_maximum:int|None,location_public_id:str|None,reason:str,idempotency_key:str):
+    url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")
+    with psycopg.connect(url) as connection:return correct_character_state_command(connection,initiator_reference=authority,idempotency_key=idempotency_key,actor_public_id=actor_public_id,correction_kind=correction_kind,target_code=target_code,resulting_value=resulting_value,resulting_maximum=resulting_maximum,location_public_id=location_public_id,reason=reason)
 
 def apply_personal_fatigue(*,actor_public_id:str,idempotency_key:str):
     url=database_url();authority=os.environ.get("EMPOROS_AUTHORITY_REFERENCE","emporos-local-player")

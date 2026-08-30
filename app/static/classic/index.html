@@ -281,6 +281,7 @@ function crewPanel(f){
       ${benefits?`<div class="sub"><b>Muster benefits:</b> ${benefits}</div>`:''}
       ${a.lifepath_status!=='completed'?`<button class="goldbtn" data-cg="${a.public_id}">Continue creation</button>`:
         (a.character_name==='Unnamed Traveller'?`<button class="goldbtn" data-cg="${a.public_id}">Name character</button>`:'')}
+      <a class="btn" href="/crew?campaign=${S.cid}#builder-${a.public_id}">Referee corrections</a>
     </div>`;
   }
   if(!f.actors.length)h+='<div class="card"><div class="sub">No characters yet.</div></div>';

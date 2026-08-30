@@ -21,6 +21,14 @@ ROOT = Path(__file__).resolve().parents[1]
 PREFIX = "emporos_clean_install_audit_"
 
 
+def expected_schema_version() -> int:
+    migration_files = ROOT.joinpath("db", "migrations").glob("[0-9][0-9][0-9][0-9]_*.sql")
+    versions = [int(path.name[:4]) for path in migration_files]
+    if not versions:
+        raise RuntimeError("no database migrations were found")
+    return max(versions)
+
+
 def configured_dsn() -> str:
     dsn = (
         os.environ.get("EMPOROS_DATABASE_URL")
@@ -63,9 +71,11 @@ def main() -> int:
             attack_profiles = connection.execute(
                 "SELECT count(*) FROM combat_attack_profile"
             ).fetchone()[0]
-        if version != 593 or not complete:
+        expected_version = expected_schema_version()
+        if version != expected_version or not complete:
             raise RuntimeError(
-                f"clean install incomplete: schema={version}, marker={complete}"
+                "clean install incomplete: "
+                f"schema={version}, expected={expected_version}, marker={complete}"
             )
         if min(rules, careers, attack_profiles) < 1:
             raise RuntimeError(

@@ -19,6 +19,7 @@ from app.commands import acquire_ship, create_campaign, import_sector, initializ
 from app.commands import select_social_content,create_patron_brief,authorize_extreme_range
 from app.commands import cancel_jump
 from app.commands import reroll_characteristics, arrange_characteristics, abandon_unfinished_character, delete_character
+from app.commands import correct_character_state
 from app.commands import record_human_narration, request_gm_assistance
 from app.commands import adventure_modules,create_adventure_module,key_adventure_location,enter_adventure_location,update_adventure_location_state,advance_adventure_exploration
 from app.commands import begin_adventure_indexing,review_adventure_location_proposal
@@ -558,6 +559,12 @@ def character_delete(campaign_id: str, actor_id: str,
     except (ValueError, PermissionError, RuntimeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return RedirectResponse(url=f"/crew?campaign={campaign_id}", status_code=303)
+
+@app.post("/campaigns/{campaign_id}/characters/{actor_id}/corrections")
+def character_correction(campaign_id:str,actor_id:str,correction_kind:str=Form(...),target_code:str|None=Form(None),resulting_value:int|None=Form(None),resulting_maximum:int|None=Form(None),location_public_id:str|None=Form(None),reason:str=Form(...),idempotency_key:str=Form("")):
+    try:correct_character_state(actor_public_id=actor_id,correction_kind=correction_kind,target_code=target_code or None,resulting_value=resulting_value,resulting_maximum=resulting_maximum,location_public_id=location_public_id or None,reason=reason,idempotency_key=idempotency_key.strip() or str(uuid.uuid4()))
+    except (ValueError,PermissionError,RuntimeError) as exc:raise HTTPException(status_code=400,detail=str(exc)) from exc
+    return RedirectResponse(url=f"/crew?campaign={campaign_id}#builder-{actor_id}",status_code=303)
 
 @app.post("/campaigns/{campaign_id}/characters/{actor_id}/career-entry")
 def character_career_entry(campaign_id:str,actor_id:str,career_selection:str=Form(...),idempotency_key:str=Form(...)):
