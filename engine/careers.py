@@ -3125,7 +3125,8 @@ def determine_career_aging_command(
                 raise RuntimeError("Idempotency key belongs to another command")
             return _load_aging(connection, existing[0], existing[1], True)
         term = connection.execute(
-            """SELECT term.career_term_id,actor.actor_id,lifepath.total_terms,
+            """SELECT term.career_term_id,actor.actor_id,
+                      completion.resulting_total_terms,
                       COALESCE(use.continuous_course_terms,0)
                FROM actor_actor actor
                JOIN actor_career_stint stint ON stint.actor_id=actor.actor_id
@@ -3133,12 +3134,14 @@ def determine_career_aging_command(
                  ON term.career_stint_id=stint.career_stint_id
                JOIN actor_lifepath_state lifepath
                  ON lifepath.actor_id=actor.actor_id
+               JOIN cmd_career_term_completion_receipt completion
+                 ON completion.career_term_id=term.career_term_id
                LEFT JOIN actor_career_anagathic_term use
                  ON use.career_anagathic_term_id=term.anagathic_term_id
                WHERE actor.public_id=%s
                  AND actor.controller_reference=%s
                  AND term.term_status='completed'
-                 AND lifepath.age_years>=COALESCE(
+                 AND completion.resulting_age_years>=COALESCE(
                      (
                          SELECT species.aging_start_age_years
                          FROM actor_current_species current_species

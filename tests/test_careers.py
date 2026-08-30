@@ -63,6 +63,47 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
         )
         return actor_id, str(actor_public)
 
+    def _set_latest_completion_snapshot(
+        self, connection, actor_id, *, prior_age, resulting_age,
+        prior_terms, resulting_terms, suffix,
+    ):
+        term_id = connection.execute(
+            """SELECT term.career_term_id
+               FROM actor_career_term term
+               JOIN actor_career_stint stint USING(career_stint_id)
+               WHERE stint.actor_id=%s AND term.term_status='completed'
+               ORDER BY term.career_term_id DESC LIMIT 1""",
+            (actor_id,),
+        ).fetchone()[0]
+        receipt = connection.execute(
+            """SELECT command_id FROM cmd_career_term_completion_receipt
+               WHERE career_term_id=%s""", (term_id,),
+        ).fetchone()
+        if receipt is None:
+            command_id = connection.execute(
+                """INSERT INTO cmd_command
+                   (command_type,initiator_reference,idempotency_key,
+                    command_status,completed_at)
+                   VALUES ('complete_career_term','player',%s,'completed',
+                           clock_timestamp()) RETURNING command_id""",
+                (f"snapshot-{suffix}",),
+            ).fetchone()[0]
+            connection.execute(
+                """INSERT INTO cmd_career_term_completion_receipt
+                   VALUES (%s,%s,%s,%s,%s,%s)""",
+                (command_id, term_id, prior_age, resulting_age,
+                 prior_terms, resulting_terms),
+            )
+        else:
+            connection.execute(
+                """UPDATE cmd_career_term_completion_receipt
+                   SET prior_age_years=%s,resulting_age_years=%s,
+                       prior_total_terms=%s,resulting_total_terms=%s
+                   WHERE command_id=%s""",
+                (prior_age, resulting_age, prior_terms, resulting_terms,
+                 receipt[0]),
+            )
+
     def test_merchant_is_the_undivided_cepheus_engine_career(self):
         with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
             merchant = connection.execute(
@@ -557,6 +598,11 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
                        ON CONFLICT (actor_id) DO UPDATE
                        SET age_years=34,total_terms=4""",
                     (actor_id,),
+                )
+                self._set_latest_completion_snapshot(
+                    connection, actor_id, prior_age=30, resulting_age=34,
+                    prior_terms=3, resulting_terms=4,
+                    suffix="anagathic-aging",
                 )
                 aging = determine_career_aging_command(
                     connection, initiator_reference="player",
@@ -1369,6 +1415,27 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
                 self.assertEqual(
                     {row.resulting_value for row in applied.reductions}, {6})
 
+    def test_current_age_does_not_retroactively_age_earlier_terms(self):
+        with psycopg.connect(os.environ["BASE_CEPHEUS_DATABASE_URL"]) as connection:
+            with connection.transaction(force_rollback=True):
+                actor_id, actor_public = self._actor(connection)
+                self._complete_first_merchant_term(
+                    connection, actor_public, "no-retroactive-aging")
+                connection.execute(
+                    """UPDATE actor_lifepath_state
+                       SET total_terms=4,age_years=34 WHERE actor_id=%s""",
+                    (actor_id,),
+                )
+                with self.assertRaisesRegex(
+                    ValueError, "no completed term requiring aging"
+                ):
+                    determine_career_aging_command(
+                        connection, initiator_reference="player",
+                        idempotency_key="reject-retroactive-aging",
+                        actor_public_id=actor_public,
+                        random_source=FixedRandom((1, 1)),
+                    )
+
     def test_successful_reenlistment_preserves_player_choice_and_gates_next_term(
         self,
     ):
@@ -1452,6 +1519,11 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
                        SET total_terms=7,age_years=46 WHERE actor_id=%s""",
                     (actor_id,),
                 )
+                self._set_latest_completion_snapshot(
+                    connection, actor_id, prior_age=42, resulting_age=46,
+                    prior_terms=6, resulting_terms=7,
+                    suffix="retirement-aging",
+                )
                 determine_career_aging_command(
                     connection, initiator_reference="player",
                     idempotency_key="retirement-aging",
@@ -1482,6 +1554,11 @@ class CareerCatalogueIntegrationTests(unittest.TestCase):
                     """UPDATE actor_lifepath_state
                        SET total_terms=7,age_years=46 WHERE actor_id=%s""",
                     (second_id,),
+                )
+                self._set_latest_completion_snapshot(
+                    connection, second_id, prior_age=42, resulting_age=46,
+                    prior_terms=6, resulting_terms=7,
+                    suffix="natural-twelve-aging",
                 )
                 determine_career_aging_command(
                     connection, initiator_reference="player",
